@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Assets.Data;
 using Assets.Services.Interfaces;
+using Assets.Enums;
 
 namespace Assets.Services.Implementations;
 
@@ -18,43 +19,40 @@ public class DashboardService : IDashboardService
     public async Task<object> GetStatisticsAsync()
     {
         var totalAssets = await _context.Assets.CountAsync(a => !a.IsDeleted);
-        var totalEmployees = await _context.Employees.CountAsync(e => e.IsActive);
-        var totalDepartments = await _context.Departments.CountAsync(d => d.IsActive);
-        var totalWarehouses = await _context.Warehouses.CountAsync(w => w.IsActive);
-        
         var activeAssets = await _context.Assets.CountAsync(a => !a.IsDeleted && a.Status.IsActive);
-        var inactiveAssets = totalAssets - activeAssets;
         
-        var assetsWithWarranty = await _context.Assets.CountAsync(a => !a.IsDeleted && a.HasWarranty);
+        // Count assets under maintenance
+        var assetsUnderMaintenance = await _context.AssetMaintenances
+            .CountAsync(m => m.Status == Enums.MaintenanceStatus.Scheduled || 
+                           m.Status == Enums.MaintenanceStatus.InProgress);
         
-        var thirtyDaysFromNow = DateTime.UtcNow.AddDays(30);
-        var expiringWarranties = await _context.Assets
-            .CountAsync(a => !a.IsDeleted && 
-                           a.HasWarranty && 
-                           a.WarrantyExpiryDate.HasValue && 
-                           a.WarrantyExpiryDate.Value <= thirtyDaysFromNow &&
-                           a.WarrantyExpiryDate.Value >= DateTime.UtcNow);
-
-        // Get disposed assets count
+        // Count disposed assets
         var disposedAssets = await _context.AssetDisposals.CountAsync();
+        
+        // Count recent transfers (last 30 days)
+        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+        var recentTransfers = await _context.AssetMovements
+            .CountAsync(m => m.MovementType == Enums.MovementType.Transfer && 
+                           m.CreatedAt >= thirtyDaysAgo);
+        
+        // Count recent disposals (last 30 days)
+        var recentDisposals = await _context.AssetDisposals
+            .CountAsync(d => d.CreatedAt >= thirtyDaysAgo);
 
         return new
         {
             totalAssets,
-            totalEmployees,
-            totalDepartments,
-            totalWarehouses,
             activeAssets,
-            inactiveAssets,
-            assetsWithWarranty,
-            expiringWarranties,
-            disposedAssets
+            assetsUnderMaintenance,
+            disposedAssets,
+            recentTransfers,
+            recentDisposals
         };
     }
 
     public async Task<object> GetAssetsByCategoryAsync()
     {
-        return await _context.Assets
+        var result = await _context.Assets
             .Where(a => !a.IsDeleted)
             .Include(a => a.Category)
             .GroupBy(a => new { a.Category.Id, a.Category.Name, a.Category.Color })
@@ -67,11 +65,22 @@ public class DashboardService : IDashboardService
             })
             .OrderByDescending(x => x.assetsCount)
             .ToListAsync();
+
+        return new
+        {
+            categoryDistribution = result.Select(r => new
+            {
+                name = r.categoryName,
+                value = r.assetsCount,
+                fill = r.color
+            }),
+            categories = result
+        };
     }
 
     public async Task<object> GetAssetsByStatusAsync()
     {
-        return await _context.Assets
+        var result = await _context.Assets
             .Where(a => !a.IsDeleted)
             .Include(a => a.Status)
             .GroupBy(a => new { a.Status.Id, a.Status.Name, a.Status.Color })
@@ -84,6 +93,17 @@ public class DashboardService : IDashboardService
             })
             .OrderByDescending(x => x.assetsCount)
             .ToListAsync();
+
+        return new
+        {
+            statusDistribution = result.Select(r => new
+            {
+                name = r.statusName,
+                value = r.assetsCount,
+                fill = r.color
+            }),
+            statuses = result
+        };
     }
 
     public async Task<object> GetRecentActivitiesAsync(int limit = 10)
@@ -97,9 +117,9 @@ public class DashboardService : IDashboardService
             {
                 id = a.Id,
                 type = "asset_created",
-                description = $"?? ????? ?????: {a.Name}",
+                description = $"Asset Created: {a.Name}",
                 assetName = a.Name,
-                userName = "System", // Since we don't have CreatedBy field yet
+                userName = "System",
                 createdAt = a.CreatedAt
             })
             .ToListAsync();
@@ -123,8 +143,8 @@ public class DashboardService : IDashboardService
             {
                 id = a.Id,
                 type = "warranty_expiring",
-                title = "????? ????? ??????",
-                description = $"????? ????? '{a.Name}' ????? ?? {a.WarrantyExpiryDate:yyyy-MM-dd}",
+                title = "Warranty Expiring Soon",
+                description = $"Asset '{a.Name}' warranty expires on {a.WarrantyExpiryDate:yyyy-MM-dd}",
                 assetId = a.Id,
                 priority = a.WarrantyExpiryDate!.Value <= DateTime.UtcNow.AddDays(7) ? "high" : 
                           a.WarrantyExpiryDate.Value <= DateTime.UtcNow.AddDays(15) ? "medium" : "low",
@@ -145,8 +165,8 @@ public class DashboardService : IDashboardService
             {
                 id = a.Id + 10000, // Different ID range
                 type = "no_location",
-                title = "??? ???? ????",
-                description = $"????? '{a.Name}' ??? ???? ????? ????",
+                title = "No Location Assigned",
+                description = $"Asset '{a.Name}' has no assigned location",
                 assetId = a.Id,
                 priority = "medium",
                 createdAt = DateTime.UtcNow

@@ -266,7 +266,7 @@ export default function EditAssetPage() {
           layout="vertical"
           onFinish={handleSubmit}
         >
-          <Divider orientation="left">Basic Information</Divider>
+          <Divider>Basic Information</Divider>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -320,7 +320,7 @@ export default function EditAssetPage() {
             <Input.TextArea rows={3} placeholder="Enter description" />
           </Form.Item>
 
-          <Divider orientation="left">Category</Divider>
+          <Divider>Category</Divider>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -350,7 +350,7 @@ export default function EditAssetPage() {
             </Col>
           </Row>
 
-          <Divider orientation="left">Current Location</Divider>
+          <Divider>Current Location</Divider>
           <Row gutter={16}>
             <Col span={8}>
               <Form.Item
@@ -444,7 +444,7 @@ export default function EditAssetPage() {
             </Col>
           </Row>
 
-          <Divider orientation="left">Warranty Information</Divider>
+          <Divider>Warranty Information</Divider>
           <Row gutter={16}>
             <Col span={8}>
               <Form.Item name="hasWarranty" label="Has Warranty" valuePropName="checked">

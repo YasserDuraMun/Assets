@@ -12,9 +12,11 @@ import {
   SettingOutlined,
   SwapOutlined,
   DeleteOutlined,
-  ToolOutlined
+  ToolOutlined,
+  BarChartOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import type { User } from '../types';
 
 const { Header, Sider, Content } = Layout;
@@ -25,34 +27,22 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-  const [collapsed, setCollapsed] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
+const [collapsed, setCollapsed] = useState(false);
+const navigate = useNavigate();
+const location = useLocation();
+const { logout, user } = useAuth();
   
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-    }
-  }, [navigate]);
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    navigate('/login');
+  }
+}, [navigate]);
 
-  const [user] = useState<User | null>(() => {
-    const userData = localStorage.getItem('user');
-    if (!userData || userData === 'undefined' || userData === 'null') {
-      return null;
-    }
-    try {
-      return JSON.parse(userData);
-    } catch {
-      return null;
-    }
-  });
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
-  };
+const handleLogout = () => {
+  logout();
+  navigate('/login');
+};
 
   const menuItems = [
     {
@@ -84,6 +74,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
       icon: <ToolOutlined />,
       label: 'Maintenance',
       onClick: () => navigate('/maintenance')
+    },
+    {
+      key: '/reports',
+      icon: <BarChartOutlined />,
+      label: 'Reports',
+      onClick: () => navigate('/reports')
     },
     {
       key: '/settings',

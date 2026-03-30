@@ -13,22 +13,29 @@ import NewTransferPage from './pages/NewTransferPage';
 import TransferDetailsPage from './pages/TransferDetailsPage';
 import DisposalsPage from './pages/DisposalsPage';
 import MaintenancePage from './pages/MaintenancePage';
+import ReportsPage from './pages/ReportsPage';
 import './App.css';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
+const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
 
-  useEffect(() => {
-    const checkAuth = () => {
-      setIsAuthenticated(!!localStorage.getItem('token'));
-    };
+useEffect(() => {
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    setIsAuthenticated(!!token);
+  };
 
-    window.addEventListener('storage', checkAuth);
+  // ???? ?? Authentication ?? ?????
+  const authInterval = setInterval(checkAuth, 1000);
     
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-    };
-  }, []);
+  // ???? ??? ????? localStorage
+  window.addEventListener('storage', checkAuth);
+    
+  return () => {
+    clearInterval(authInterval);
+    window.removeEventListener('storage', checkAuth);
+  };
+}, []);
 
   return (
     <ConfigProvider 
@@ -57,6 +64,7 @@ function App() {
                 <Route path="/transfers/:id" element={<TransferDetailsPage />} />
                 <Route path="/disposals" element={<DisposalsPage />} />
                 <Route path="/maintenance" element={<MaintenancePage />} />
+                <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
               </>
             ) : (

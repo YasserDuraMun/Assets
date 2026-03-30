@@ -1,107 +1,100 @@
 import { useState } from 'react';
+import { Form, Input, Button, Card, message, Typography } from 'antd';
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Card, message, Typography, App } from 'antd';
-import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 import api from '../api/axios.config';
-import type { LoginRequest, LoginResponse, ApiResponse } from '../types';
 
 const { Title } = Typography;
+
+interface LoginForm {
+  username: string;
+  password: string;
+}
 
 export default function Login() {
 const [loading, setLoading] = useState(false);
 const navigate = useNavigate();
-const { message: messageApi } = App.useApp();
 
-const onFinish = async (values: LoginRequest) => {
-  setLoading(true);
-  try {
-    const response = await api.post<ApiResponse<LoginResponse>>('/auth/login', values);
+  const handleLogin = async (values: LoginForm) => {
+    setLoading(true);
+    try {
+      const response = await api.post('/auth/login', values);
       
-    if (response.data.success && response.data.data) {
-      localStorage.setItem('token', response.data.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      if (response.data.success) {
+        localStorage.setItem('token', response.data.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        message.success('Login successful');
         
-      messageApi.success('Login successful!');
-        
-      // ?????? navigate ????? ?? window.location.href
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 300);
+        // ?????? ???? ?? ??????
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+      } else {
+        message.error(response.data.message || 'Login failed');
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      message.error(error.response?.data?.message || 'Login failed');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    const err = error as { response?: { data?: { message?: string } } };
-    messageApi.error(err.response?.data?.message || 'Login failed');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
+    <div style={{
       minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
     }}>
-      <Card 
-        style={{ 
-          width: 450, 
-          boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-          borderRadius: 12
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <LoginOutlined style={{ fontSize: 48, color: '#1890ff' }} />
-          <Title level={2} style={{ marginTop: 16, marginBottom: 8 }}>
-            ???? ????? ??????
-          </Title>
-          <Typography.Text type="secondary">
-            ?? ?????? ?????? ????????
-          </Typography.Text>
+      <Card style={{ width: 400, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <Title level={2}>Asset Management System</Title>
+          <p>Municipal Asset Management Portal</p>
         </div>
 
         <Form
           name="login"
-          onFinish={onFinish}
-          autoComplete="off"
-          layout="vertical"
+          onFinish={handleLogin}
           size="large"
+          layout="vertical"
         >
           <Form.Item
-            label="??? ????????"
             name="username"
-            rules={[{ required: true, message: '?????? ????? ??? ????????' }]}
+            rules={[{ required: true, message: 'Please enter username' }]}
           >
-            <Input 
-              prefix={<UserOutlined />} 
-              placeholder="admin" 
+            <Input
+              prefix={<UserOutlined />}
+              placeholder="Username"
             />
           </Form.Item>
 
           <Form.Item
-            label="???? ??????"
             name="password"
-            rules={[{ required: true, message: '?????? ????? ???? ??????' }]}
+            rules={[{ required: true, message: 'Please enter password' }]}
           >
-            <Input.Password 
-              prefix={<LockOutlined />} 
-              placeholder="••••••••" 
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="Password"
             />
           </Form.Item>
 
           <Form.Item>
-            <Button 
-              type="primary" 
-              htmlType="submit" 
-              block
+            <Button
+              type="primary"
+              htmlType="submit"
               loading={loading}
-              icon={<LoginOutlined />}
+              style={{ width: '100%' }}
             >
-              ????? ??????
+              Login
             </Button>
           </Form.Item>
         </Form>
+
+        <div style={{ textAlign: 'center', marginTop: 16, color: '#666' }}>
+          <small>Default: admin / admin123</small>
+        </div>
       </Card>
     </div>
   );

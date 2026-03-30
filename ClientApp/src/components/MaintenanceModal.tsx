@@ -138,7 +138,7 @@ export default function MaintenanceModal({
         <Row gutter={[16, 0]}>
           {/* Basic Information */}
           <Col span={24}>
-            <Divider orientation="left">Basic Information</Divider>
+            <Divider>Basic Information</Divider>
           </Col>
 
           <Col span={12}>
@@ -202,7 +202,7 @@ export default function MaintenanceModal({
 
           {/* Cost Information */}
           <Col span={24}>
-            <Divider orientation="left">Cost Information</Divider>
+            <Divider>Cost Information</Divider>
           </Col>
 
           <Col span={12}>
@@ -217,10 +217,7 @@ export default function MaintenanceModal({
                 min={0}
                 precision={2}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => {
-                  const parsed = value!.replace(/\$\s?|(,*)/g, '');
-                  return parseFloat(parsed) || 0;
-                }}
+                parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as any}
               />
             </Form.Item>
           </Col>
@@ -240,7 +237,7 @@ export default function MaintenanceModal({
 
           {/* Personnel Information */}
           <Col span={24}>
-            <Divider orientation="left">Personnel Information</Divider>
+            <Divider>Personnel Information</Divider>
           </Col>
 
           <Col span={8}>
@@ -272,7 +269,7 @@ export default function MaintenanceModal({
 
           {/* Scheduling Information */}
           <Col span={24}>
-            <Divider orientation="left">Scheduling Information</Divider>
+            <Divider>Scheduling Information</Divider>
           </Col>
 
           <Col span={12}>

@@ -9,6 +9,12 @@ $endpoints = @(
     @{ Name = "Debug Health"; Url = "$baseUrl/api/debug/health" },
     @{ Name = "Disposal Test"; Url = "$baseUrl/api/disposals/test" },
     @{ Name = "Disposal Reasons"; Url = "$baseUrl/api/disposals/reasons" },
+    @{ Name = "Maintenance Test"; Url = "$baseUrl/api/maintenance/test" },
+    @{ Name = "Maintenance Types"; Url = "$baseUrl/api/maintenance/types" },
+    @{ Name = "Maintenance Stats"; Url = "$baseUrl/api/maintenance/stats" },
+    @{ Name = "Reports Test"; Url = "$baseUrl/api/reports/test" },
+    @{ Name = "Available Reports"; Url = "$baseUrl/api/reports/available-reports" },
+    @{ Name = "Assets Summary"; Url = "$baseUrl/api/reports/assets-summary" },
     @{ Name = "Assets"; Url = "$baseUrl/api/assets" },
     @{ Name = "Categories"; Url = "$baseUrl/api/categories" }
 )
@@ -46,4 +52,12 @@ Write-Host "=" * 50 -ForegroundColor Yellow
 Write-Host "?? Summary:" -ForegroundColor Yellow
 Write-Host "If any endpoints work, Backend is running." -ForegroundColor White
 Write-Host "If Disposal endpoints fail but others work, DisposalController has issues." -ForegroundColor White
+Write-Host "If Maintenance endpoints fail, MaintenanceController has issues." -ForegroundColor White
+Write-Host "If Reports endpoints fail, ReportsController has issues." -ForegroundColor White
 Write-Host "If all fail, Backend is not responding properly." -ForegroundColor White
+
+Write-Host ""
+Write-Host "?? Next Steps:" -ForegroundColor Cyan
+Write-Host "1. Test Reports page: http://localhost:3000/reports" -ForegroundColor White
+Write-Host "2. Check different report types (Disposal, Maintenance, Transfers)" -ForegroundColor White
+Write-Host "3. Test date range filtering" -ForegroundColor White
