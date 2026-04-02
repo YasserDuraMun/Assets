@@ -54,6 +54,11 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Username).IsUnique();
             entity.HasIndex(e => e.Email).IsUnique();
             entity.Property(e => e.Role).HasConversion<int>();
+            
+            // Explicitly configure FullName to use NVARCHAR for Arabic support
+            entity.Property(e => e.FullName)
+                .IsUnicode(true)
+                .HasMaxLength(200);
         });
 
         // Asset configurations
@@ -63,6 +68,10 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.SerialNumber).IsUnique();
             entity.Property(e => e.PurchasePrice).HasColumnType("decimal(18,2)");
             entity.Property(e => e.CurrentLocationType).HasConversion<int>();
+            
+            // Unicode support for Arabic
+            entity.Property(e => e.Name).IsUnicode(true).HasMaxLength(200);
+            entity.Property(e => e.Description).IsUnicode(true).HasMaxLength(1000);
 
             entity.HasOne(e => e.Category)
                 .WithMany(c => c.Assets)
@@ -209,6 +218,10 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.EmployeeNumber).IsUnique();
+            
+            // Unicode support for Arabic
+            entity.Property(e => e.FullName).IsUnicode(true).HasMaxLength(200);
+            entity.Property(e => e.JobTitle).IsUnicode(true).HasMaxLength(200);
 
             entity.HasOne(e => e.Section)
                 .WithMany(s => s.Employees)
@@ -221,15 +234,80 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // Department configurations
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            // Unicode support for Arabic
+            entity.Property(e => e.Name).IsUnicode(true).HasMaxLength(200);
+        });
+
         // Section configurations
         modelBuilder.Entity<Section>(entity =>
         {
             entity.HasKey(e => e.Id);
             
+            // Unicode support for Arabic
+            entity.Property(e => e.Name).IsUnicode(true).HasMaxLength(200);
+            
             entity.HasOne(e => e.Department)
                 .WithMany(d => d.Sections)
                 .HasForeignKey(e => e.DepartmentId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Warehouse configurations
+        modelBuilder.Entity<Warehouse>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            // Unicode support for Arabic
+            entity.Property(e => e.Name).IsUnicode(true).HasMaxLength(200);
+            entity.Property(e => e.Location).IsUnicode(true).HasMaxLength(500);
+            entity.Property(e => e.Notes).IsUnicode(true).HasMaxLength(1000);
+        });
+
+        // AssetCategory configurations
+        modelBuilder.Entity<AssetCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            // Unicode support for Arabic
+            entity.Property(e => e.Name).IsUnicode(true).HasMaxLength(200);
+            entity.Property(e => e.Description).IsUnicode(true).HasMaxLength(1000);
+        });
+
+        // AssetSubCategory configurations
+        modelBuilder.Entity<AssetSubCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            // Unicode support for Arabic
+            entity.Property(e => e.Name).IsUnicode(true).HasMaxLength(200);
+            entity.Property(e => e.Description).IsUnicode(true).HasMaxLength(1000);
+        });
+
+        // AssetStatus configurations
+        modelBuilder.Entity<AssetStatus>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            // Unicode support for Arabic
+            entity.Property(e => e.Name).IsUnicode(true).HasMaxLength(100);
+            entity.Property(e => e.Description).IsUnicode(true).HasMaxLength(500);
+        });
+
+        // Supplier configurations
+        modelBuilder.Entity<Supplier>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            // Unicode support for Arabic
+            entity.Property(e => e.Name).IsUnicode(true).HasMaxLength(200);
+            entity.Property(e => e.ContactPerson).IsUnicode(true).HasMaxLength(200);
+            entity.Property(e => e.Address).IsUnicode(true).HasMaxLength(500);
+            entity.Property(e => e.Notes).IsUnicode(true).HasMaxLength(1000);
         });
 
         // PurchaseOrder configurations

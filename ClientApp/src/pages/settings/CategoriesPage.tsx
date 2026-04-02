@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, Space, Modal, Form, Input, message, Popconfirm, Tag, Row, Col, Select } from 'antd';
+import { Table, Button, Space, Modal, Form, Input, message, Popconfirm, Tag, Row, Col, Select, Switch } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { categoryApi } from '../../api/category.api';
 import { subCategoryApi, type SubCategory, type CreateSubCategoryDto } from '../../api/subcategory.api';
@@ -29,7 +29,7 @@ export default function CategoriesPage() {
         setCategories(response.data.data);
       }
     } catch (error) {
-      message.error('Failed to load categories');
+      message.error('فشل تحميل الفئات');
     } finally {
       setLoading(false);
     }
@@ -65,33 +65,44 @@ export default function CategoriesPage() {
 
   const handleEditCategory = (record: AssetCategory) => {
     setEditingCategory(record);
-    form.setFieldsValue(record);
+    // Don't include code in the form - it's auto-generated
+    const { code, ...formData } = record;
+    form.setFieldsValue(formData);
     setModalVisible(true);
   };
 
   const handleDeleteCategory = async (id: number) => {
     try {
       await categoryApi.delete(id);
-      message.success('Category deleted successfully');
+      message.success('تم حذف الفئة بنجاح');
       fetchCategories();
     } catch (error) {
-      message.error('Failed to delete category');
+      message.error('فشل حذف الفئة');
     }
   };
 
   const handleSubmitCategory = async (values: Partial<AssetCategory>) => {
     try {
       if (editingCategory) {
-        await categoryApi.update(editingCategory.id, values);
-        message.success('Category updated successfully');
+        // For updates, ensure we include the ID and preserve isActive
+        const updateData = {
+          ...values,
+          id: editingCategory.id,
+          isActive: values.isActive !== undefined ? values.isActive : editingCategory.isActive
+        };
+        await categoryApi.update(editingCategory.id, updateData);
+        message.success('تم تحديث الفئة بنجاح');
       } else {
-        await categoryApi.create(values);
-        message.success('Category created successfully');
+        // For creation, don't include code - it will be generated
+        const { code, ...createData } = values;
+        await categoryApi.create(createData);
+        message.success('تم إنشاء الفئة بنجاح');
       }
       setModalVisible(false);
       fetchCategories();
     } catch (error) {
-      message.error('Failed to save category');
+      console.error('Category operation error:', error);
+      message.error(editingCategory ? 'فشل تحديث الفئة' : 'فشل إنشاء الفئة');
     }
   };
 
@@ -103,17 +114,19 @@ export default function CategoriesPage() {
 
   const handleEditSubCategory = (record: SubCategory) => {
     setEditingSubCategory(record);
-    subForm.setFieldsValue(record);
+    // Don't include code in the form - it's auto-generated
+    const { code, ...formData } = record;
+    subForm.setFieldsValue(formData);
     setSubModalVisible(true);
   };
 
   const handleDeleteSubCategory = async (id: number) => {
     try {
       await subCategoryApi.delete(id);
-      message.success('SubCategory deleted successfully');
+      message.success('تم حذف الفئة الفرعية بنجاح');
       fetchAllSubCategories();
     } catch (error) {
-      message.error('Failed to delete subcategory');
+      message.error('فشل حذف الفئة الفرعية');
     }
   };
 
@@ -122,52 +135,58 @@ export default function CategoriesPage() {
       console.log('Submitting subcategory:', values);
       
       if (editingSubCategory) {
+        // For updates, don't include code
+        const { code, ...updateData } = values as any;
         await subCategoryApi.update(editingSubCategory.id, {
-          ...values,
+          ...updateData,
           id: editingSubCategory.id,
           isActive: true
         });
-        message.success('SubCategory updated successfully');
+        message.success('تم تحديث الفئة الفرعية بنجاح');
       } else {
-        await subCategoryApi.create(values);
-        message.success('SubCategory created successfully');
+        // For creation, don't include code - it will be generated
+        const { code, ...createData } = values as any;
+        await subCategoryApi.create(createData);
+        message.success('تم إنشاء الفئة الفرعية بنجاح');
       }
       setSubModalVisible(false);
       fetchAllSubCategories();
     } catch (error) {
       console.error('Failed to save subcategory:', error);
-      message.error('Failed to save subcategory');
+      message.error(editingSubCategory ? 'فشل تحديث الفئة الفرعية' : 'فشل إنشاء الفئة الفرعية');
     }
   };
 
   const categoryColumns = [
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Code', dataIndex: 'code', key: 'code' },
-    { title: 'Description', dataIndex: 'description', key: 'description' },
+    { title: 'الاسم', dataIndex: 'name', key: 'name' },
+    { title: 'الرمز', dataIndex: 'code', key: 'code' },
+    { title: 'الوصف', dataIndex: 'description', key: 'description' },
     {
-      title: 'Active',
+      title: 'نشط',
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
         <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'Active' : 'Inactive'}
+          {isActive ? 'نشط' : 'غير نشط'}
         </Tag>
       ),
     },
     {
-      title: 'Actions',
+      title: 'الإجراءات',
       key: 'actions',
       render: (_: unknown, record: AssetCategory) => (
         <Space>
           <Button type="link" icon={<EditOutlined />} onClick={() => handleEditCategory(record)}>
-            Edit
+            تعديل
           </Button>
           <Popconfirm
-            title="Delete this category?"
+            title="هل أنت متأكد من حذف هذه الفئة؟"
             onConfirm={() => handleDeleteCategory(record.id)}
+            okText="نعم"
+            cancelText="لا"
           >
             <Button type="link" danger icon={<DeleteOutlined />}>
-              Delete
+              حذف
             </Button>
           </Popconfirm>
         </Space>
@@ -176,34 +195,36 @@ export default function CategoriesPage() {
   ];
 
   const subCategoryColumns = [
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Code', dataIndex: 'code', key: 'code' },
-    { title: 'Parent Category', dataIndex: 'categoryName', key: 'categoryName' },
-    { title: 'Description', dataIndex: 'description', key: 'description' },
+    { title: 'الاسم', dataIndex: 'name', key: 'name' },
+    { title: 'الرمز', dataIndex: 'code', key: 'code' },
+    { title: 'الفئة الرئيسية', dataIndex: 'categoryName', key: 'categoryName' },
+    { title: 'الوصف', dataIndex: 'description', key: 'description' },
     {
-      title: 'Active',
+      title: 'نشط',
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
         <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'Active' : 'Inactive'}
+          {isActive ? 'نشط' : 'غير نشط'}
         </Tag>
       ),
     },
     {
-      title: 'Actions',
+      title: 'الإجراءات',
       key: 'actions',
       render: (_: unknown, record: SubCategory) => (
         <Space>
           <Button type="link" icon={<EditOutlined />} onClick={() => handleEditSubCategory(record)}>
-            Edit
+            تعديل
           </Button>
           <Popconfirm
-            title="Delete this subcategory?"
+            title="هل أنت متأكد من حذف هذه الفئة الفرعية؟"
             onConfirm={() => handleDeleteSubCategory(record.id)}
+            okText="نعم"
+            cancelText="لا"
           >
             <Button type="link" danger icon={<DeleteOutlined />}>
-              Delete
+              حذف
             </Button>
           </Popconfirm>
         </Space>
@@ -215,10 +236,10 @@ export default function CategoriesPage() {
     <div>
       <Row gutter={[16, 24]}>
         <Col span={24}>
-          <h3>Main Categories</h3>
+          <h3>الفئات الرئيسية</h3>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleAddCategory}>
-              Add Category
+              إضافة فئة
             </Button>
           </div>
           <Table
@@ -231,10 +252,10 @@ export default function CategoriesPage() {
         </Col>
 
         <Col span={24}>
-          <h3>SubCategories</h3>
+          <h3>الفئات الفرعية</h3>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleAddSubCategory}>
-              Add SubCategory
+              إضافة فئة فرعية
             </Button>
           </div>
           <Table
@@ -248,48 +269,67 @@ export default function CategoriesPage() {
       </Row>
 
       <Modal
-        title={editingCategory ? 'Edit Category' : 'Add Category'}
+        title={editingCategory ? 'تعديل الفئة' : 'إضافة فئة'}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onOk={() => form.submit()}
         width={600}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmitCategory}>
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item 
+            name="name" 
+            label="اسم الفئة" 
+            rules={[{ required: true, message: 'يرجى إدخال اسم الفئة' }]}
+          >
+            <Input placeholder="مثال: أجهزة حاسوب، أثاث مكتبي" />
           </Form.Item>
-          <Form.Item name="code" label="Code" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="description" label="الوصف">
+            <Input.TextArea rows={3} placeholder="وصف الفئة (اختياري)" />
           </Form.Item>
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} />
+          <Form.Item name="color" label="اللون">
+            <Input type="color" />
           </Form.Item>
+          {editingCategory && (
+            <Form.Item
+              name="isActive"
+              label="نشط"
+              valuePropName="checked"
+              initialValue={true}
+            >
+              <Switch />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
 
       <Modal
-        title={editingSubCategory ? 'Edit SubCategory' : 'Add SubCategory'}
+        title={editingSubCategory ? 'تعديل الفئة الفرعية' : 'إضافة فئة فرعية'}
         open={subModalVisible}
         onCancel={() => setSubModalVisible(false)}
         onOk={() => subForm.submit()}
         width={600}
       >
         <Form form={subForm} layout="vertical" onFinish={handleSubmitSubCategory}>
-          <Form.Item name="categoryId" label="Parent Category" rules={[{ required: true }]}>
-            <Select placeholder="Select parent category" showSearch optionFilterProp="children">
+          <Form.Item 
+            name="categoryId" 
+            label="الفئة الرئيسية" 
+            rules={[{ required: true, message: 'يرجى اختيار الفئة الرئيسية' }]}
+          >
+            <Select placeholder="اختر الفئة الرئيسية" showSearch optionFilterProp="children">
               {categories.map(cat => (
                 <Select.Option key={cat.id} value={cat.id}>{cat.name}</Select.Option>
               ))}
             </Select>
           </Form.Item>
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item 
+            name="name" 
+            label="اسم الفئة الفرعية" 
+            rules={[{ required: true, message: 'يرجى إدخال اسم الفئة الفرعية' }]}
+          >
+            <Input placeholder="مثال: أجهزة لابتوب، مكاتب خشبية" />
           </Form.Item>
-          <Form.Item name="code" label="Code" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} />
+          <Form.Item name="description" label="الوصف">
+            <Input.TextArea rows={3} placeholder="وصف الفئة الفرعية (اختياري)" />
           </Form.Item>
         </Form>
       </Modal>

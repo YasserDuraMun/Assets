@@ -51,7 +51,7 @@ const loadDashboardData = async () => {
       
   } catch (error) {
     console.error('?? Dashboard error:', error);
-    message.error('Error loading dashboard data');
+    message.error('خطأ في تحميل بيانات لوحة المعلومات');
   } finally {
     setLoading(false);
   }
@@ -62,7 +62,7 @@ const loadDashboardData = async () => {
       <MainLayout>
         <div style={{ textAlign: 'center', padding: 50 }}>
           <Spin size="large" />
-          <div style={{ marginTop: 16 }}>Loading dashboard...</div>
+          <div style={{ marginTop: 16 }}>جاري تحميل لوحة المعلومات...</div>
         </div>
       </MainLayout>
     );
@@ -74,7 +74,7 @@ const loadDashboardData = async () => {
         <Card>
           <div style={{ textAlign: 'center', padding: 50 }}>
             <WarningOutlined style={{ fontSize: 48, color: '#faad14' }} />
-            <div style={{ marginTop: 16 }}>No dashboard data available</div>
+            <div style={{ marginTop: 16 }}>لا توجد بيانات متاحة للعرض</div>
           </div>
         </Card>
       </MainLayout>
@@ -91,7 +91,7 @@ const loadDashboardData = async () => {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="Total Assets"
+                title="إجمالي الأصول"
                 value={stats.totalAssets}
                 prefix={<FileOutlined />}
                 valueStyle={{ color: '#3f8600' }}
@@ -101,7 +101,7 @@ const loadDashboardData = async () => {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="Active Assets"
+                title="الأصول النشطة"
                 value={stats.activeAssets}
                 prefix={<DashboardOutlined />}
                 valueStyle={{ color: '#1890ff' }}
@@ -111,7 +111,7 @@ const loadDashboardData = async () => {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="Under Maintenance"
+                title="تحت الصيانة"
                 value={stats.assetsUnderMaintenance}
                 prefix={<ToolOutlined />}
                 valueStyle={{ color: '#faad14' }}
@@ -121,7 +121,7 @@ const loadDashboardData = async () => {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="Disposed Assets"
+                title="الأصول المستبعدة"
                 value={stats.disposedAssets}
                 prefix={<DeleteOutlined />}
                 valueStyle={{ color: '#cf1322' }}
@@ -134,7 +134,7 @@ const loadDashboardData = async () => {
         <Row gutter={[16, 16]}>
           {/* Assets by Category - Pie Chart */}
           <Col xs={24} lg={12}>
-            <Card title="Assets by Category" size="small">
+            <Card title="الأصول حسب الفئة" size="small">
               {categoryData?.categoryDistribution && categoryData.categoryDistribution.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
@@ -158,7 +158,7 @@ const loadDashboardData = async () => {
                 </ResponsiveContainer>
               ) : (
                 <div style={{ textAlign: 'center', padding: 40 }}>
-                  {categoryData ? 'No data to display' : <Spin />}
+                  {categoryData ? 'لا توجد بيانات للعرض' : <Spin />}
                 </div>
               )}
             </Card>
@@ -166,7 +166,7 @@ const loadDashboardData = async () => {
 
           {/* Assets by Status - Bar Chart */}
           <Col xs={24} lg={12}>
-            <Card title="Assets by Status" size="small">
+            <Card title="الأصول حسب الحالة" size="small">
               {statusData?.statusDistribution && statusData.statusDistribution.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={statusData.statusDistribution}>
@@ -184,7 +184,7 @@ const loadDashboardData = async () => {
                 </ResponsiveContainer>
               ) : (
                 <div style={{ textAlign: 'center', padding: 40 }}>
-                  {statusData ? 'No data to display' : <Spin />}
+                  {statusData ? 'لا توجد بيانات للعرض' : <Spin />}
                 </div>
               )}
             </Card>
@@ -194,9 +194,9 @@ const loadDashboardData = async () => {
         {/* Recent Activities Section */}
         <Row gutter={[16, 16]}>
           <Col xs={24} lg={12}>
-            <Card title="Recent Transfers" size="small">
+            <Card title="عمليات النقل الأخيرة" size="small">
               <Statistic
-                title="This Month"
+                title="هذا الشهر"
                 value={stats.recentTransfers}
                 prefix={<SwapOutlined />}
               />
@@ -209,9 +209,9 @@ const loadDashboardData = async () => {
             </Card>
           </Col>
           <Col xs={24} lg={12}>
-            <Card title="Recent Disposals" size="small">
+            <Card title="عمليات الاستبعاد الأخيرة" size="small">
               <Statistic
-                title="This Month"
+                title="هذا الشهر"
                 value={stats.recentDisposals}
                 prefix={<DeleteOutlined />}
               />
@@ -226,14 +226,14 @@ const loadDashboardData = async () => {
         </Row>
 
         {/* Asset Status Overview */}
-        <Card title="Asset Status Overview" size="small">
+        <Card title="ملخص حالة الأصول" size="small">
           <Row gutter={[16, 16]}>
             <Col span={8}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 24, fontWeight: 'bold', color: '#52c41a' }}>
                   {stats.activeAssets}
                 </div>
-                <div>Active Assets</div>
+                <div>الأصول النشطة</div>
               </div>
             </Col>
             <Col span={8}>
@@ -241,7 +241,7 @@ const loadDashboardData = async () => {
                 <div style={{ fontSize: 24, fontWeight: 'bold', color: '#faad14' }}>
                   {stats.assetsUnderMaintenance}
                 </div>
-                <div>Under Maintenance</div>
+                <div>تحت الصيانة</div>
               </div>
             </Col>
             <Col span={8}>
@@ -249,7 +249,7 @@ const loadDashboardData = async () => {
                 <div style={{ fontSize: 24, fontWeight: 'bold', color: '#ff4d4f' }}>
                   {stats.disposedAssets}
                 </div>
-                <div>Disposed</div>
+                <div>مستبعدة</div>
               </div>
             </Col>
           </Row>

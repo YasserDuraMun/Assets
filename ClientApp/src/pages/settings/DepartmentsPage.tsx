@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Switch, message, Popconfirm, Tag, Row, Col } from 'antd';
+import { Table, Button, Space, Modal, Form, Input, Switch, message, Popconfirm, Tag, Row, Col, Select } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { departmentApi } from '../../api/department.api';
 import { sectionApi } from '../../api/section.api';
@@ -29,7 +29,7 @@ export default function DepartmentsPage() {
         setDepartments(response.data.data);
       }
     } catch (error) {
-      message.error('Failed to load departments');
+      message.error('فشل تحميل الإدارات');
     } finally {
       setLoading(false);
     }
@@ -42,7 +42,7 @@ export default function DepartmentsPage() {
         setSections(response.data.data);
       }
     } catch (error) {
-      message.error('Failed to load sections');
+      message.error('فشل تحميل الأقسام');
     }
   };
 
@@ -54,33 +54,44 @@ export default function DepartmentsPage() {
 
   const handleEditDepartment = (record: Department) => {
     setEditingDepartment(record);
-    form.setFieldsValue(record);
+    // Don't include code in the form - it's auto-generated
+    const { code, ...formData } = record;
+    form.setFieldsValue(formData);
     setModalVisible(true);
   };
 
   const handleDeleteDepartment = async (id: number) => {
     try {
       await departmentApi.delete(id);
-      message.success('Department deleted successfully');
+      message.success('تم حذف الإدارة بنجاح');
       fetchDepartments();
     } catch (error) {
-      message.error('Failed to delete department');
+      message.error('فشل حذف الإدارة');
     }
   };
 
   const handleSubmitDepartment = async (values: Partial<Department>) => {
     try {
       if (editingDepartment) {
-        await departmentApi.update(editingDepartment.id, values);
-        message.success('Department updated successfully');
+        // For updates, ensure we include the ID and preserve isActive
+        const updateData = {
+          ...values,
+          id: editingDepartment.id,
+          isActive: values.isActive !== undefined ? values.isActive : editingDepartment.isActive
+        };
+        await departmentApi.update(editingDepartment.id, updateData);
+        message.success('تم تحديث الإدارة بنجاح');
       } else {
-        await departmentApi.create(values);
-        message.success('Department created successfully');
+        // For creation, don't include code - it will be generated
+        const { code, ...createData } = values;
+        await departmentApi.create(createData);
+        message.success('تم إنشاء الإدارة بنجاح');
       }
       setModalVisible(false);
       fetchDepartments();
     } catch (error) {
-      message.error('Failed to save department');
+      console.error('Department operation error:', error);
+      message.error(editingDepartment ? 'فشل تحديث الإدارة' : 'فشل إنشاء الإدارة');
     }
   };
 
@@ -92,64 +103,77 @@ export default function DepartmentsPage() {
 
   const handleEditSection = (record: Section) => {
     setEditingSection(record);
-    sectionForm.setFieldsValue(record);
+    // Don't include code in the form - it's auto-generated
+    const { code, ...formData } = record;
+    sectionForm.setFieldsValue(formData);
     setSectionModalVisible(true);
   };
 
   const handleDeleteSection = async (id: number) => {
     try {
       await sectionApi.delete(id);
-      message.success('Section deleted successfully');
+      message.success('تم حذف القسم بنجاح');
       fetchSections();
     } catch (error) {
-      message.error('Failed to delete section');
+      message.error('فشل حذف القسم');
     }
   };
 
   const handleSubmitSection = async (values: Partial<Section>) => {
     try {
       if (editingSection) {
-        await sectionApi.update(editingSection.id, values);
-        message.success('Section updated successfully');
+        // For updates, ensure we include the ID and preserve isActive
+        const updateData = {
+          ...values,
+          id: editingSection.id,
+          isActive: values.isActive !== undefined ? values.isActive : editingSection.isActive
+        };
+        await sectionApi.update(editingSection.id, updateData);
+        message.success('تم تحديث القسم بنجاح');
       } else {
-        await sectionApi.create(values);
-        message.success('Section created successfully');
+        // For creation, don't include code - it will be generated
+        const { code, ...createData } = values;
+        await sectionApi.create(createData);
+        message.success('تم إنشاء القسم بنجاح');
       }
       setSectionModalVisible(false);
       fetchSections();
     } catch (error) {
-      message.error('Failed to save section');
+      console.error('Section operation error:', error);
+      message.error(editingSection ? 'فشل تحديث القسم' : 'فشل إنشاء القسم');
     }
   };
 
   const departmentColumns = [
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Code', dataIndex: 'code', key: 'code' },
-    { title: 'Description', dataIndex: 'description', key: 'description' },
+    { title: 'الاسم', dataIndex: 'name', key: 'name' },
+    { title: 'الرمز', dataIndex: 'code', key: 'code' },
+    { title: 'الوصف', dataIndex: 'description', key: 'description' },
     {
-      title: 'Active',
+      title: 'نشط',
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
         <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'Active' : 'Inactive'}
+          {isActive ? 'نشط' : 'غير نشط'}
         </Tag>
       ),
     },
     {
-      title: 'Actions',
+      title: 'الإجراءات',
       key: 'actions',
       render: (_: unknown, record: Department) => (
         <Space>
           <Button type="link" icon={<EditOutlined />} onClick={() => handleEditDepartment(record)}>
-            Edit
+            تعديل
           </Button>
           <Popconfirm
-            title="Delete this department?"
+            title="هل أنت متأكد من حذف هذه الإدارة؟"
             onConfirm={() => handleDeleteDepartment(record.id)}
+            okText="نعم"
+            cancelText="لا"
           >
             <Button type="link" danger icon={<DeleteOutlined />}>
-              Delete
+              حذف
             </Button>
           </Popconfirm>
         </Space>
@@ -158,34 +182,36 @@ export default function DepartmentsPage() {
   ];
 
   const sectionColumns = [
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Code', dataIndex: 'code', key: 'code' },
-    { title: 'Department', dataIndex: 'departmentName', key: 'departmentName' },
-    { title: 'Description', dataIndex: 'description', key: 'description' },
+    { title: 'الاسم', dataIndex: 'name', key: 'name' },
+    { title: 'الرمز', dataIndex: 'code', key: 'code' },
+    { title: 'الإدارة', dataIndex: 'departmentName', key: 'departmentName' },
+    { title: 'الوصف', dataIndex: 'description', key: 'description' },
     {
-      title: 'Active',
+      title: 'نشط',
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
         <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'Active' : 'Inactive'}
+          {isActive ? 'نشط' : 'غير نشط'}
         </Tag>
       ),
     },
     {
-      title: 'Actions',
+      title: 'الإجراءات',
       key: 'actions',
       render: (_: unknown, record: Section) => (
         <Space>
           <Button type="link" icon={<EditOutlined />} onClick={() => handleEditSection(record)}>
-            Edit
+            تعديل
           </Button>
           <Popconfirm
-            title="Delete this section?"
+            title="هل أنت متأكد من حذف هذا القسم؟"
             onConfirm={() => handleDeleteSection(record.id)}
+            okText="نعم"
+            cancelText="لا"
           >
             <Button type="link" danger icon={<DeleteOutlined />}>
-              Delete
+              حذف
             </Button>
           </Popconfirm>
         </Space>
@@ -199,7 +225,7 @@ export default function DepartmentsPage() {
         <Col span={24}>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDepartment}>
-              Add Department
+              إضافة إدارة
             </Button>
           </div>
           <Table
@@ -214,7 +240,7 @@ export default function DepartmentsPage() {
         <Col span={24}>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleAddSection}>
-              Add Section
+              إضافة قسم
             </Button>
           </div>
           <Table
@@ -228,56 +254,65 @@ export default function DepartmentsPage() {
       </Row>
 
       <Modal
-        title={editingDepartment ? 'Edit Department' : 'Add Department'}
+        title={editingDepartment ? 'تعديل الإدارة' : 'إضافة إدارة'}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onOk={() => form.submit()}
         width={600}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmitDepartment}>
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item 
+            name="name" 
+            label="اسم الإدارة" 
+            rules={[{ required: true, message: 'يرجى إدخال اسم الإدارة' }]}
+          >
+            <Input placeholder="مثال: إدارة تقنية المعلومات، إدارة الموارد البشرية" />
           </Form.Item>
-          <Form.Item name="code" label="Code" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="description" label="الوصف">
+            <Input.TextArea rows={3} placeholder="وصف الإدارة (اختياري)" />
           </Form.Item>
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} />
-          </Form.Item>
-          <Form.Item name="isActive" label="Active" valuePropName="checked" initialValue={true}>
-            <Switch />
-          </Form.Item>
+          {editingDepartment && (
+            <Form.Item name="isActive" label="نشط" valuePropName="checked" initialValue={true}>
+              <Switch />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
 
       <Modal
-        title={editingSection ? 'Edit Section' : 'Add Section'}
+        title={editingSection ? 'تعديل القسم' : 'إضافة قسم'}
         open={sectionModalVisible}
         onCancel={() => setSectionModalVisible(false)}
         onOk={() => sectionForm.submit()}
         width={600}
       >
         <Form form={sectionForm} layout="vertical" onFinish={handleSubmitSection}>
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item 
+            name="name" 
+            label="اسم القسم" 
+            rules={[{ required: true, message: 'يرجى إدخال اسم القسم' }]}
+          >
+            <Input placeholder="مثال: قسم البرمجة، قسم الدعم الفني" />
           </Form.Item>
-          <Form.Item name="code" label="Code" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="departmentId" label="Department" rules={[{ required: true }]}>
-            <select className="ant-input" style={{ width: '100%', height: 32 }}>
-              <option value="">Select Department</option>
+          <Form.Item 
+            name="departmentId" 
+            label="الإدارة" 
+            rules={[{ required: true, message: 'يرجى اختيار الإدارة' }]}
+          >
+            <Select placeholder="اختر الإدارة">
               {departments.map(dept => (
-                <option key={dept.id} value={dept.id}>{dept.name}</option>
+                <Select.Option key={dept.id} value={dept.id}>{dept.name}</Select.Option>
               ))}
-            </select>
+            </Select>
           </Form.Item>
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} />
+          <Form.Item name="description" label="الوصف">
+            <Input.TextArea rows={3} placeholder="وصف القسم (اختياري)" />
           </Form.Item>
-          <Form.Item name="isActive" label="Active" valuePropName="checked" initialValue={true}>
-            <Switch />
-          </Form.Item>
+          {editingSection && (
+            <Form.Item name="isActive" label="نشط" valuePropName="checked" initialValue={true}>
+              <Switch />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
     </div>

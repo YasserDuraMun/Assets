@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Switch, message, Popconfirm, Tag, Select } from 'antd';
+import { Table, Button, Space, Modal, Form, Input, Switch, message, Popconfirm, Tag, Select, DatePicker } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { employeeApi } from '../../api/employee.api';
 import { departmentApi } from '../../api/department.api';
@@ -40,7 +40,7 @@ export default function EmployeesPage() {
       }
     } catch (error) {
       console.error('Failed to load employees:', error);
-      message.error('Failed to load employees');
+      message.error('فشل تحميل الموظفين');
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ export default function EmployeesPage() {
         setDepartments(response.data.data);
       }
     } catch (error) {
-      message.error('Failed to load departments');
+      message.error('فشل تحميل الإدارات');
     }
   };
 
@@ -72,7 +72,7 @@ export default function EmployeesPage() {
       }
     } catch (error) {
       console.error('Failed to load sections:', error);
-      message.error('Failed to load sections');
+      message.error('فشل تحميل الأقسام');
       setSections([]);
     }
   };
@@ -96,26 +96,33 @@ export default function EmployeesPage() {
   const handleDelete = async (id: number) => {
     try {
       await employeeApi.delete(id);
-      message.success('Employee deleted successfully');
+      message.success('تم حذف الموظف بنجاح');
       fetchEmployees();
     } catch (error) {
-      message.error('Failed to delete employee');
+      message.error('فشل حذف الموظف');
     }
   };
 
   const handleSubmit = async (values: Partial<Employee>) => {
     try {
       if (editingEmployee) {
-        await employeeApi.update(editingEmployee.id, values);
-        message.success('Employee updated successfully');
+        // For updates, ensure we include the ID and preserve isActive
+        const updateData = {
+          ...values,
+          id: editingEmployee.id,
+          isActive: values.isActive !== undefined ? values.isActive : editingEmployee.isActive
+        };
+        await employeeApi.update(editingEmployee.id, updateData);
+        message.success('تم تحديث الموظف بنجاح');
       } else {
         await employeeApi.create(values);
-        message.success('Employee created successfully');
+        message.success('تم إنشاء الموظف بنجاح');
       }
       setModalVisible(false);
       fetchEmployees();
     } catch (error) {
-      message.error('Failed to save employee');
+      console.error('Employee operation error:', error);
+      message.error(editingEmployee ? 'فشل تحديث الموظف' : 'فشل إنشاء الموظف');
     }
   };
 
@@ -126,37 +133,39 @@ export default function EmployeesPage() {
   };
 
   const columns = [
-    { title: 'Employee Number', dataIndex: 'employeeNumber', key: 'employeeNumber' },
-    { title: 'Full Name', dataIndex: 'fullName', key: 'fullName' },
-    { title: 'Email', dataIndex: 'email', key: 'email' },
-    { title: 'Phone', dataIndex: 'phoneNumber', key: 'phoneNumber' },
-    { title: 'Job Title', dataIndex: 'jobTitle', key: 'jobTitle' },
-    { title: 'Department', dataIndex: 'departmentName', key: 'departmentName' },
-    { title: 'Section', dataIndex: 'sectionName', key: 'sectionName' },
+    { title: 'رقم الموظف', dataIndex: 'employeeNumber', key: 'employeeNumber' },
+    { title: 'الاسم الكامل', dataIndex: 'fullName', key: 'fullName' },
+    { title: 'البريد الإلكتروني', dataIndex: 'email', key: 'email' },
+    { title: 'الهاتف', dataIndex: 'phone', key: 'phone' },
+    { title: 'المسمى الوظيفي', dataIndex: 'jobTitle', key: 'jobTitle' },
+    { title: 'الإدارة', dataIndex: 'departmentName', key: 'departmentName' },
+    { title: 'القسم', dataIndex: 'sectionName', key: 'sectionName' },
     {
-      title: 'Active',
+      title: 'نشط',
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
         <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'Active' : 'Inactive'}
+          {isActive ? 'نشط' : 'غير نشط'}
         </Tag>
       ),
     },
     {
-      title: 'Actions',
+      title: 'الإجراءات',
       key: 'actions',
       render: (_: unknown, record: Employee) => (
         <Space>
           <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
-            Edit
+            تعديل
           </Button>
           <Popconfirm
-            title="Delete this employee?"
+            title="هل أنت متأكد من حذف هذا الموظف؟"
             onConfirm={() => handleDelete(record.id)}
+            okText="نعم"
+            cancelText="لا"
           >
             <Button type="link" danger icon={<DeleteOutlined />}>
-              Delete
+              حذف
             </Button>
           </Popconfirm>
         </Space>
@@ -168,7 +177,7 @@ export default function EmployeesPage() {
     <div>
       <div style={{ marginBottom: 16, textAlign: 'right' }}>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          Add Employee
+          إضافة موظف
         </Button>
       </div>
 
@@ -181,40 +190,56 @@ export default function EmployeesPage() {
       />
 
       <Modal
-        title={editingEmployee ? 'Edit Employee' : 'Add Employee'}
+        title={editingEmployee ? 'تعديل الموظف' : 'إضافة موظف'}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onOk={() => form.submit()}
         width={700}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="employeeNumber" label="Employee Number" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          
-          <Form.Item name="fullName" label="Full Name" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-
-          <Form.Item name="email" label="Email" rules={[{ type: 'email' }]}>
-            <Input />
+          <Form.Item 
+            name="employeeNumber" 
+            label="رقم الموظف" 
+            rules={[{ required: true, message: 'يرجى إدخال رقم الموظف' }]}
+          >
+            <Input placeholder="مثال: EMP001, A123" />
           </Form.Item>
 
-          <Form.Item name="phoneNumber" label="Phone Number">
-            <Input />
+          <Form.Item 
+            name="fullName" 
+            label="الاسم الكامل" 
+            rules={[{ required: true, message: 'يرجى إدخال اسم الموظف' }]}
+          >
+            <Input placeholder="مثال: أحمد محمد علي" />
           </Form.Item>
 
-          <Form.Item name="nationalId" label="National ID">
-            <Input />
+          <Form.Item 
+            name="email" 
+            label="البريد الإلكتروني" 
+            rules={[{ type: 'email', message: 'يرجى إدخال بريد إلكتروني صحيح' }]}
+          >
+            <Input placeholder="example@company.com" />
           </Form.Item>
 
-          <Form.Item name="jobTitle" label="Job Title">
-            <Input />
+          <Form.Item name="phone" label="رقم الهاتف">
+            <Input placeholder="مثال: 966501234567" />
           </Form.Item>
 
-          <Form.Item name="departmentId" label="Department" rules={[{ required: true }]}>
+          <Form.Item name="nationalId" label="رقم الهوية الوطنية">
+            <Input placeholder="مثال: 1234567890" />
+          </Form.Item>
+
+          <Form.Item name="jobTitle" label="المسمى الوظيفي">
+            <Input placeholder="مثال: مطور برمجيات، محاسب" />
+          </Form.Item>
+
+          <Form.Item 
+            name="departmentId" 
+            label="الإدارة" 
+            rules={[{ required: true, message: 'يرجى اختيار الإدارة' }]}
+          >
             <Select
-              placeholder="Select department"
+              placeholder="اختر الإدارة"
               onChange={handleDepartmentChange}
               showSearch
               optionFilterProp="children"
@@ -225,9 +250,9 @@ export default function EmployeesPage() {
             </Select>
           </Form.Item>
 
-          <Form.Item name="sectionId" label="Section">
+          <Form.Item name="sectionId" label="القسم">
             <Select
-              placeholder="Select section"
+              placeholder="اختر القسم (اختياري)"
               disabled={!selectedDepartmentId}
               allowClear
               showSearch
@@ -239,9 +264,15 @@ export default function EmployeesPage() {
             </Select>
           </Form.Item>
 
-          <Form.Item name="isActive" label="Active" valuePropName="checked" initialValue={true}>
-            <Switch />
+          <Form.Item name="hireDate" label="تاريخ التوظيف">
+            <DatePicker style={{ width: '100%' }} placeholder="اختر تاريخ التوظيف" />
           </Form.Item>
+
+          {editingEmployee && (
+            <Form.Item name="isActive" label="نشط" valuePropName="checked" initialValue={true}>
+              <Switch />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
     </div>

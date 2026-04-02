@@ -57,7 +57,9 @@ export interface Asset {
   purchaseDate?: string;
   purchasePrice?: number;
   hasWarranty: boolean;
+  warrantyMonths?: number;
   warrantyExpiryDate?: string;
+  notes?: string;
   createdAt: string;
   updatedAt?: string;
   isDeleted?: boolean;

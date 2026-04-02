@@ -73,6 +73,15 @@ public class WarehousesController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("Creating warehouse with data: {@Dto}", dto);
+            
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("Invalid model state for warehouse creation: {Errors}", 
+                    string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                return BadRequest(ApiResponse<object>.ErrorResponse("???????? ??????? ??? ?????"));
+            }
+            
             var warehouse = await _warehouseService.CreateAsync(dto);
             return CreatedAtAction(
                 nameof(GetWarehouse),
@@ -82,7 +91,7 @@ public class WarehousesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating warehouse");
+            _logger.LogError(ex, "Error creating warehouse with data: {@Dto}", dto);
             return StatusCode(500, ApiResponse<object>.ErrorResponse("??? ?? ????? ????????"));
         }
     }
@@ -99,6 +108,11 @@ public class WarehousesController : ControllerBase
             return BadRequest(ApiResponse<object>.ErrorResponse("???? ???????? ??? ??????"));
         }
 
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("???????? ??????? ??? ?????"));
+        }
+
         try
         {
             var warehouse = await _warehouseService.UpdateAsync(dto);
@@ -106,7 +120,13 @@ public class WarehousesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating warehouse");
+            _logger.LogError(ex, "Error updating warehouse with ID: {Id}", id);
+            
+            if (ex.Message.Contains("not found"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse("???????? ??? ?????"));
+            }
+            
             return StatusCode(500, ApiResponse<object>.ErrorResponse("??? ?? ????? ????????"));
         }
     }

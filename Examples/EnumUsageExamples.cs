@@ -1,0 +1,105 @@
+using Assets.Enums;
+using Assets.Extensions;
+using Assets.Helpers;
+
+namespace Assets.Examples;
+
+/// <summary>
+/// Examples of how to use the bilingual enum system
+/// ????? ??? ??????? ???? ??????? ????? ?????
+/// </summary>
+public class EnumUsageExamples
+{
+    public void BasicUsageExamples()
+    {
+        // ??????? Extension Methods ??????
+        var disposalReason = DisposalReason.Damaged;
+        
+        string arabicName = disposalReason.GetArabicName();        // "????/?????"
+        string englishName = disposalReason.GetEnglishName();      // "Damaged"
+        string bilingualName = disposalReason.GetBilingualName(); // "Damaged - ????/?????"
+        
+        // ????? ???? ???? ????? ?????
+        string customFormat = disposalReason.GetBilingualName("??????: {1} | English: {0}");
+        // ???????: "??????: ????/????? | English: Damaged"
+        
+        // ??????? ?? ???? ??? enums
+        var maintenanceType = MaintenanceType.Emergency;
+        string maintenanceArabic = maintenanceType.GetArabicName(); // "????? ?????"
+        
+        var userRole = UserRole.WarehouseKeeper;
+        string roleArabic = userRole.GetArabicName(); // "???? ??????"
+    }
+
+    public void GetAllValuesExamples()
+    {
+        // ?????? ??? ???? ??? DisposalReason ????????
+        var allDisposalReasonsArabic = EnumExtensions.GetAllArabicNames<DisposalReason>();
+        
+        // ?????? ??? ???? ??? MaintenanceStatus ???? ???????
+        var allMaintenanceStatusesBilingual = EnumExtensions.GetAllBilingualNames<MaintenanceStatus>();
+        
+        // ????? ???? ?????
+        foreach (var kvp in allDisposalReasonsArabic)
+        {
+            Console.WriteLine($"{kvp.Key} = {kvp.Value}");
+        }
+    }
+
+    public void UsingEnumLocalizerHelper()
+    {
+        // ??????? Helper Class ?????? ??????
+        var disposalReasonsArabic = EnumLocalizer.DisposalReasons.Arabic;
+        var maintenanceTypesEnglish = EnumLocalizer.MaintenanceTypes.English;
+        var userRolesBilingual = EnumLocalizer.UserRoles.Bilingual;
+        
+        // ???? ??? ????????? ?? dropdown lists
+        var dropdownItems = EnumLocalizer.DisposalReasons.Bilingual
+            .Select(kvp => new { Value = (int)kvp.Key, Text = kvp.Value })
+            .ToList();
+    }
+
+    public void ApiResponseExample()
+    {
+        // ???? ??? ????????? ?? API responses
+        var asset = new
+        {
+            Id = 1,
+            Name = "Laptop",
+            DisposalReason = DisposalReason.EndOfLife,
+            DisposalReasonText = DisposalReason.EndOfLife.GetBilingualName(),
+            MaintenanceType = MaintenanceType.Preventive,
+            MaintenanceTypeText = MaintenanceType.Preventive.GetBilingualName(),
+            UserRole = UserRole.Admin,
+            UserRoleText = UserRole.Admin.GetBilingualName()
+        };
+        
+        // ??????? ?????:
+        // DisposalReasonText: "End of Life - ?????? ????? ?????????"
+        // MaintenanceTypeText: "Preventive - ????? ??????"  
+        // UserRoleText: "Admin - ???? ??????"
+    }
+
+    public void SelectListExample()
+    {
+        // ???? ?????????? ?? Select Lists ?? ASP.NET Core
+        var disposalReasonSelectList = EnumExtensions.GetAllBilingualNames<DisposalReason>()
+            .Select(kvp => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            {
+                Value = ((int)kvp.Key).ToString(),
+                Text = kvp.Value
+            }).ToList();
+    }
+
+    public void ValidationExample()
+    {
+        // ???? ??? ????????? ?? ????? ??????
+        var reason = DisposalReason.Damaged;
+        var validationMessage = GetValidationMessage(reason);
+    }
+    
+    public string GetValidationMessage(DisposalReason reason)
+    {
+        return $"????? ??????: {reason.GetArabicName()} ??? ????";
+    }
+}

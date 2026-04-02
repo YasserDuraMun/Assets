@@ -31,7 +31,6 @@ public class WarehouseService : IWarehouseService
                 Location = w.Location,
                 ResponsibleEmployeeId = w.ResponsibleEmployeeId,
                 ResponsibleEmployeeName = w.ResponsibleEmployee != null ? w.ResponsibleEmployee.FullName : null,
-                Capacity = w.Capacity,
                 CurrentAssetsCount = w.Assets.Count,
                 Notes = w.Notes,
                 IsActive = w.IsActive,
@@ -59,7 +58,6 @@ public class WarehouseService : IWarehouseService
             Location = warehouse.Location,
             ResponsibleEmployeeId = warehouse.ResponsibleEmployeeId,
             ResponsibleEmployeeName = warehouse.ResponsibleEmployee?.FullName,
-            Capacity = warehouse.Capacity,
             CurrentAssetsCount = warehouse.Assets.Count,
             Notes = warehouse.Notes,
             IsActive = warehouse.IsActive,
@@ -72,10 +70,9 @@ public class WarehouseService : IWarehouseService
         var warehouse = new Warehouse
         {
             Name = dto.Name,
-            Code = dto.Code,
+            Code = GenerateCode(dto.Name), // Auto-generate code from name
             Location = dto.Location,
             ResponsibleEmployeeId = dto.ResponsibleEmployeeId,
-            Capacity = dto.Capacity,
             Notes = dto.Notes,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
@@ -95,10 +92,9 @@ public class WarehouseService : IWarehouseService
             throw new Exception("Warehouse not found");
 
         warehouse.Name = dto.Name;
-        warehouse.Code = dto.Code;
+        warehouse.Code = GenerateUniqueCodeForUpdate(dto.Name, dto.Id); // Update code when name changes
         warehouse.Location = dto.Location;
         warehouse.ResponsibleEmployeeId = dto.ResponsibleEmployeeId;
-        warehouse.Capacity = dto.Capacity;
         warehouse.Notes = dto.Notes;
         warehouse.IsActive = dto.IsActive;
 
@@ -136,11 +132,75 @@ public class WarehouseService : IWarehouseService
                 Location = w.Location,
                 ResponsibleEmployeeId = w.ResponsibleEmployeeId,
                 ResponsibleEmployeeName = w.ResponsibleEmployee != null ? w.ResponsibleEmployee.FullName : null,
-                Capacity = w.Capacity,
                 CurrentAssetsCount = w.Assets.Count,
                 IsActive = w.IsActive,
                 CreatedAt = w.CreatedAt
             })
             .ToListAsync();
     }
+
+    #region Code Generation Methods
+
+    private string GenerateCode(string name)
+    {
+        var baseCode = GenerateBaseCode(name);
+        return EnsureUniqueCode(baseCode);
+    }
+
+    private string GenerateUniqueCodeForUpdate(string name, int excludeId)
+    {
+        var baseCode = GenerateBaseCode(name);
+        
+        var existingCodes = _context.Warehouses
+            .Where(w => w.Id != excludeId && w.Code.StartsWith(baseCode))
+            .Select(w => w.Code)
+            .AsEnumerable()
+            .ToList();
+
+        if (!existingCodes.Contains(baseCode))
+            return baseCode;
+
+        int counter = 1;
+        string uniqueCode;
+        do
+        {
+            uniqueCode = $"{baseCode}{counter}";
+            counter++;
+        } while (existingCodes.Contains(uniqueCode));
+
+        return uniqueCode;
+    }
+
+    private string GenerateBaseCode(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "WH";
+
+        var cleanName = name.Trim().Replace(" ", "");
+        return cleanName.Length > 6 ? cleanName.Substring(0, 6).ToUpper() : cleanName.ToUpper();
+    }
+
+    private string EnsureUniqueCode(string baseCode)
+    {
+        var existingCodes = _context.Warehouses
+            .Where(w => w.Code.StartsWith(baseCode))
+            .Select(w => w.Code)
+            .AsEnumerable()
+            .ToList();
+
+        if (!existingCodes.Contains(baseCode))
+            return baseCode;
+
+        int counter = 1;
+        string uniqueCode;
+        do
+        {
+            uniqueCode = $"{baseCode}{counter}";
+            counter++;
+        } while (existingCodes.Contains(uniqueCode));
+
+        return uniqueCode;
+    }
+
+    #endregion
 }

@@ -54,21 +54,21 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
     } catch (error) {
       console.error('?? Failed to load disposal enum data:', error);
       
-      // ????? fallback reasons ????????
-      console.log('?? Using fallback disposal reasons...');
+      // استخدام أسباب احتياطية
+      console.log('⚠️ Using fallback disposal reasons...');
       const fallbackReasons = [
-        { value: 1, label: 'Damaged' },
-        { value: 2, label: 'Obsolete' },
-        { value: 3, label: 'Lost' },
-        { value: 4, label: 'Stolen' },
-        { value: 5, label: 'EndOfLife' },
-        { value: 6, label: 'Maintenance' },
-        { value: 7, label: 'Replacement' },
-        { value: 99, label: 'Other' }
+        { value: 1, label: 'تالف/معطوب' },
+        { value: 2, label: 'قديم/غير صالح للاستخدام' },
+        { value: 3, label: 'مفقود' },
+        { value: 4, label: 'مسروق' },
+        { value: 5, label: 'انتهاء العمر الافتراضي' },
+        { value: 6, label: 'صيانة وإصلاح شامل' },
+        { value: 7, label: 'تم الاستبدال' },
+        { value: 99, label: 'أخرى' }
       ];
       setDisposalReasons(fallbackReasons);
       
-      message.error('Failed to load disposal options from server. Using default options.');
+      message.error('فشل تحميل خيارات الاستبعاد من السيرفر. استخدام الخيارات الافتراضية.');
     } finally {
       setDataLoading(false);
     }
@@ -87,7 +87,7 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
       };
 
       await disposalApi.create(disposalData);
-      message.success('Asset disposed successfully');
+      message.success('تم استبعاد الأصل بنجاح');
       form.resetFields();
       onSuccess();
     } catch (error: any) {
@@ -95,7 +95,7 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
       if (error.response?.data?.message) {
         message.error(error.response.data.message);
       } else {
-        message.error('Failed to dispose asset');
+        message.error('فشل في استبعاد الأصل');
       }
     } finally {
       setLoading(false);
@@ -112,14 +112,14 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
       title={
         <span>
           <DeleteOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
-          Dispose Asset
+          استبعاد أصل
         </span>
       }
       open={visible}
       onCancel={handleCancel}
       onOk={() => form.submit()}
-      okText="Dispose Asset"
-      cancelText="Cancel"
+      okText="استبعاد الأصل"
+      cancelText="إلغاء"
       okButtonProps={{ 
         loading, 
         danger: true,
@@ -136,12 +136,12 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
           padding: 16, 
           marginBottom: 24 
         }}>
-          <h4 style={{ margin: 0, color: '#cf1322' }}>Asset to be Disposed:</h4>
+          <h4 style={{ margin: 0, color: '#cf1322' }}>الأصل المراد استبعاده:</h4>
           <p style={{ margin: '8px 0 0 0', fontSize: 16 }}>
-            <strong>{asset.name}</strong> (S/N: {asset.serialNumber})
+            <strong>{asset.name}</strong> (الرقم التسلسلي: {asset.serialNumber})
           </p>
           <p style={{ margin: '4px 0 0 0', color: '#666' }}>
-            Category: {asset.categoryName} | Status: {asset.statusName}
+            الفئة: {asset.categoryName} | الحالة: {asset.statusName}
           </p>
         </div>
       )}
@@ -154,21 +154,21 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
         >
           <Form.Item
             name="disposalDate"
-            label="Disposal Date"
-            rules={[{ required: true, message: 'Please select disposal date' }]}
+            label="تاريخ الاستبعاد"
+            rules={[{ required: true, message: 'الرجاء اختيار تاريخ الاستبعاد' }]}
           >
             <DatePicker 
               style={{ width: '100%' }} 
-              placeholder="Select disposal date"
+              placeholder="اختر تاريخ الاستبعاد"
             />
           </Form.Item>
 
           <Form.Item
             name="disposalReason"
-            label="Disposal Reason"
-            rules={[{ required: true, message: 'Please select disposal reason' }]}
+            label="سبب الاستبعاد"
+            rules={[{ required: true, message: 'الرجاء اختيار سبب الاستبعاد' }]}
           >
-            <Select placeholder="Select disposal reason">
+            <Select placeholder="اختر سبب الاستبعاد">
               {disposalReasons.map(reason => (
                 <Select.Option key={reason.value} value={reason.value}>
                   {reason.label}
@@ -179,12 +179,12 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
 
           <Form.Item
             name="notes"
-            label="Notes & Details"
-            rules={[{ required: true, message: 'Please provide disposal details' }]}
+            label="ملاحظات وتفاصيل"
+            rules={[{ required: true, message: 'الرجاء تقديم تفاصيل الاستبعاد' }]}
           >
             <Input.TextArea
               rows={4}
-              placeholder="Describe the reason for disposal, condition of asset, and any other relevant details..."
+              placeholder="اشرح سبب الاستبعاد، حالة الأصل، وأي تفاصيل أخرى ذات صلة..."
             />
           </Form.Item>
         </Form>

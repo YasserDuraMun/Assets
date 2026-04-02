@@ -144,6 +144,34 @@ export interface AvailableReports {
   }>;
 }
 
+export interface AssetLocationDetailReport {
+  summary: {
+    totalAssets: number;
+    locationFilter: string;
+    departmentName: string | null;
+    sectionName: string | null;
+    generatedAt: string;
+  };
+  assets: Array<{
+    id: number;
+    name: string;
+    serialNumber: string;
+    barcode: string | null;
+    qrCode: string | null;
+    categoryName: string;
+    statusName: string;
+    statusColor: string;
+    currentLocationType: number;
+    currentEmployeeName: string | null;
+    currentWarehouseName: string | null;
+    currentDepartmentName: string | null;
+    currentSectionName: string | null;
+    purchaseDate: string | null;
+    purchasePrice: number | null;
+    notes: string | null;
+  }>;
+}
+
 export const reportsApi = {
   // Test endpoint
   test: () =>
@@ -194,6 +222,13 @@ export const reportsApi = {
   // Periodical Reports
   getMonthlySummary: (year: number, month: number) =>
     api.get<ApiResponse<any>>('/reports/monthly-summary', { params: { year, month } }),
+
+  // Location Detail Reports
+  getAssetsByLocationDetail: (params?: {
+    departmentId?: number;
+    sectionId?: number;
+  }) =>
+    api.get<ApiResponse<AssetLocationDetailReport>>('/reports/assets-by-location-detail', { params }),
 
   // Custom Reports
   generateCustomReport: (request: CustomReportRequest) =>

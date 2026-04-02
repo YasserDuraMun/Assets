@@ -67,7 +67,7 @@ public class CategoryService : ICategoryService
         var category = new AssetCategory
         {
             Name = dto.Name,
-            Code = dto.Code,
+            Code = GenerateCode(dto.Name), // Auto-generate code from name
             Description = dto.Description,
             Icon = dto.Icon,
             Color = dto.Color ?? "#1890ff",
@@ -89,7 +89,7 @@ public class CategoryService : ICategoryService
             throw new Exception("Category not found");
 
         category.Name = dto.Name;
-        category.Code = dto.Code;
+        category.Code = GenerateUniqueCodeForUpdate(dto.Name, dto.Id); // Update code when name changes
         category.Description = dto.Description;
         category.Icon = dto.Icon;
         category.Color = dto.Color;
@@ -147,7 +147,7 @@ public class CategoryService : ICategoryService
         var subCategory = new AssetSubCategory
         {
             Name = dto.Name,
-            Code = dto.Code,
+            Code = GenerateSubCategoryCode(dto.Name, dto.CategoryId), // Auto-generate code
             Description = dto.Description,
             CategoryId = dto.CategoryId,
             IsActive = true,
@@ -155,6 +155,47 @@ public class CategoryService : ICategoryService
         };
 
         _context.AssetSubCategories.Add(subCategory);
+        await _context.SaveChangesAsync();
+
+        var result = await _context.AssetSubCategories
+            .Include(sc => sc.Category)
+            .Include(sc => sc.Assets)
+            .FirstAsync(sc => sc.Id == subCategory.Id);
+
+        return new SubCategoryDto
+        {
+            Id = result.Id,
+            Name = result.Name,
+            Code = result.Code,
+            Description = result.Description,
+            CategoryId = result.CategoryId,
+            CategoryName = result.Category.Name,
+            IsActive = result.IsActive,
+            AssetsCount = result.Assets.Count,
+            CreatedAt = result.CreatedAt
+        };
+    }
+
+    public async Task<SubCategoryDto> UpdateSubCategoryAsync(UpdateSubCategoryDto dto)
+    {
+        var subCategory = await _context.AssetSubCategories.FindAsync(dto.Id);
+        
+        if (subCategory == null)
+            throw new Exception("SubCategory not found");
+
+        // Validate that category exists
+        var categoryExists = await _context.AssetCategories.AnyAsync(c => c.Id == dto.CategoryId && c.IsActive);
+        if (!categoryExists)
+        {
+            throw new Exception($"Category with ID {dto.CategoryId} not found or inactive");
+        }
+
+        subCategory.Name = dto.Name;
+        subCategory.Code = GenerateSubCategoryCode(dto.Name, dto.CategoryId); // Update code
+        subCategory.Description = dto.Description;
+        subCategory.CategoryId = dto.CategoryId;
+        subCategory.IsActive = dto.IsActive;
+
         await _context.SaveChangesAsync();
 
         var result = await _context.AssetSubCategories
@@ -189,4 +230,105 @@ public class CategoryService : ICategoryService
         await _context.SaveChangesAsync();
         return true;
     }
+
+    #region Code Generation Methods
+
+    private string GenerateCode(string name)
+    {
+        var baseCode = GenerateBaseCode(name);
+        return EnsureUniqueCode(baseCode);
+    }
+
+    private string GenerateUniqueCodeForUpdate(string name, int excludeId)
+    {
+        var baseCode = GenerateBaseCode(name);
+        
+        var existingCodes = _context.AssetCategories
+            .Where(c => c.Id != excludeId && c.Code.StartsWith(baseCode))
+            .Select(c => c.Code)
+            .AsEnumerable()
+            .ToList();
+
+        if (!existingCodes.Contains(baseCode))
+            return baseCode;
+
+        int counter = 1;
+        string uniqueCode;
+        do
+        {
+            uniqueCode = $"{baseCode}{counter}";
+            counter++;
+        } while (existingCodes.Contains(uniqueCode));
+
+        return uniqueCode;
+    }
+
+    private string GenerateSubCategoryCode(string name, int categoryId)
+    {
+        // Get category code for prefix
+        var categoryCode = _context.AssetCategories
+            .Where(c => c.Id == categoryId)
+            .Select(c => c.Code)
+            .FirstOrDefault() ?? "CAT";
+
+        var baseCode = GenerateBaseCode(name);
+        var fullCode = $"{categoryCode}-{baseCode}";
+        
+        return EnsureUniqueSubCategoryCode(fullCode);
+    }
+
+    private string GenerateBaseCode(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "CAT";
+
+        var cleanName = name.Trim().Replace(" ", "");
+        return cleanName.Length > 6 ? cleanName.Substring(0, 6).ToUpper() : cleanName.ToUpper();
+    }
+
+    private string EnsureUniqueCode(string baseCode)
+    {
+        var existingCodes = _context.AssetCategories
+            .Where(c => c.Code.StartsWith(baseCode))
+            .Select(c => c.Code)
+            .AsEnumerable()
+            .ToList();
+
+        if (!existingCodes.Contains(baseCode))
+            return baseCode;
+
+        int counter = 1;
+        string uniqueCode;
+        do
+        {
+            uniqueCode = $"{baseCode}{counter}";
+            counter++;
+        } while (existingCodes.Contains(uniqueCode));
+
+        return uniqueCode;
+    }
+
+    private string EnsureUniqueSubCategoryCode(string baseCode)
+    {
+        var existingCodes = _context.AssetSubCategories
+            .Where(sc => sc.Code.StartsWith(baseCode))
+            .Select(sc => sc.Code)
+            .AsEnumerable()
+            .ToList();
+
+        if (!existingCodes.Contains(baseCode))
+            return baseCode;
+
+        int counter = 1;
+        string uniqueCode;
+        do
+        {
+            uniqueCode = $"{baseCode}{counter}";
+            counter++;
+        } while (existingCodes.Contains(uniqueCode));
+
+        return uniqueCode;
+    }
+
+    #endregion
 }

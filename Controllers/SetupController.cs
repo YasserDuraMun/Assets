@@ -43,12 +43,20 @@ public class SetupController : ControllerBase
                 {
                     Username = "admin",
                     Email = "admin@dura.ps",
-                    FullName = "???? ??????",
+                    FullName = "مدير النظام",
                     Role = UserRole.Admin,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 };
                 _context.Users.Add(admin);
+            }
+            else
+            {
+                // Update FullName for existing admin if it's corrupted
+                if (admin.FullName == null || admin.FullName.Contains("?"))
+                {
+                    admin.FullName = "مدير النظام";
+                }
             }
 
             // Generate REAL BCrypt hash for "Admin@123"
@@ -110,6 +118,45 @@ public class SetupController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Generate QR codes for all existing assets that don't have one
+    /// ?? FOR DEVELOPMENT/MIGRATION ONLY
+    /// </summary>
+    [HttpPost("generate-qrcodes")]
+    public async Task<IActionResult> GenerateQRCodes()
+    {
+        try
+        {
+            var assetsWithoutQR = await _context.Assets
+                .Where(a => string.IsNullOrEmpty(a.QRCode))
+                .ToListAsync();
+
+            int count = 0;
+            foreach (var asset in assetsWithoutQR)
+            {
+                asset.QRCode = $"ASSET-{asset.Id}-{asset.SerialNumber}";
+                count++;
+            }
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation($"? Generated QR codes for {count} assets");
+
+            return Ok(new
+            {
+                success = true,
+                message = $"? Successfully generated QR codes for {count} asset(s)",
+                assetsUpdated = count,
+                totalAssets = await _context.Assets.CountAsync()
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "? Error generating QR codes");
+            return StatusCode(500, new { success = false, error = ex.Message });
         }
     }
 }

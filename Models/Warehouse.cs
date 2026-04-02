@@ -7,7 +7,6 @@ public class Warehouse
     public string Code { get; set; } = string.Empty;
     public string? Location { get; set; }
     public int? ResponsibleEmployeeId { get; set; }
-    public int? Capacity { get; set; }
     public string? Notes { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

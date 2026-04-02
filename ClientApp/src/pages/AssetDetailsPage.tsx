@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Descriptions, Spin, Button, Space, Tag, Typography, Row, Col, message, Divider, Timeline } from 'antd';
+import { Card, Descriptions, Spin, Button, Space, Tag, Typography, Row, Col, message, Divider, Timeline, Modal, QRCode } from 'antd';
 import { EditOutlined, ArrowLeftOutlined, QrcodeOutlined, PrinterOutlined, ToolOutlined } from '@ant-design/icons';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
@@ -17,6 +17,8 @@ const navigate = useNavigate();
   const [asset, setAsset] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
   const [maintenanceModalVisible, setMaintenanceModalVisible] = useState(false);
+  const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
+  const [printLabelModalVisible, setPrintLabelModalVisible] = useState(false);
 
   const includeDeleted = searchParams.get('includeDeleted') === 'true';
 
@@ -38,12 +40,12 @@ const fetchAsset = async (assetId: number) => {
       setAsset(response.data.data);
       console.log('? Asset loaded:', response.data.data);
     } else {
-      message.error('Asset not found');
+      message.error('لم يتم العثور على الأصل');
       navigate('/assets');
     }
   } catch (error) {
-    console.error('?? Failed to load asset:', error);
-    message.error('Failed to load asset details');
+    console.error('? Failed to load asset:', error);
+    message.error('فشل في تحميل تفاصيل الأصل');
     navigate('/assets');
   } finally {
     setLoading(false);
@@ -51,33 +53,65 @@ const fetchAsset = async (assetId: number) => {
 };
 
   const getLocationDisplay = (asset: Asset) => {
-    switch (asset.currentLocationType) {
+    console.log('?? Asset location info:', {
+      currentLocationType: asset.currentLocationType,
+      currentEmployeeId: asset.currentEmployeeId,
+      currentEmployeeName: asset.currentEmployeeName,
+      currentWarehouseId: asset.currentWarehouseId,
+      currentWarehouseName: asset.currentWarehouseName,
+      currentDepartmentId: asset.currentDepartmentId,
+      currentDepartmentName: asset.currentDepartmentName,
+      currentSectionId: asset.currentSectionId,
+      currentSectionName: asset.currentSectionName
+    });
+
+    // Convert number to string for comparison
+    const locationType = typeof asset.currentLocationType === 'number' 
+      ? {
+          1: 'Warehouse',
+          2: 'Employee', 
+          3: 'Department',
+          4: 'Section'
+        }[asset.currentLocationType] || 'Unknown'
+      : asset.currentLocationType;
+
+    console.log('?? Resolved location type:', locationType);
+
+    switch (locationType) {
       case 'Employee':
-        return (
-          <Tag color="blue" icon={<span>??</span>}>
-            Employee: {asset.currentEmployeeName}
+        return asset.currentEmployeeName ? (
+          <Tag color="blue" icon={<span>👤</span>}>
+            موظف: {asset.currentEmployeeName}
           </Tag>
+        ) : (
+          <Tag color="red">موظف: غير محدد</Tag>
         );
       case 'Warehouse':
-        return (
-          <Tag color="green" icon={<span>??</span>}>
-            Warehouse: {asset.currentWarehouseName}
+        return asset.currentWarehouseName ? (
+          <Tag color="green" icon={<span>🏢</span>}>
+            مستودع: {asset.currentWarehouseName}
           </Tag>
+        ) : (
+          <Tag color="red">مستودع: غير محدد</Tag>
         );
       case 'Department':
-        return (
-          <Tag color="orange" icon={<span>???</span>}>
-            Department: {asset.currentDepartmentName}
+        return asset.currentDepartmentName ? (
+          <Tag color="orange" icon={<span>🏛️</span>}>
+            قسم: {asset.currentDepartmentName}
           </Tag>
+        ) : (
+          <Tag color="red">قسم: غير محدد</Tag>
         );
       case 'Section':
-        return (
-          <Tag color="purple" icon={<span>??</span>}>
-            Section: {asset.currentSectionName}
+        return asset.currentSectionName ? (
+          <Tag color="purple" icon={<span>📍</span>}>
+            شعبة: {asset.currentSectionName}
           </Tag>
+        ) : (
+          <Tag color="red">شعبة: غير محدد</Tag>
         );
       default:
-        return <Tag color="default">Unknown Location</Tag>;
+        return <Tag color="default">موقع غير معروف (النوع: {asset.currentLocationType})</Tag>;
     }
   };
 
@@ -90,20 +124,20 @@ const fetchAsset = async (assetId: number) => {
   };
 
   const getWarrantyStatus = (asset: Asset) => {
-    if (!asset.hasWarranty) return <Tag color="default">No Warranty</Tag>;
+    if (!asset.hasWarranty) return <Tag color="default">لا يوجد ضمان</Tag>;
     
-    if (!asset.warrantyExpiryDate) return <Tag color="orange">Warranty (No Expiry Date)</Tag>;
+    if (!asset.warrantyExpiryDate) return <Tag color="orange">ضمان (بدون تاريخ انتهاء)</Tag>;
     
     const expiryDate = dayjs(asset.warrantyExpiryDate);
     const now = dayjs();
     const daysUntilExpiry = expiryDate.diff(now, 'day');
     
     if (daysUntilExpiry < 0) {
-      return <Tag color="red">Warranty Expired</Tag>;
+      return <Tag color="red">انتهى الضمان</Tag>;
     } else if (daysUntilExpiry <= 30) {
-      return <Tag color="orange">Warranty Expires Soon ({daysUntilExpiry} days)</Tag>;
+      return <Tag color="orange">ينتهي الضمان قريباً ({daysUntilExpiry} يوم)</Tag>;
     } else {
-      return <Tag color="green">Under Warranty</Tag>;
+      return <Tag color="green">تحت الضمان</Tag>;
     }
   };
 
@@ -122,7 +156,7 @@ const fetchAsset = async (assetId: number) => {
       <MainLayout>
         <Card>
           <div style={{ textAlign: 'center', padding: 50 }}>
-            <Text type="secondary">Asset not found</Text>
+            <Text type="secondary">لم يتم العثور على الأصل</Text>
           </div>
         </Card>
       </MainLayout>
@@ -135,22 +169,30 @@ const fetchAsset = async (assetId: number) => {
         <Card>
           <Space>
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/assets')}>
-              Back to Assets
+              العودة للأصول
             </Button>
             <Button type="primary" icon={<EditOutlined />} onClick={() => navigate(`/assets/${id}/edit`)}>
-              Edit Asset
+              تعديل الأصل
             </Button>
             <Button 
               icon={<ToolOutlined />} 
               onClick={() => setMaintenanceModalVisible(true)}
             >
-              Schedule Maintenance
+              جدولة صيانة
             </Button>
-            <Button icon={<QrcodeOutlined />}>
-              View QR Code
+            <Button 
+              icon={<QrcodeOutlined />}
+              onClick={() => setQrCodeModalVisible(true)}
+              disabled={!asset.qrCode}
+            >
+              عرض رمز QR
             </Button>
-            <Button icon={<PrinterOutlined />}>
-              Print Label
+            <Button 
+              icon={<PrinterOutlined />}
+              onClick={() => setPrintLabelModalVisible(true)}
+              disabled={!asset.qrCode}
+            >
+              طباعة الملصق
             </Button>
           </Space>
         </Card>
@@ -163,7 +205,7 @@ const fetchAsset = async (assetId: number) => {
             </Tag>
             {asset.isDeleted && (
               <Tag color="red" style={{ marginLeft: 8 }}>
-                ??? DISPOSED
+                ⚠️ تم الاستبعاد
               </Tag>
             )}
           </Title>
@@ -177,46 +219,66 @@ const fetchAsset = async (assetId: number) => {
               marginBottom: 16 
             }}>
               <Text type="warning" strong>
-                ?? This asset has been disposed and is no longer in active use.
+                ⚠️ تم استبعاد هذا الأصل ولم يعد قيد الاستخدام.
               </Text>
             </div>
           )}
           
           <Row gutter={[24, 24]}>
             <Col span={12}>
-              <Card title="Basic Information" size="small">
+              <Card title="المعلومات الأساسية" size="small">
                 <Descriptions column={1} size="small">
-                  <Descriptions.Item label="Serial Number">
+                  <Descriptions.Item label="الرقم التسلسلي">
                     <Text strong>{asset.serialNumber}</Text>
                   </Descriptions.Item>
-                  <Descriptions.Item label="Barcode">
-                    {asset.barcode || 'N/A'}
+                  <Descriptions.Item label="الباركود">
+                    {asset.barcode || 'غير متوفر'}
                   </Descriptions.Item>
-                  <Descriptions.Item label="QR Code">
-                    {asset.qrCode || 'N/A'}
+                  <Descriptions.Item label="رمز QR">
+                    {asset.qrCode ? (
+                      <Space direction="vertical" align="center" size="small">
+                        <QRCode
+                          value={asset.qrCode}
+                          size={80}
+                          bgColor="#ffffff"
+                          fgColor="#000000"
+                          level="M"
+                        />
+                        <Button 
+                          type="link" 
+                          size="small"
+                          icon={<QrcodeOutlined />}
+                          onClick={() => setQrCodeModalVisible(true)}
+                        >
+                          عرض بحجم كبير
+                        </Button>
+                      </Space>
+                    ) : (
+                      <Text type="secondary">غير متوفر</Text>
+                    )}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Description">
-                    {asset.description || 'No description'}
+                  <Descriptions.Item label="الوصف">
+                    {asset.description || 'لا يوجد وصف'}
                   </Descriptions.Item>
                 </Descriptions>
               </Card>
             </Col>
 
             <Col span={12}>
-              <Card title="Category & Status" size="small">
+              <Card title="الفئة والحالة" size="small">
                 <Descriptions column={1} size="small">
-                  <Descriptions.Item label="Category">
+                  <Descriptions.Item label="الفئة">
                     <Tag color="blue">{asset.categoryName}</Tag>
                   </Descriptions.Item>
-                  <Descriptions.Item label="SubCategory">
+                  <Descriptions.Item label="الفئة الفرعية">
                     {asset.subCategoryName ? (
                       <Tag color="cyan">{asset.subCategoryName}</Tag>
-                    ) : 'N/A'}
+                    ) : 'غير متوفر'}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Status">
+                  <Descriptions.Item label="الحالة">
                     <Tag color={asset.statusColor}>{asset.statusName}</Tag>
                   </Descriptions.Item>
-                  <Descriptions.Item label="Current Location">
+                  <Descriptions.Item label="الموقع الحالي">
                     {getLocationDisplay(asset)}
                   </Descriptions.Item>
                 </Descriptions>
@@ -228,18 +290,18 @@ const fetchAsset = async (assetId: number) => {
 
           <Row gutter={[24, 24]}>
             <Col span={12}>
-              <Card title="Purchase Information" size="small">
+              <Card title="معلومات الشراء" size="small">
                 <Descriptions column={1} size="small">
-                  <Descriptions.Item label="Purchase Date">
+                  <Descriptions.Item label="تاريخ الشراء">
                     {formatDate(asset.purchaseDate)}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Purchase Price">
+                  <Descriptions.Item label="سعر الشراء">
                     {formatCurrency(asset.purchasePrice)}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Created Date">
+                  <Descriptions.Item label="تاريخ الإنشاء">
                     {formatDate(asset.createdAt)}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Last Updated">
+                  <Descriptions.Item label="آخر تحديث">
                     {formatDate(asset.updatedAt)}
                   </Descriptions.Item>
                 </Descriptions>
@@ -247,19 +309,71 @@ const fetchAsset = async (assetId: number) => {
             </Col>
 
             <Col span={12}>
-              <Card title="Warranty Information" size="small">
+              <Card title="معلومات الموقع الكاملة" size="small">
                 <Descriptions column={1} size="small">
-                  <Descriptions.Item label="Has Warranty">
+                  <Descriptions.Item label="الموقع الحالي">
+                    {getLocationDisplay(asset)}
+                  </Descriptions.Item>
+                  
+                  {asset.currentEmployeeId && (
+                    <Descriptions.Item label="الموظف المعين">
+                      <Tag color="blue" icon={<span>👤</span>}>
+                        {asset.currentEmployeeName || `ID: ${asset.currentEmployeeId}`}
+                      </Tag>
+                    </Descriptions.Item>
+                  )}
+                  
+                  {asset.currentWarehouseId && (
+                    <Descriptions.Item label="المستودع">
+                      <Tag color="green" icon={<span>🏢</span>}>
+                        {asset.currentWarehouseName || `ID: ${asset.currentWarehouseId}`}
+                      </Tag>
+                    </Descriptions.Item>
+                  )}
+                  
+                  {asset.currentDepartmentId && (
+                    <Descriptions.Item label="القسم">
+                      <Tag color="orange" icon={<span>🏛️</span>}>
+                        {asset.currentDepartmentName || `ID: ${asset.currentDepartmentId}`}
+                      </Tag>
+                    </Descriptions.Item>
+                  )}
+                  
+                  {asset.currentSectionId && (
+                    <Descriptions.Item label="الشعبة">
+                      <Tag color="purple" icon={<span>📍</span>}>
+                        {asset.currentSectionName || `ID: ${asset.currentSectionId}`}
+                      </Tag>
+                    </Descriptions.Item>
+                  )}
+                  
+                  {!asset.currentEmployeeId && !asset.currentWarehouseId && !asset.currentDepartmentId && !asset.currentSectionId && (
+                    <Descriptions.Item label="تفاصيل الموقع">
+                      <Tag color="red">لا توجد معلومات موقع متاحة</Tag>
+                    </Descriptions.Item>
+                  )}
+                </Descriptions>
+              </Card>
+            </Col>
+          </Row>
+
+          <Divider />
+
+          <Row gutter={[24, 24]}>
+            <Col span={12}>
+              <Card title="معلومات الضمان" size="small">
+                <Descriptions column={1} size="small">
+                  <Descriptions.Item label="يوجد ضمان">
                     <Tag color={asset.hasWarranty ? 'green' : 'default'}>
-                      {asset.hasWarranty ? 'Yes' : 'No'}
+                      {asset.hasWarranty ? 'نعم' : 'لا'}
                     </Tag>
                   </Descriptions.Item>
                   {asset.hasWarranty && (
                     <>
-                      <Descriptions.Item label="Warranty Expiry">
+                      <Descriptions.Item label="تاريخ انتهاء الضمان">
                         {formatDate(asset.warrantyExpiryDate)}
                       </Descriptions.Item>
-                      <Descriptions.Item label="Warranty Status">
+                      <Descriptions.Item label="حالة الضمان">
                         {getWarrantyStatus(asset)}
                       </Descriptions.Item>
                     </>
@@ -270,14 +384,14 @@ const fetchAsset = async (assetId: number) => {
           </Row>
         </Card>
 
-        <Card title="Asset History" size="small">
+        <Card title="سجل الأصل" size="small">
           <Timeline
             items={[
               {
                 color: 'green',
                 children: (
                   <div>
-                    <Text strong>Asset Created</Text>
+                    <Text strong>تم إنشاء الأصل</Text>
                     <br />
                     <Text type="secondary">{formatDate(asset.createdAt)}</Text>
                   </div>
@@ -287,7 +401,7 @@ const fetchAsset = async (assetId: number) => {
                 color: 'blue',
                 children: (
                   <div>
-                    <Text strong>Asset Updated</Text>
+                    <Text strong>تم تحديث الأصل</Text>
                     <br />
                     <Text type="secondary">{formatDate(asset.updatedAt)}</Text>
                   </div>
@@ -296,22 +410,230 @@ const fetchAsset = async (assetId: number) => {
             ]}
           />
           <Text type="secondary">
-            More detailed history (transfers, maintenance, etc.) will be available in future updates.
+            سيتم توفير سجل أكثر تفصيلاً (التحويلات، الصيانة، إلخ) في التحديثات المستقبلية.
           </Text>
         </Card>
       </Space>
 
-      {/* Maintenance Modal */}
+      {/* نافذة الصيانة */}
       <MaintenanceModal
         visible={maintenanceModalVisible}
         onCancel={() => setMaintenanceModalVisible(false)}
         onSuccess={() => {
           setMaintenanceModalVisible(false);
-          message.success('Maintenance scheduled successfully');
+          message.success('تم جدولة الصيانة بنجاح');
         }}
         assetId={asset?.id}
         assetName={asset?.name}
       />
+
+      {/* QR Code Modal */}
+      <Modal
+        title="رمز QR للأصل"
+        open={qrCodeModalVisible}
+        onCancel={() => setQrCodeModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setQrCodeModalVisible(false)}>
+            إغلاق
+          </Button>,
+          <Button 
+            key="print" 
+            type="primary" 
+            icon={<PrinterOutlined />}
+            onClick={() => {
+              window.print();
+            }}
+          >
+            طباعة
+          </Button>
+        ]}
+        width={400}
+        centered
+      >
+        {asset?.qrCode && (
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            padding: '24px',
+            gap: '16px'
+          }}>
+            <QRCode
+              value={asset.qrCode}
+              size={250}
+              bgColor="#ffffff"
+              fgColor="#000000"
+              level="H"
+            />
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <Text strong style={{ fontSize: '16px', display: 'block', marginBottom: 8 }}>
+                {asset.name}
+              </Text>
+              <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>
+                الرقم التسلسلي: {asset.serialNumber}
+              </Text>
+              <Text type="secondary" style={{ fontSize: '12px', fontFamily: 'monospace' }}>
+                {asset.qrCode}
+              </Text>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Print Label Modal */}
+      <Modal
+        title="ملصق الأصل"
+        open={printLabelModalVisible}
+        onCancel={() => setPrintLabelModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setPrintLabelModalVisible(false)}>
+            إغلاق
+          </Button>,
+          <Button 
+            key="print" 
+            type="primary" 
+            icon={<PrinterOutlined />}
+            onClick={() => {
+              window.print();
+            }}
+          >
+            طباعة
+          </Button>
+        ]}
+        width={600}
+        centered
+      >
+        {asset?.qrCode && (
+          <div 
+            id="asset-label-print"
+            style={{ 
+              padding: '24px',
+              background: '#fff',
+              border: '2px solid #000',
+              borderRadius: '8px'
+            }}
+          >
+            {/* Header */}
+            <div style={{ 
+              textAlign: 'center', 
+              borderBottom: '2px solid #000',
+              paddingBottom: '16px',
+              marginBottom: '16px'
+            }}>
+              <Title level={3} style={{ margin: 0 }}>نظام إدارة الأصول</Title>
+              <Text type="secondary">ملصق تعريف الأصل</Text>
+            </div>
+
+            {/* Main Content */}
+            <Row gutter={24}>
+              {/* QR Code Side */}
+              <Col span={10}>
+                <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%'
+                }}>
+                  <QRCode
+                    value={asset.qrCode}
+                    size={180}
+                    bgColor="#ffffff"
+                    fgColor="#000000"
+                    level="H"
+                  />
+                  <Text 
+                    style={{ 
+                      fontSize: '10px', 
+                      fontFamily: 'monospace',
+                      marginTop: '8px',
+                      wordBreak: 'break-all',
+                      textAlign: 'center'
+                    }}
+                  >
+                    {asset.qrCode}
+                  </Text>
+                </div>
+              </Col>
+
+              {/* Asset Info Side */}
+              <Col span={14}>
+                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '12px' }}>اسم الأصل</Text>
+                    <div>
+                      <Text strong style={{ fontSize: '16px' }}>{asset.name}</Text>
+                    </div>
+                  </div>
+
+                  <Divider style={{ margin: '8px 0' }} />
+
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '11px' }}>الرقم التسلسلي</Text>
+                    <div>
+                      <Text strong style={{ fontSize: '14px', fontFamily: 'monospace' }}>
+                        {asset.serialNumber}
+                      </Text>
+                    </div>
+                  </div>
+
+                  {asset.barcode && (
+                    <>
+                      <div>
+                        <Text type="secondary" style={{ fontSize: '11px' }}>الباركود</Text>
+                        <div>
+                          <Text style={{ fontSize: '12px', fontFamily: 'monospace' }}>
+                            {asset.barcode}
+                          </Text>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <Divider style={{ margin: '8px 0' }} />
+
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '11px' }}>الفئة</Text>
+                    <div>
+                      <Tag color="blue">{asset.categoryName}</Tag>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '11px' }}>الحالة</Text>
+                    <div>
+                      <Tag color={asset.statusColor}>{asset.statusName}</Tag>
+                    </div>
+                  </div>
+
+                  {asset.purchaseDate && (
+                    <div>
+                      <Text type="secondary" style={{ fontSize: '11px' }}>تاريخ الشراء</Text>
+                      <div>
+                        <Text style={{ fontSize: '12px' }}>
+                          {dayjs(asset.purchaseDate).format('DD/MM/YYYY')}
+                        </Text>
+                      </div>
+                    </div>
+                  )}
+                </Space>
+              </Col>
+            </Row>
+
+            {/* Footer */}
+            <div style={{ 
+              marginTop: '16px',
+              paddingTop: '12px',
+              borderTop: '1px solid #d9d9d9',
+              textAlign: 'center'
+            }}>
+              <Text type="secondary" style={{ fontSize: '10px' }}>
+                تم الطباعة في: {dayjs().format('DD/MM/YYYY HH:mm')}
+              </Text>
+            </div>
+          </div>
+        )}
+      </Modal>
     </MainLayout>
   );
 }

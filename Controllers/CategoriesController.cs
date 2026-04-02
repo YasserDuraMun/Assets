@@ -96,18 +96,29 @@ public class CategoriesController : ControllerBase
     {
         if (id != dto.Id)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse("???? ??????? ??? ??????"));
+            return BadRequest(ApiResponse<object>.ErrorResponse("???? ????? ??? ??????"));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("???????? ??????? ??? ?????"));
         }
 
         try
         {
             var category = await _categoryService.UpdateAsync(dto);
-            return Ok(ApiResponse<CategoryDto>.SuccessResponse(category, "?? ????? ??????? ?????"));
+            return Ok(ApiResponse<CategoryDto>.SuccessResponse(category, "?? ????? ????? ?????"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating category");
-            return StatusCode(500, ApiResponse<object>.ErrorResponse("??? ?? ????? ???????"));
+            _logger.LogError(ex, "Error updating category with ID: {Id}", id);
+            
+            if (ex.Message.Contains("not found"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse("????? ??? ??????"));
+            }
+            
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("??? ?? ????? ?????"));
         }
     }
 
@@ -177,6 +188,41 @@ public class CategoriesController : ControllerBase
     }
 
     /// <summary>
+    /// Update subcategory
+    /// </summary>
+    [HttpPut("subcategories/{id}")]
+    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    public async Task<IActionResult> UpdateSubCategory(int id, [FromBody] UpdateSubCategoryDto dto)
+    {
+        if (id != dto.Id)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("???? ????? ??????? ??? ??????"));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("???????? ??????? ??? ?????"));
+        }
+
+        try
+        {
+            var subCategory = await _categoryService.UpdateSubCategoryAsync(dto);
+            return Ok(ApiResponse<SubCategoryDto>.SuccessResponse(subCategory, "?? ????? ????? ??????? ?????"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating subcategory with ID: {Id}", id);
+            
+            if (ex.Message.Contains("not found"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse("????? ??????? ??? ??????"));
+            }
+            
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("??? ?? ????? ????? ???????"));
+        }
+    }
+
+    /// <summary>
     /// Delete subcategory (soft delete)
     /// </summary>
     [HttpDelete("subcategories/{id}")]
@@ -192,7 +238,7 @@ public class CategoriesController : ControllerBase
                 return NotFound(ApiResponse<object>.ErrorResponse("??????? ?????? ??? ?????"));
             }
 
-            return Ok(ApiResponse<object>.SuccessResponse(null, "?? ??? ??????? ?????? ?????"));
+            return Ok(ApiResponse<object>.SuccessResponse(null, "?? ??? ????? ??????? ?????"));
         }
         catch (Exception ex)
         {

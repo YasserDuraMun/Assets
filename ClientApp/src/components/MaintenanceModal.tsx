@@ -57,11 +57,11 @@ export default function MaintenanceModal({
       console.error('? Failed to load maintenance types:', error);
       // Provide fallback maintenance types
       setMaintenanceTypes([
-        { value: 1, label: 'Preventive (????? ??????)' },
-        { value: 2, label: 'Corrective (????? ???????)' },
-        { value: 3, label: 'Emergency (????? ?????)' },
-        { value: 4, label: 'Routine (????? ?????)' },
-        { value: 5, label: 'Upgrade (????? ??????)' }
+        { value: 1, label: 'وقائية' },
+        { value: 2, label: 'تصحيحية' },
+        { value: 3, label: 'طارئة' },
+        { value: 4, label: 'دورية' },
+        { value: 5, label: 'تطوير' }
       ]);
       console.log('?? Using fallback maintenance types');
     }
@@ -93,12 +93,12 @@ export default function MaintenanceModal({
       const response = await maintenanceApi.create(maintenanceData);
       console.log('? Maintenance created successfully:', response.data);
 
-      message.success('Maintenance record created successfully');
+      message.success('تم إنشاء سجل الصيانة بنجاح');
       form.resetFields();
       onSuccess();
     } catch (error: any) {
-      console.error('?? Failed to create maintenance:', error);
-      message.error(`Failed to create maintenance: ${error.response?.data?.message || error.message}`);
+      console.error('❌❌ Failed to create maintenance:', error);
+      message.error(`فشل في إنشاء الصيانة: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -106,11 +106,11 @@ export default function MaintenanceModal({
 
   const getMaintenanceTypeColor = (type: number): string => {
     switch (type) {
-      case 1: return '#1677ff'; // Blue for Preventive (????? ??????)
-      case 2: return '#fa8c16'; // Orange for Corrective (????? ???????)  
-      case 3: return '#f5222d'; // Red for Emergency (????? ?????)
-      case 4: return '#52c41a'; // Green for Routine (????? ?????)
-      case 5: return '#722ed1'; // Purple for Upgrade (????? ??????)
+      case 1: return '#1677ff'; // Blue for Preventive (وقائية)
+      case 2: return '#fa8c16'; // Orange for Corrective (تصحيحية)  
+      case 3: return '#f5222d'; // Red for Emergency (طارئة)
+      case 4: return '#52c41a'; // Green for Routine (دورية)
+      case 5: return '#722ed1'; // Purple for Upgrade (تطوير)
       default: return '#000';
     }
   };
@@ -120,7 +120,7 @@ export default function MaintenanceModal({
       title={
         <Space>
           <ToolOutlined />
-          <span>Schedule Maintenance</span>
+          <span>جدولة صيانة</span>
           {assetName && <span style={{ color: '#666' }}>- {assetName}</span>}
         </Space>
       }
@@ -136,19 +136,19 @@ export default function MaintenanceModal({
         onFinish={handleSubmit}
       >
         <Row gutter={[16, 0]}>
-          {/* Basic Information */}
+          {/* معلومات أساسية */}
           <Col span={24}>
-            <Divider>Basic Information</Divider>
+            <Divider>المعلومات الأساسية</Divider>
           </Col>
 
           <Col span={12}>
             <Form.Item
-              label="Maintenance Type"
+              label="نوع الصيانة"
               name="maintenanceType"
-              rules={[{ required: true, message: 'Please select maintenance type' }]}
+              rules={[{ required: true, message: 'الرجاء اختيار نوع الصيانة' }]}
             >
               <Select 
-                placeholder="Select maintenance type"
+                placeholder="اختر نوع الصيانة"
                 optionRender={(option) => (
                   <div style={{ 
                     padding: '4px 8px',
@@ -170,50 +170,50 @@ export default function MaintenanceModal({
 
           <Col span={12}>
             <Form.Item
-              label="Maintenance Date"
+              label="تاريخ الصيانة"
               name="maintenanceDate"
-              rules={[{ required: true, message: 'Please select maintenance date' }]}
+              rules={[{ required: true, message: 'الرجاء اختيار تاريخ الصيانة' }]}
             >
               <DatePicker 
                 style={{ width: '100%' }}
                 format="DD/MM/YYYY"
-                placeholder="Select date"
+                placeholder="اختر التاريخ"
               />
             </Form.Item>
           </Col>
 
           <Col span={24}>
             <Form.Item
-              label="Description"
+              label="الوصف"
               name="description"
               rules={[
-                { required: true, message: 'Please enter description' },
-                { max: 500, message: 'Description cannot exceed 500 characters' }
+                { required: true, message: 'الرجاء إدخال الوصف' },
+                { max: 500, message: 'لا يمكن أن يتجاوز الوصف 500 حرف' }
               ]}
             >
               <Input.TextArea
                 rows={3}
-                placeholder="Describe the maintenance work to be performed..."
+                placeholder="صف أعمال الصيانة التي سيتم إجراؤها..."
                 showCount
                 maxLength={500}
               />
             </Form.Item>
           </Col>
 
-          {/* Cost Information */}
+          {/* معلومات التكلفة */}
           <Col span={24}>
-            <Divider>Cost Information</Divider>
+            <Divider>معلومات التكلفة</Divider>
           </Col>
 
           <Col span={12}>
             <Form.Item
-              label="Cost"
+              label="التكلفة"
               name="cost"
-              rules={[{ type: 'number', min: 0, message: 'Cost must be positive' }]}
+              rules={[{ type: 'number', min: 0, message: 'يجب أن تكون التكلفة موجبة' }]}
             >
               <InputNumber
                 style={{ width: '100%' }}
-                placeholder="Enter cost"
+                placeholder="أدخل التكلفة"
                 min={0}
                 precision={2}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -224,83 +224,83 @@ export default function MaintenanceModal({
 
           <Col span={12}>
             <Form.Item
-              label="Currency"
+              label="العملة"
               name="currency"
             >
               <Select defaultValue="ILS">
-                <Select.Option value="ILS">ILS (Israeli Shekel)</Select.Option>
-                <Select.Option value="USD">USD (US Dollar)</Select.Option>
-                <Select.Option value="EUR">EUR (Euro)</Select.Option>
+                <Select.Option value="ILS">شيكل إسرائيلي (ILS)</Select.Option>
+                <Select.Option value="USD">دولار أمريكي (USD)</Select.Option>
+                <Select.Option value="EUR">يورو (EUR)</Select.Option>
               </Select>
             </Form.Item>
           </Col>
 
-          {/* Personnel Information */}
+          {/* معلومات الكادر */}
           <Col span={24}>
-            <Divider>Personnel Information</Divider>
+            <Divider>معلومات الكادر</Divider>
           </Col>
 
           <Col span={8}>
             <Form.Item
-              label="Performed By"
+              label="نُفذت بواسطة"
               name="performedBy"
             >
-              <Input placeholder="Department/Person" />
+              <Input placeholder="القسم/الشخص" />
             </Form.Item>
           </Col>
 
           <Col span={8}>
             <Form.Item
-              label="Technician Name"
+              label="اسم الفني"
               name="technicianName"
             >
-              <Input placeholder="Technician name" />
+              <Input placeholder="اسم الفني" />
             </Form.Item>
           </Col>
 
           <Col span={8}>
             <Form.Item
-              label="Company Name"
+              label="اسم الشركة"
               name="companyName"
             >
-              <Input placeholder="Service company" />
+              <Input placeholder="شركة الخدمة" />
             </Form.Item>
           </Col>
 
-          {/* Scheduling Information */}
+          {/* معلومات الجدولة */}
           <Col span={24}>
-            <Divider>Scheduling Information</Divider>
+            <Divider>معلومات الجدولة</Divider>
           </Col>
 
           <Col span={12}>
             <Form.Item
-              label="Scheduled Date"
+              label="التاريخ المجدول"
               name="scheduledDate"
             >
               <DatePicker 
                 style={{ width: '100%' }}
                 format="DD/MM/YYYY"
-                placeholder="If different from maintenance date"
+                placeholder="إذا كان مختلفاً عن تاريخ الصيانة"
               />
             </Form.Item>
           </Col>
 
           <Col span={12}>
             <Form.Item
-              label="Next Maintenance Due"
+              label="موعد الصيانة القادمة"
               name="nextMaintenanceDate"
             >
               <DatePicker 
                 style={{ width: '100%' }}
                 format="DD/MM/YYYY"
-                placeholder="Schedule next maintenance"
+                placeholder="جدولة الصيانة القادمة"
               />
             </Form.Item>
           </Col>
 
           <Col span={12}>
             <Form.Item
-              label="Warranty Used"
+              label="تم استخدام الضمان"
               name="warrantyUsed"
               valuePropName="checked"
             >
@@ -308,16 +308,16 @@ export default function MaintenanceModal({
             </Form.Item>
           </Col>
 
-          {/* Additional Notes */}
+          {/* ملاحظات إضافية */}
           <Col span={24}>
             <Form.Item
-              label="Additional Notes"
+              label="ملاحظات إضافية"
               name="notes"
-              rules={[{ max: 1000, message: 'Notes cannot exceed 1000 characters' }]}
+              rules={[{ max: 1000, message: 'لا يمكن أن تتجاوز الملاحظات 1000 حرف' }]}
             >
               <Input.TextArea
                 rows={3}
-                placeholder="Additional notes or comments..."
+                placeholder="ملاحظات أو تعليقات إضافية..."
                 showCount
                 maxLength={1000}
               />
@@ -325,11 +325,11 @@ export default function MaintenanceModal({
           </Col>
         </Row>
 
-        {/* Submit Buttons */}
+        {/* أزرار الإرسال */}
         <Row justify="end" style={{ marginTop: 16 }}>
           <Space>
             <Button onClick={onCancel}>
-              Cancel
+              إلغاء
             </Button>
             <Button 
               type="primary" 
@@ -337,7 +337,7 @@ export default function MaintenanceModal({
               loading={loading}
               icon={<CalendarOutlined />}
             >
-              Schedule Maintenance
+              جدولة الصيانة
             </Button>
           </Space>
         </Row>

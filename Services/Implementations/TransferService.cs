@@ -116,8 +116,24 @@ public class TransferService : ITransferService
             AssetName = movement.Asset.Name,
             AssetSerialNumber = movement.Asset.SerialNumber,
             TransferDate = movement.MovementDate,
-            FromLocation = GetLocationName(movement.FromLocationType, movement.FromEmployee, movement.FromWarehouse),
-            ToLocation = GetLocationName(movement.ToLocationType, movement.ToEmployee, movement.ToWarehouse),
+            FromLocation = GetLocationName(movement.FromLocationType, movement.FromEmployee, movement.FromWarehouse, movement.FromDepartment, movement.FromSection),
+            ToLocation = GetLocationName(movement.ToLocationType, movement.ToEmployee, movement.ToWarehouse, movement.ToDepartment, movement.ToSection),
+            FromLocationDetails = new LocationDetailsDto
+            {
+                Type = movement.FromLocationType,
+                EmployeeName = movement.FromEmployee?.FullName,
+                WarehouseName = movement.FromWarehouse?.Name,
+                DepartmentName = movement.FromDepartment?.Name,
+                SectionName = movement.FromSection?.Name
+            },
+            ToLocationDetails = new LocationDetailsDto
+            {
+                Type = movement.ToLocationType,
+                EmployeeName = movement.ToEmployee?.FullName,
+                WarehouseName = movement.ToWarehouse?.Name,
+                DepartmentName = movement.ToDepartment?.Name,
+                SectionName = movement.ToSection?.Name
+            },
             Reason = movement.Reason,
             Notes = movement.Notes,
             PerformedBy = movement.PerformedByUser?.FullName ?? "System",
@@ -134,6 +150,10 @@ public class TransferService : ITransferService
             .Include(m => m.ToEmployee)
             .Include(m => m.FromWarehouse)
             .Include(m => m.ToWarehouse)
+            .Include(m => m.FromDepartment)
+            .Include(m => m.ToDepartment)
+            .Include(m => m.FromSection)
+            .Include(m => m.ToSection)
             .Include(m => m.PerformedByUser)
             .AsQueryable();
 
@@ -158,8 +178,8 @@ public class TransferService : ITransferService
             AssetName = m.Asset.Name,
             AssetSerialNumber = m.Asset.SerialNumber,
             TransferDate = m.MovementDate,
-            FromLocation = GetLocationName(m.FromLocationType, m.FromEmployee, m.FromWarehouse),
-            ToLocation = GetLocationName(m.ToLocationType, m.ToEmployee, m.ToWarehouse),
+            FromLocation = GetLocationName(m.FromLocationType, m.FromEmployee, m.FromWarehouse, m.FromDepartment, m.FromSection),
+            ToLocation = GetLocationName(m.ToLocationType, m.ToEmployee, m.ToWarehouse, m.ToDepartment, m.ToSection),
             Reason = m.Reason,
             Notes = m.Notes,
             PerformedBy = m.PerformedByUser?.FullName ?? "System",
@@ -172,12 +192,14 @@ public class TransferService : ITransferService
         return await GetAllAsync(assetId: assetId);
     }
 
-    private string? GetLocationName(LocationType? locationType, Employee? employee, Warehouse? warehouse)
+    private string? GetLocationName(LocationType? locationType, Employee? employee, Warehouse? warehouse, Department? department, Section? section)
     {
         return locationType switch
         {
             LocationType.Employee => employee?.FullName,
             LocationType.Warehouse => warehouse?.Name,
+            LocationType.Department => department?.Name,
+            LocationType.Section => section?.Name,
             _ => "Unknown Location"
         };
     }

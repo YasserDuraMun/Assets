@@ -4,13 +4,9 @@ namespace Assets.DTOs.Category;
 
 public class CreateCategoryDto
 {
-    [Required(ErrorMessage = "??? ??????? ?????")]
+    [Required(ErrorMessage = "??? ????? ?????")]
     [StringLength(200)]
     public string Name { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "??? ??????? ?????")]
-    [StringLength(50)]
-    public string Code { get; set; } = string.Empty;
 
     public string? Description { get; set; }
     public string? Icon { get; set; }
@@ -25,10 +21,6 @@ public class UpdateCategoryDto
     [Required]
     [StringLength(200)]
     public string Name { get; set; } = string.Empty;
-
-    [Required]
-    [StringLength(50)]
-    public string Code { get; set; } = string.Empty;
 
     public string? Description { get; set; }
     public string? Icon { get; set; }
@@ -56,15 +48,29 @@ public class CreateSubCategoryDto
     [StringLength(200)]
     public string Name { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "??? ????? ??????? ?????")]
-    [StringLength(50)]
-    public string Code { get; set; } = string.Empty;
+    public string? Description { get; set; }
+
+    [Required(ErrorMessage = "???? ????? ???????? ?????")]
+    [Range(1, int.MaxValue, ErrorMessage = "??? ?????? ??? ?????? ?????")]
+    public int CategoryId { get; set; }
+}
+
+public class UpdateSubCategoryDto
+{
+    [Required]
+    public int Id { get; set; }
+
+    [Required]
+    [StringLength(200)]
+    public string Name { get; set; } = string.Empty;
 
     public string? Description { get; set; }
 
-    [Required(ErrorMessage = "????? ???????? ??????")]
-    [Range(1, int.MaxValue, ErrorMessage = "??? ?????? ??? ?????? ?????")]
+    [Required]
+    [Range(1, int.MaxValue)]
     public int CategoryId { get; set; }
+
+    public bool IsActive { get; set; }
 }
 
 public class SubCategoryDto

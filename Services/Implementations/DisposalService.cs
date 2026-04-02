@@ -19,6 +19,22 @@ public class DisposalService : IDisposalService
         _logger = logger;
     }
 
+    private static string GetDisposalReasonText(DisposalReason reason)
+    {
+        return reason switch
+        {
+            DisposalReason.Damaged => "تالف/معطوب",
+            DisposalReason.Obsolete => "قديم/غير صالح للاستخدام",
+            DisposalReason.Lost => "مفقود",
+            DisposalReason.Stolen => "مسروق",
+            DisposalReason.EndOfLife => "انتهاء العمر الافتراضي",
+            DisposalReason.Maintenance => "صيانة وإصلاح شامل",
+            DisposalReason.Replacement => "تم الاستبدال",
+            DisposalReason.Other => "أخرى",
+            _ => reason.ToString()
+        };
+    }
+
     public async Task<DisposalDto> CreateDisposalAsync(CreateDisposalDto dto, int userId)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
@@ -100,7 +116,7 @@ public class DisposalService : IDisposalService
             AssetName = disposal.Asset.Name,
             AssetSerialNumber = disposal.Asset.SerialNumber,
             DisposalDate = disposal.DisposalDate,
-            DisposalReason = disposal.DisposalReason.ToString(),
+            DisposalReason = GetDisposalReasonText(disposal.DisposalReason),
             Notes = disposal.Notes,
             PerformedBy = disposal.PerformedByUser.FullName,
             CreatedAt = disposal.CreatedAt
@@ -151,7 +167,7 @@ public class DisposalService : IDisposalService
                 AssetName = d.Asset.Name,
                 AssetSerialNumber = d.Asset.SerialNumber,
                 DisposalDate = d.DisposalDate,
-                DisposalReason = d.DisposalReason.ToString(),
+                DisposalReason = GetDisposalReasonText(d.DisposalReason),
                 Notes = d.Notes,
                 PerformedBy = d.PerformedByUser.FullName,
                 CreatedAt = d.CreatedAt

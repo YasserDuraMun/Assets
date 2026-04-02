@@ -1,20 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Card, Row, Col, Space, Button, DatePicker, Select, Table, Tag, Statistic,
-  Tabs, Typography, Spin, message, Divider, Empty, Timeline, Progress
+  Tabs, Typography, Spin, message, Divider, Empty, Timeline, Progress, QRCode
 } from 'antd';
 import {
   FileTextOutlined, CalendarOutlined, BarChartOutlined, 
   DownloadOutlined, FilterOutlined, ReloadOutlined,
-  DeleteOutlined, ToolOutlined, SwapOutlined, DashboardOutlined
+  DeleteOutlined, ToolOutlined, SwapOutlined, DashboardOutlined,
+  QrcodeOutlined, PrinterOutlined, EnvironmentOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
-import { reportsApi, AssetsSummaryReport, DisposalReport, MaintenanceReport, TransfersReport } from '../api/reports.api';
+import { reportsApi, AssetsSummaryReport, DisposalReport, MaintenanceReport, TransfersReport, AssetLocationDetailReport } from '../api/reports.api';
+import { departmentApi } from '../api/department.api';
+import { sectionApi } from '../api/section.api';
+import type { Department, Section } from '../types';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
+
+// Helper function to translate transfer reasons
+const getReasonInArabic = (reason: string | undefined): string => {
+  if (!reason) return '-';
+  
+  const translations: { [key: string]: string } = {
+    'Employee Request': 'طلب موظف',
+    'Transfer Request': 'طلب نقل',
+    'Relocation': 'إعادة توزيع',
+    'Department Reorganization': 'إعادة تنظيم الأقسام',
+    'Equipment Upgrade': 'ترقية المعدات',
+    'Maintenance': 'صيانة',
+    'End of Project': 'انتهاء المشروع',
+    'Employee Termination': 'إنهاء خدمة موظف',
+    'New Assignment': 'تكليف جديد',
+    'Temporary Loan': 'إعارة مؤقتة',
+    'Other': 'أخرى'
+  };
+  
+  return translations[reason] || reason;
+};
 
 export default function ReportsPage() {
   console.log('?? ReportsPage component loaded');
@@ -30,6 +55,15 @@ export default function ReportsPage() {
   const [maintenanceReport, setMaintenanceReport] = useState<MaintenanceReport | null>(null);
   const [transfersReport, setTransfersReport] = useState<TransfersReport | null>(null);
   const [monthlyReport, setMonthlyReport] = useState<any>(null);
+  const [locationDetailReport, setLocationDetailReport] = useState<AssetLocationDetailReport | null>(null);
+
+  // Location filters
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | undefined>(undefined);
+  const [selectedSectionId, setSelectedSectionId] = useState<number | undefined>(undefined);
+  
+  const printRef = useRef<HTMLDivElement>(null);
 
   console.log('?? Reports state:', { 
     activeTab, 
@@ -42,7 +76,31 @@ export default function ReportsPage() {
 
   useEffect(() => {
     loadInitialReports();
+    loadDepartments();
   }, []);
+
+  const loadDepartments = async () => {
+    try {
+      const response = await departmentApi.getAll();
+      if (response.data.success && response.data.data) {
+        setDepartments(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to load departments:', error);
+    }
+  };
+
+  const loadSectionsByDepartment = async (departmentId: number) => {
+    try {
+      const response = await sectionApi.getByDepartment(departmentId);
+      if (response.data.success && response.data.data) {
+        setSections(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to load sections:', error);
+      setSections([]);
+    }
+  };
 
   const loadInitialReports = async () => {
     setLoading(true);
@@ -69,7 +127,7 @@ export default function ReportsPage() {
       console.log('? Initial reports loaded successfully');
     } catch (error) {
       console.error('?? Failed to load initial reports:', error);
-      message.error('Failed to load reports');
+      message.error('فشل تحميل التقارير');
     } finally {
       setLoading(false);
     }
@@ -145,7 +203,26 @@ export default function ReportsPage() {
       console.error('? Failed to load monthly summary:', error);
     }
   };
-
+  const loadLocationDetailReport = async (departmentId?: number, sectionId?: number) => {
+    try {
+      console.log('📍 Loading location detail report...', { departmentId, sectionId });
+      setLoading(true);
+      const response = await reportsApi.getAssetsByLocationDetail({ 
+        departmentId, 
+        sectionId 
+      });
+      if (response.data.success && response.data.data) {
+        setLocationDetailReport(response.data.data);
+        console.log('✅ Location detail report loaded:', response.data.data);
+        message.success(`تم تحميل ${response.data.data.summary.totalAssets} أصل`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load location detail report:', error);
+      message.error('فشل تحميل التقرير');
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleDateRangeChange = (dates: any) => {
     setDateRange(dates);
     
@@ -188,7 +265,33 @@ export default function ReportsPage() {
       case 'transfers':
         if (!transfersReport) loadTransfersReport(startDate, endDate);
         break;
+      case 'locationDetail':
+        // Load location detail report with current filters
+        loadLocationDetailReport(selectedDepartmentId, selectedSectionId);
+        break;
     }
+  };
+
+  const handleDepartmentChange = (value: number | undefined) => {
+    setSelectedDepartmentId(value);
+    setSelectedSectionId(undefined); // Reset section when department changes
+    setSections([]); // Clear sections list
+    
+    if (value) {
+      loadSectionsByDepartment(value);
+    }
+  };
+
+  const handleSectionChange = (value: number | undefined) => {
+    setSelectedSectionId(value);
+  };
+
+  const handleFilterApply = () => {
+    loadLocationDetailReport(selectedDepartmentId, selectedSectionId);
+  };
+
+  const handlePrintReport = () => {
+    window.print();
   };
 
   const handleRefresh = () => {
@@ -218,7 +321,7 @@ export default function ReportsPage() {
 
   const renderAssetsSummaryTab = () => {
     if (!assetsSummary) {
-      return <Empty description="No assets summary data available" />;
+      return <Empty description="لا توجد بيانات ملخص الأصول" />;
     }
 
     return (
@@ -228,7 +331,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="?????? ??????"
+                title="إجمالي الأصول"
                 value={assetsSummary.summary.totalAssets}
                 prefix={<DashboardOutlined />}
               />
@@ -237,7 +340,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="?????? ??????"
+                title="الأصول النشطة"
                 value={assetsSummary.summary.activeAssets}
                 valueStyle={{ color: '#52c41a' }}
               />
@@ -246,7 +349,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="?????? ????????"
+                title="الأصول المستبعدة"
                 value={assetsSummary.summary.disposedAssets}
                 valueStyle={{ color: '#f5222d' }}
               />
@@ -255,7 +358,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="?????? ??????"
+                title="القيمة الإجمالية"
                 value={assetsSummary.summary.totalValue}
                 precision={0}
                 suffix={assetsSummary.summary.currency}
@@ -268,17 +371,17 @@ export default function ReportsPage() {
         {/* Assets by Category */}
         <Row gutter={[16, 16]}>
           <Col xs={24} lg={12}>
-            <Card title="?????? ???? ???????" size="small">
+            <Card title="الأصول حسب الفئة" size="small">
               <Table
                 dataSource={assetsSummary.assetsByCategory}
                 columns={[
                   { 
-                    title: '???????', 
+                    title: 'الفئة', 
                     dataIndex: 'category', 
                     key: 'category' 
                   },
                   { 
-                    title: '?????', 
+                    title: 'العدد', 
                     dataIndex: 'count', 
                     key: 'count',
                     render: (count: number) => (
@@ -292,17 +395,17 @@ export default function ReportsPage() {
             </Card>
           </Col>
           <Col xs={24} lg={12}>
-            <Card title="?????? ???? ??????" size="small">
+            <Card title="الأصول حسب الحالة" size="small">
               <Table
                 dataSource={assetsSummary.assetsByStatus}
                 columns={[
                   { 
-                    title: '??????', 
+                    title: 'الحالة', 
                     dataIndex: 'status', 
                     key: 'status' 
                   },
                   { 
-                    title: '?????', 
+                    title: 'العدد', 
                     dataIndex: 'count', 
                     key: 'count',
                     render: (count: number) => (
@@ -322,7 +425,7 @@ export default function ReportsPage() {
 
   const renderDisposalReportTab = () => {
     if (!disposalReport) {
-      return <Empty description="No disposal report data available" />;
+      return <Empty description="لا توجد بيانات تقرير الاستبعاد" />;
     }
 
     return (
@@ -332,7 +435,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12}>
             <Card>
               <Statistic
-                title="?????? ?????? ????????"
+                title="إجمالي الأصول المستبعدة"
                 value={disposalReport.summary.totalDisposals}
                 prefix={<DeleteOutlined />}
                 valueStyle={{ color: '#f5222d' }}
@@ -341,24 +444,24 @@ export default function ReportsPage() {
           </Col>
           <Col xs={24} sm={12}>
             <Card>
-              <Text type="secondary">???? ???????</Text>
+              <Text type="secondary">فترة التقرير</Text>
               <div>{disposalReport.summary.periodCovered}</div>
             </Card>
           </Col>
         </Row>
 
         {/* Disposal by Reason */}
-        <Card title="??????? ???? ?????" size="small">
+        <Card title="الاستبعادات حسب السبب" size="small">
           <Table
             dataSource={disposalReport.disposalsByReason}
             columns={[
               { 
-                title: '?????', 
+                title: 'السبب', 
                 dataIndex: 'reasonText', 
                 key: 'reasonText' 
               },
               { 
-                title: '?????', 
+                title: 'العدد', 
                 dataIndex: 'count', 
                 key: 'count',
                 render: (count: number) => (
@@ -372,34 +475,34 @@ export default function ReportsPage() {
         </Card>
 
         {/* Recent Disposals */}
-        <Card title="????????? ???????" size="small">
+        <Card title="الاستبعادات الأخيرة" size="small">
           <Table
             dataSource={disposalReport.recentDisposals}
             columns={[
               { 
-                title: '??? ?????', 
+                title: 'اسم الأصل', 
                 dataIndex: 'assetName', 
                 key: 'assetName' 
               },
               { 
-                title: '????? ???????', 
+                title: 'الرقم التسلسلي', 
                 dataIndex: 'assetSerialNumber', 
                 key: 'assetSerialNumber' 
               },
               { 
-                title: '?????', 
+                title: 'السبب', 
                 dataIndex: 'reasonText', 
                 key: 'reasonText',
                 render: (text: string) => <Tag color="red">{text}</Tag>
               },
               { 
-                title: '????? ???????', 
+                title: 'تاريخ الاستبعاد', 
                 dataIndex: 'disposalDate', 
                 key: 'disposalDate',
                 render: (date: string) => dayjs(date).format('DD/MM/YYYY')
               },
               { 
-                title: '???????', 
+                title: 'المنفذ', 
                 dataIndex: 'performedBy', 
                 key: 'performedBy' 
               }
@@ -414,7 +517,7 @@ export default function ReportsPage() {
 
   const renderMaintenanceReportTab = () => {
     if (!maintenanceReport) {
-      return <Empty description="No maintenance report data available" />;
+      return <Empty description="لا توجد بيانات تقرير الصيانة" />;
     }
 
     return (
@@ -424,7 +527,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={8}>
             <Card>
               <Statistic
-                title="Total Maintenance"
+                title="إجمالي الصيانات"
                 value={maintenanceReport.summary.totalMaintenance}
                 prefix={<ToolOutlined />}
                 valueStyle={{ color: '#1677ff' }}
@@ -434,7 +537,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={8}>
             <Card>
               <Statistic
-                title="Total Cost"
+                title="التكلفة الإجمالية"
                 value={maintenanceReport.summary.totalCost}
                 precision={0}
                 suffix={maintenanceReport.summary.currency}
@@ -444,24 +547,24 @@ export default function ReportsPage() {
           </Col>
           <Col xs={24} sm={8}>
             <Card>
-              <Text type="secondary">Report Period</Text>
+              <Text type="secondary">فترة التقرير</Text>
               <div>{maintenanceReport.summary.periodCovered}</div>
             </Card>
           </Col>
         </Row>
 
         {/* Maintenance by Type */}
-        <Card title="Maintenance by Type" size="small">
+        <Card title="الصيانات حسب النوع" size="small">
           <Table
             dataSource={maintenanceReport.maintenanceByType}
             columns={[
               { 
-                title: 'Type', 
+                title: 'النوع', 
                 dataIndex: 'typeText', 
                 key: 'typeText' 
               },
               { 
-                title: 'Count', 
+                title: 'العدد', 
                 dataIndex: 'count', 
                 key: 'count',
                 render: (count: number) => (
@@ -469,7 +572,7 @@ export default function ReportsPage() {
                 )
               },
               { 
-                title: 'Total Cost', 
+                title: 'التكلفة الإجمالية', 
                 dataIndex: 'totalCost', 
                 key: 'totalCost',
                 render: (cost: number) => `${cost.toLocaleString()} ILS`
@@ -482,7 +585,7 @@ export default function ReportsPage() {
 
         {/* Upcoming Maintenance */}
         {maintenanceReport.upcomingMaintenance.length > 0 && (
-          <Card title="Upcoming Maintenance" size="small">
+          <Card title="الصيانات القادمة" size="small">
             <Timeline>
               {maintenanceReport.upcomingMaintenance.slice(0, 10).map((item, index) => (
                 <Timeline.Item 
@@ -495,9 +598,9 @@ export default function ReportsPage() {
                     <Text type="secondary">{item.type}</Text>
                     <br />
                     <Tag color={item.daysUntilDue < 0 ? 'red' : 'blue'}>
-                      {item.daysUntilDue < 0 ? `Overdue ${Math.abs(item.daysUntilDue)} days` : 
-                       item.daysUntilDue === 0 ? 'Due Today' :
-                       `${item.daysUntilDue} days remaining`}
+                      {item.daysUntilDue < 0 ? `متأخر ${Math.abs(item.daysUntilDue)} يوم` : 
+                       item.daysUntilDue === 0 ? 'مستحق اليوم' :
+                       `${item.daysUntilDue} يوم متبقي`}
                     </Tag>
                   </div>
                 </Timeline.Item>
@@ -511,7 +614,7 @@ export default function ReportsPage() {
 
   const renderTransfersReportTab = () => {
     if (!transfersReport) {
-      return <Empty description="No transfers report data available" />;
+      return <Empty description="لا توجد بيانات تقرير التحويلات" />;
     }
 
     return (
@@ -521,7 +624,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12}>
             <Card>
               <Statistic
-                title="?????? ?????????"
+                title="إجمالي التحويلات"
                 value={transfersReport.summary.totalTransfers}
                 prefix={<SwapOutlined />}
                 valueStyle={{ color: '#52c41a' }}
@@ -530,24 +633,24 @@ export default function ReportsPage() {
           </Col>
           <Col xs={24} sm={12}>
             <Card>
-              <Text type="secondary">???? ???????</Text>
+              <Text type="secondary">فترة التقرير</Text>
               <div>{transfersReport.summary.periodCovered}</div>
             </Card>
           </Col>
         </Row>
 
         {/* Transfers by Category */}
-        <Card title="????????? ???? ???????" size="small">
+        <Card title="التحويلات حسب الفئة" size="small">
           <Table
             dataSource={transfersReport.transfersByCategory}
             columns={[
               { 
-                title: '???????', 
+                title: 'الفئة', 
                 dataIndex: 'category', 
                 key: 'category' 
               },
               { 
-                title: '??? ?????????', 
+                title: 'عدد التحويلات', 
                 dataIndex: 'count', 
                 key: 'count',
                 render: (count: number) => (
@@ -561,33 +664,33 @@ export default function ReportsPage() {
         </Card>
 
         {/* Recent Transfers */}
-        <Card title="????????? ???????" size="small">
+        <Card title="التحويلات الأخيرة" size="small">
           <Table
             dataSource={transfersReport.recentTransfers}
             columns={[
               { 
-                title: '??? ?????', 
+                title: 'اسم الأصل', 
                 dataIndex: 'assetName', 
                 key: 'assetName' 
               },
               { 
-                title: '??', 
+                title: 'من', 
                 dataIndex: 'fromLocation', 
                 key: 'fromLocation' 
               },
               { 
-                title: '???', 
+                title: 'إلى', 
                 dataIndex: 'toLocation', 
                 key: 'toLocation' 
               },
               { 
-                title: '????? ?????', 
+                title: 'تاريخ النقل', 
                 dataIndex: 'movementDate', 
                 key: 'movementDate',
                 render: (date: string) => dayjs(date).format('DD/MM/YYYY')
               },
               { 
-                title: '???????', 
+                title: 'المنفذ', 
                 dataIndex: 'performedBy', 
                 key: 'performedBy' 
               }
@@ -602,7 +705,7 @@ export default function ReportsPage() {
 
   const renderMonthlyReportTab = () => {
     if (!monthlyReport) {
-      return <Empty description="No monthly report data available" />;
+      return <Empty description="لا توجد بيانات التقرير الشهري" />;
     }
 
     return (
@@ -611,7 +714,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="New Assets"
+                title="الأصول الجديدة"
                 value={monthlyReport.summary.assetsCreated}
                 valueStyle={{ color: '#52c41a' }}
               />
@@ -620,7 +723,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="Disposed Assets"
+                title="الأصول المستبعدة"
                 value={monthlyReport.summary.disposals}
                 valueStyle={{ color: '#f5222d' }}
               />
@@ -629,7 +732,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="Maintenance Work"
+                title="أعمال الصيانة"
                 value={monthlyReport.summary.maintenanceRecords}
                 valueStyle={{ color: '#1677ff' }}
               />
@@ -638,7 +741,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="Transfer Operations"
+                title="عمليات النقل"
                 value={monthlyReport.summary.transfers}
                 valueStyle={{ color: '#722ed1' }}
               />
@@ -649,19 +752,227 @@ export default function ReportsPage() {
     );
   };
 
+  const renderLocationDetailReportTab = () => {
+    return (
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        {/* Filters */}
+        <Card size="small" className="no-print">
+          <Row gutter={[16, 16]} align="middle">
+            <Col xs={24} sm={8}>
+              <Select
+                style={{ width: '100%' }}
+                placeholder="اختر الدائرة"
+                allowClear
+                value={selectedDepartmentId}
+                onChange={handleDepartmentChange}
+                options={departments.map(dept => ({
+                  label: dept.name,
+                  value: dept.id
+                }))}
+              />
+            </Col>
+            <Col xs={24} sm={8}>
+              <Select
+                style={{ width: '100%' }}
+                placeholder="اختر القسم"
+                allowClear
+                value={selectedSectionId}
+                onChange={handleSectionChange}
+                disabled={!selectedDepartmentId}
+                options={sections.map(sec => ({
+                  label: sec.name,
+                  value: sec.id
+                }))}
+              />
+            </Col>
+            <Col xs={24} sm={8}>
+              <Space>
+                <Button
+                  type="primary"
+                  icon={<FilterOutlined />}
+                  onClick={handleFilterApply}
+                  loading={loading}
+                >
+                  عرض التقرير
+                </Button>
+                {locationDetailReport && (
+                  <Button
+                    icon={<PrinterOutlined />}
+                    onClick={handlePrintReport}
+                  >
+                    طباعة
+                  </Button>
+                )}
+              </Space>
+            </Col>
+          </Row>
+        </Card>
+
+        {/* Report Content */}
+        {!locationDetailReport ? (
+          <Empty description="اختر الدائرة أو القسم لعرض التقرير" />
+        ) : (
+          <div ref={printRef} id="print-area">
+            {/* Summary */}
+            <Card size="small" style={{ marginBottom: 16 }}>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12}>
+                  <Statistic
+                    title="إجمالي الأصول"
+                    value={locationDetailReport.summary.totalAssets}
+                    prefix={<DashboardOutlined />}
+                    valueStyle={{ color: '#1677ff' }}
+                  />
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div>
+                    <Text type="secondary">الموقع</Text>
+                    <div style={{ fontSize: 16, fontWeight: 'bold' }}>
+                      {locationDetailReport.summary.locationFilter}
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+            </Card>
+
+            {/* Assets Grid with QR Codes */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: '16px',
+              pageBreakInside: 'avoid'
+            }}>
+              {locationDetailReport.assets.map((asset) => (
+                <Card
+                  key={asset.id}
+                  size="small"
+                  style={{
+                    pageBreakInside: 'avoid',
+                    border: '1px solid #d9d9d9'
+                  }}
+                >
+                  <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                    {/* Asset Name */}
+                    <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: 16 }}>
+                      {asset.name}
+                    </div>
+                    
+                    {/* QR Code */}
+                    {asset.qrCode && (
+                      <div style={{ textAlign: 'center', padding: '8px 0' }}>
+                        <QRCode 
+                          value={asset.qrCode} 
+                          size={120}
+                          style={{ margin: '0 auto' }}
+                        />
+                        <div style={{ fontSize: 12, marginTop: 4, color: '#666' }}>
+                          {asset.qrCode}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Asset Details */}
+                    <Divider style={{ margin: '8px 0' }} />
+                    <div style={{ fontSize: 13 }}>
+                      <div><strong>الرقم التسلسلي:</strong> {asset.serialNumber}</div>
+                      {asset.barcode && (
+                        <div><strong>الباركود:</strong> {asset.barcode}</div>
+                      )}
+                      <div><strong>الفئة:</strong> {asset.categoryName}</div>
+                      <div>
+                        <strong>الحالة:</strong>{' '}
+                        <Tag color={asset.statusColor}>{asset.statusName}</Tag>
+                      </div>
+                      
+                      {/* Current Location */}
+                      {(asset.currentEmployeeName || asset.currentWarehouseName || 
+                        asset.currentDepartmentName || asset.currentSectionName) && (
+                        <>
+                          <Divider style={{ margin: '8px 0' }} />
+                          <div style={{ fontSize: 12 }}>
+                            <strong>الموقع الحالي:</strong>
+                            {asset.currentEmployeeName && <div>👤 {asset.currentEmployeeName}</div>}
+                            {asset.currentDepartmentName && <div>🏢 {asset.currentDepartmentName}</div>}
+                            {asset.currentSectionName && <div>📋 {asset.currentSectionName}</div>}
+                            {asset.currentWarehouseName && <div>🏪 {asset.currentWarehouseName}</div>}
+                          </div>
+                        </>
+                      )}
+                      
+                      {/* Additional Info */}
+                      {(asset.purchaseDate || asset.purchasePrice) && (
+                        <>
+                          <Divider style={{ margin: '8px 0' }} />
+                          <div style={{ fontSize: 12 }}>
+                            {asset.purchaseDate && (
+                              <div><strong>تاريخ الشراء:</strong> {dayjs(asset.purchaseDate).format('DD/MM/YYYY')}</div>
+                            )}
+                            {asset.purchasePrice && (
+                              <div><strong>السعر:</strong> {asset.purchasePrice.toLocaleString()} ILS</div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </Space>
+                </Card>
+              ))}
+            </div>
+
+            {/* Print Footer */}
+            <div style={{ 
+              marginTop: 24, 
+              textAlign: 'center', 
+              fontSize: 12, 
+              color: '#999',
+              pageBreakBefore: 'avoid'
+            }}>
+              تم إنشاء التقرير في: {dayjs(locationDetailReport.summary.generatedAt).format('DD/MM/YYYY HH:mm')}
+            </div>
+          </div>
+        )}
+      </Space>
+    );
+  };
+
   return (
     <MainLayout>
+      <style>
+        {`
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            #print-area, #print-area * {
+              visibility: visible;
+            }
+            #print-area {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+            }
+            .no-print {
+              display: none !important;
+            }
+            @page {
+              size: A4;
+              margin: 10mm;
+            }
+          }
+        `}
+      </style>
       <Card
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <FileTextOutlined style={{ marginRight: 8 }} />
-              <span>Reports</span>
+              <span>التقارير</span>
             </div>
             <Space>
               <RangePicker
                 onChange={handleDateRangeChange}
-                placeholder={['Start Date', 'End Date']}
+                placeholder={['تاريخ البداية', 'تاريخ النهاية']}
                 style={{ width: 250 }}
               />
               <Button 
@@ -669,14 +980,14 @@ export default function ReportsPage() {
                 onClick={handleRefresh}
                 loading={loading}
               >
-                Refresh
+                تحديث
               </Button>
               <Button 
                 icon={<DownloadOutlined />}
                 type="primary"
                 disabled
               >
-                Export
+                تصدير
               </Button>
             </Space>
           </div>
@@ -688,7 +999,7 @@ export default function ReportsPage() {
               tab={
                 <span>
                   <DashboardOutlined />
-                  Assets Summary
+                  ملخص الأصول
                 </span>
               }
               key="summary"
@@ -700,7 +1011,7 @@ export default function ReportsPage() {
               tab={
                 <span>
                   <DeleteOutlined />
-                  Disposed Assets
+                  الأصول المستبعدة
                 </span>
               }
               key="disposal"
@@ -712,7 +1023,7 @@ export default function ReportsPage() {
               tab={
                 <span>
                   <ToolOutlined />
-                  Maintenance
+                  الصيانة
                 </span>
               }
               key="maintenance"
@@ -724,7 +1035,7 @@ export default function ReportsPage() {
               tab={
                 <span>
                   <SwapOutlined />
-                  Transfers
+                  التحويلات
                 </span>
               }
               key="transfers"
@@ -736,12 +1047,24 @@ export default function ReportsPage() {
               tab={
                 <span>
                   <CalendarOutlined />
-                  Monthly Report
+                  التقرير الشهري
                 </span>
               }
               key="monthly"
             >
               {renderMonthlyReportTab()}
+            </Tabs.TabPane>
+
+            <Tabs.TabPane
+              tab={
+                <span>
+                  <QrcodeOutlined />
+                  طباعة QR Code حسب الموقع
+                </span>
+              }
+              key="locationDetail"
+            >
+              {renderLocationDetailReportTab()}
             </Tabs.TabPane>
           </Tabs>
         </Spin>

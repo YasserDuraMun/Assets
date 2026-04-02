@@ -13,7 +13,7 @@ export default function SettingsPage() {
       key: 'statuses',
       label: (
         <span>
-          <TagsOutlined /> Asset Statuses
+          <TagsOutlined /> حالات الأصول
         </span>
       ),
       children: <AssetStatusesPage />,
@@ -22,7 +22,7 @@ export default function SettingsPage() {
       key: 'categories',
       label: (
         <span>
-          <AppstoreOutlined /> Categories & SubCategories
+          <AppstoreOutlined /> الفئات والفئات الفرعية
         </span>
       ),
       children: <CategoriesPage />,
@@ -31,7 +31,7 @@ export default function SettingsPage() {
       key: 'departments',
       label: (
         <span>
-          <ApartmentOutlined /> Departments & Sections
+          <ApartmentOutlined /> الإدارات والأقسام
         </span>
       ),
       children: <DepartmentsPage />,
@@ -40,7 +40,7 @@ export default function SettingsPage() {
       key: 'employees',
       label: (
         <span>
-          <UserOutlined /> Employees
+          <UserOutlined /> الموظفون
         </span>
       ),
       children: <EmployeesPage />,
@@ -49,7 +49,7 @@ export default function SettingsPage() {
       key: 'warehouses',
       label: (
         <span>
-          <ShopOutlined /> Warehouses
+          <ShopOutlined /> المستودعات
         </span>
       ),
       children: <WarehousesPage />,
@@ -61,7 +61,7 @@ export default function SettingsPage() {
       <Card
         title={
           <span>
-            <SettingOutlined /> System Settings
+            <SettingOutlined /> إعدادات النظام
           </span>
         }
       >

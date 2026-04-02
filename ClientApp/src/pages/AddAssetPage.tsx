@@ -160,14 +160,14 @@ export default function AddAssetPage() {
       console.log('Sending payload:', payload); // Debug log
 
       await assetApi.create(payload);
-      message.success('Asset created successfully');
+      message.success('تم إنشاء الأصل بنجاح');
       navigate('/assets');
     } catch (error: any) {
       console.error('Failed to create asset:', error);
       if (error.response?.data?.message) {
         message.error(error.response.data.message);
       } else {
-        message.error('Failed to create asset');
+        message.error('فشل إنشاء الأصل');
       }
     } finally {
       setLoading(false);
@@ -176,7 +176,7 @@ export default function AddAssetPage() {
 
   return (
     <MainLayout>
-      <Card title="Add New Asset">
+      <Card title="إضافة أصل جديد">
         <Form
           form={form}
           layout="vertical"
@@ -185,46 +185,46 @@ export default function AddAssetPage() {
             hasWarranty: false,
           }}
         >
-          <Divider>Basic Information</Divider>
+          <Divider>المعلومات الأساسية</Divider>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="name"
-                label="Asset Name"
-                rules={[{ required: true, message: 'Please enter asset name' }]}
+                label="اسم الأصل"
+                rules={[{ required: true, message: 'الرجاء إدخال اسم الأصل' }]}
               >
-                <Input placeholder="Enter asset name" />
+                <Input placeholder="أدخل اسم الأصل" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="serialNumber"
-                label="Serial Number"
-                rules={[{ required: true, message: 'Please enter serial number' }]}
+                label="الرقم التسلسلي"
+                rules={[{ required: true, message: 'الرجاء إدخال الرقم التسلسلي' }]}
               >
-                <Input placeholder="Enter serial number" />
+                <Input placeholder="أدخل الرقم التسلسلي" />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
             <Col span={8}>
-              <Form.Item name="barcode" label="Barcode">
-                <Input placeholder="Enter barcode" />
+              <Form.Item name="barcode" label="الباركود">
+                <Input placeholder="أدخل الباركود" />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="qrCode" label="QR Code">
-                <Input placeholder="Auto-generated" disabled />
+              <Form.Item name="qrCode" label="رمز QR">
+                <Input placeholder="يتم إنشاؤه تلقائياً" disabled />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item
                 name="statusId"
-                label="Status"
-                rules={[{ required: true, message: 'Please select status' }]}
+                label="الحالة"
+                rules={[{ required: true, message: 'الرجاء اختيار الحالة' }]}
               >
-                <Select placeholder="Select status">
+                <Select placeholder="اختر الحالة">
                   {statuses.map(status => (
                     <Select.Option key={status.id} value={status.id}>
                       {status.name}
@@ -235,19 +235,19 @@ export default function AddAssetPage() {
             </Col>
           </Row>
 
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} placeholder="Enter description" />
+          <Form.Item name="description" label="الوصف">
+            <Input.TextArea rows={3} placeholder="أدخل الوصف" />
           </Form.Item>
 
-          <Divider>Category</Divider>
+          <Divider>الفئة</Divider>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="categoryId"
-                label="Main Category"
-                rules={[{ required: true, message: 'Please select category' }]}
+                label="الفئة الرئيسية"
+                rules={[{ required: true, message: 'الرجاء اختيار الفئة' }]}
               >
-                <Select placeholder="Select category" onChange={handleCategoryChange}>
+                <Select placeholder="اختر الفئة" onChange={handleCategoryChange}>
                   {categories.map(cat => (
                     <Select.Option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -257,8 +257,8 @@ export default function AddAssetPage() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="subCategoryId" label="SubCategory">
-                <Select placeholder="Select subcategory" disabled={!selectedCategory}>
+              <Form.Item name="subCategoryId" label="الفئة الفرعية">
+                <Select placeholder="اختر الفئة الفرعية" disabled={!selectedCategory}>
                   {subCategories.map(sub => (
                     <Select.Option key={sub.id} value={sub.id}>
                       {sub.name}
@@ -269,11 +269,11 @@ export default function AddAssetPage() {
             </Col>
           </Row>
 
-          <Divider>Current Location Information</Divider>
+          <Divider>معلومات الموقع الحالي</Divider>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="currentEmployeeId" label="Employee (Optional)">
-                <Select placeholder="Select employee (optional)" showSearch optionFilterProp="children" allowClear>
+              <Form.Item name="currentEmployeeId" label="الموظف (اختياري)">
+                <Select placeholder="اختر الموظف (اختياري)" showSearch optionFilterProp="children" allowClear>
                   {employees.map(emp => (
                     <Select.Option key={emp.id} value={emp.id}>
                       {emp.fullName} ({emp.employeeNumber}) - {emp.departmentName}
@@ -283,8 +283,8 @@ export default function AddAssetPage() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="currentWarehouseId" label="Warehouse (Optional)">
-                <Select placeholder="Select warehouse (optional)" allowClear>
+              <Form.Item name="currentWarehouseId" label="المستودع (اختياري)">
+                <Select placeholder="اختر المستودع (اختياري)" allowClear>
                   {warehouses.map(wh => (
                     <Select.Option key={wh.id} value={wh.id}>
                       {wh.name} - {wh.location}
@@ -296,8 +296,8 @@ export default function AddAssetPage() {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="currentDepartmentId" label="Department (Optional)">
-                <Select placeholder="Select department (optional)" onChange={handleDepartmentChange} allowClear>
+              <Form.Item name="currentDepartmentId" label="الإدارة (اختياري)">
+                <Select placeholder="اختر الإدارة (اختياري)" onChange={handleDepartmentChange} allowClear>
                   {departments.map(dept => (
                     <Select.Option key={dept.id} value={dept.id}>
                       {dept.name}
@@ -307,8 +307,8 @@ export default function AddAssetPage() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="currentSectionId" label="Section (Optional)">
-                <Select placeholder="Select section (optional)" allowClear>
+              <Form.Item name="currentSectionId" label="القسم (اختياري)">
+                <Select placeholder="اختر القسم (اختياري)" allowClear>
                   {sections.map(sec => (
                     <Select.Option key={sec.id} value={sec.id}>
                       {sec.name}
@@ -319,15 +319,15 @@ export default function AddAssetPage() {
             </Col>
           </Row>
 
-          <Divider>Purchase Information</Divider>
+          <Divider>معلومات الشراء</Divider>
           <Row gutter={16}>
             <Col span={8}>
-              <Form.Item name="purchaseDate" label="Purchase Date">
+              <Form.Item name="purchaseDate" label="تاريخ الشراء">
                 <DatePicker style={{ width: '100%' }} />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="purchasePrice" label="Purchase Price">
+              <Form.Item name="purchasePrice" label="سعر الشراء">
                 <InputNumber
                   style={{ width: '100%' }}
                   min={0}
@@ -338,17 +338,17 @@ export default function AddAssetPage() {
             </Col>
           </Row>
 
-          <Divider>Warranty Information</Divider>
+          <Divider>معلومات الضمان</Divider>
           <Row gutter={16}>
             <Col span={8}>
-              <Form.Item name="hasWarranty" label="Has Warranty" valuePropName="checked">
+              <Form.Item name="hasWarranty" label="لديه ضمان" valuePropName="checked">
                 <Switch onChange={setHasWarranty} />
               </Form.Item>
             </Col>
             {hasWarranty && (
               <>
                 <Col span={8}>
-                  <Form.Item name="warrantyMonths" label="Warranty Period (Months)">
+                  <Form.Item name="warrantyMonths" label="فترة الضمان (شهر)">
                     <InputNumber
                       style={{ width: '100%' }}
                       min={1}
@@ -360,7 +360,7 @@ export default function AddAssetPage() {
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item name="warrantyExpiryDate" label="Warranty Expiry Date">
+                  <Form.Item name="warrantyExpiryDate" label="تاريخ انتهاء الضمان">
                     <DatePicker style={{ width: '100%' }} disabled />
                   </Form.Item>
                 </Col>
@@ -372,10 +372,10 @@ export default function AddAssetPage() {
           <Form.Item>
             <Space size="middle">
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                Save Asset
+                حفظ الأصل
               </Button>
               <Button icon={<CloseOutlined />} onClick={() => navigate('/assets')}>
-                Cancel
+                إلغاء
               </Button>
             </Space>
           </Form.Item>

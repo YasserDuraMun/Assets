@@ -26,7 +26,7 @@ export default function WarehousesPage() {
         setWarehouses(response.data.data);
       }
     } catch (error) {
-      message.error('Failed to load warehouses');
+      message.error('فشل تحميل المستودعات');
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ export default function WarehousesPage() {
       }
     } catch (error) {
       console.error('Failed to load employees:', error);
-      message.error('Failed to load employees');
+      message.error('فشل تحميل الموظفين');
       setEmployees([]);
     }
   };
@@ -60,66 +60,79 @@ export default function WarehousesPage() {
 
   const handleEdit = (record: Warehouse) => {
     setEditingWarehouse(record);
-    form.setFieldsValue(record);
+    // Don't include code in the form - it's auto-generated
+    const { code, ...formData } = record;
+    form.setFieldsValue(formData);
     setModalVisible(true);
   };
 
   const handleDelete = async (id: number) => {
     try {
       await warehouseApi.delete(id);
-      message.success('Warehouse deleted successfully');
+      message.success('تم حذف المستودع بنجاح');
       fetchWarehouses();
     } catch (error) {
-      message.error('Failed to delete warehouse');
+      message.error('فشل حذف المستودع');
     }
   };
 
   const handleSubmit = async (values: Partial<Warehouse>) => {
     try {
       if (editingWarehouse) {
-        await warehouseApi.update(editingWarehouse.id, values);
-        message.success('Warehouse updated successfully');
+        // For updates, ensure we include the ID and preserve isActive
+        const updateData = {
+          ...values,
+          id: editingWarehouse.id,
+          isActive: values.isActive !== undefined ? values.isActive : editingWarehouse.isActive
+        };
+        await warehouseApi.update(editingWarehouse.id, updateData);
+        message.success('تم تحديث المستودع بنجاح');
       } else {
-        await warehouseApi.create(values);
-        message.success('Warehouse created successfully');
+        // For creation, don't include code - it will be generated
+        const { code, ...createData } = values;
+        await warehouseApi.create(createData);
+        message.success('تم إنشاء المستودع بنجاح');
       }
       setModalVisible(false);
       fetchWarehouses();
     } catch (error) {
-      message.error('Failed to save warehouse');
+      console.error('Warehouse operation error:', error);
+      message.error(editingWarehouse ? 'فشل تحديث المستودع' : 'فشل إنشاء المستودع');
     }
   };
 
   const columns = [
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Code', dataIndex: 'code', key: 'code' },
-    { title: 'Location', dataIndex: 'location', key: 'location' },
-    { title: 'Responsible', dataIndex: 'responsibleEmployeeName', key: 'responsibleEmployeeName' },
-    { title: 'Capacity', dataIndex: 'capacity', key: 'capacity' },
+    { title: 'الاسم', dataIndex: 'name', key: 'name' },
+    { title: 'الرمز', dataIndex: 'code', key: 'code' },
+    { title: 'الموقع', dataIndex: 'location', key: 'location' },
+    { title: 'المسؤول', dataIndex: 'responsibleEmployeeName', key: 'responsibleEmployeeName' },
+    { title: 'عدد الأصول', dataIndex: 'currentAssetsCount', key: 'currentAssetsCount' },
     {
-      title: 'Active',
+      title: 'نشط',
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
         <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'Active' : 'Inactive'}
+          {isActive ? 'نشط' : 'غير نشط'}
         </Tag>
       ),
     },
     {
-      title: 'Actions',
+      title: 'الإجراءات',
       key: 'actions',
       render: (_: unknown, record: Warehouse) => (
         <Space>
           <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
-            Edit
+            تعديل
           </Button>
           <Popconfirm
-            title="Delete this warehouse?"
+            title="هل أنت متأكد من حذف هذا المستودع؟"
             onConfirm={() => handleDelete(record.id)}
+            okText="نعم"
+            cancelText="لا"
           >
             <Button type="link" danger icon={<DeleteOutlined />}>
-              Delete
+              حذف
             </Button>
           </Popconfirm>
         </Space>
@@ -131,7 +144,7 @@ export default function WarehousesPage() {
     <div>
       <div style={{ marginBottom: 16, textAlign: 'right' }}>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          Add Warehouse
+          إضافة مستودع
         </Button>
       </div>
 
@@ -144,25 +157,28 @@ export default function WarehousesPage() {
       />
 
       <Modal
-        title={editingWarehouse ? 'Edit Warehouse' : 'Add Warehouse'}
+        title={editingWarehouse ? 'تعديل مستودع' : 'إضافة مستودع'}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onOk={() => form.submit()}
         width={600}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item 
+            name="name" 
+            label="اسم المستودع" 
+            rules={[{ required: true, message: 'يرجى إدخال اسم المستودع' }]}
+          >
+            <Input placeholder="مثال: مستودع الرياض الرئيسي، مستودع قطع الغيار" />
           </Form.Item>
-          <Form.Item name="code" label="Code" rules={[{ required: true }]}>
-            <Input />
+          
+          <Form.Item name="location" label="الموقع">
+            <Input placeholder="مثال: الرياض، حي النخيل، الدور الأول" />
           </Form.Item>
-          <Form.Item name="location" label="Location">
-            <Input />
-          </Form.Item>
-          <Form.Item name="responsibleEmployeeId" label="Responsible Employee">
+          
+          <Form.Item name="responsibleEmployeeId" label="الموظف المسؤول">
             <Select
-              placeholder="Select employee"
+              placeholder="اختر الموظف المسؤول (اختياري)"
               allowClear
               showSearch
               optionFilterProp="children"
@@ -174,12 +190,16 @@ export default function WarehousesPage() {
               ))}
             </Select>
           </Form.Item>
-          <Form.Item name="capacity" label="Capacity">
-            <Input type="number" />
+          
+          <Form.Item name="notes" label="ملاحظات">
+            <Input.TextArea rows={3} placeholder="ملاحظات إضافية (اختياري)" />
           </Form.Item>
-          <Form.Item name="isActive" label="Active" valuePropName="checked" initialValue={true}>
-            <Switch />
-          </Form.Item>
+          
+          {editingWarehouse && (
+            <Form.Item name="isActive" label="نشط" valuePropName="checked" initialValue={true}>
+              <Switch />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
     </div>

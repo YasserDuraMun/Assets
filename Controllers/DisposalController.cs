@@ -44,21 +44,37 @@ public class DisposalController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("?? Getting disposal reasons...");
+            _logger.LogInformation("📋 Getting disposal reasons...");
             
             var reasons = Enum.GetValues<Assets.Enums.DisposalReason>()
-                .Select(r => new { value = (int)r, label = r.ToString() })
+                .Select(r => new { value = (int)r, label = GetDisposalReasonText(r) })
                 .ToList();
             
-            _logger.LogInformation($"? Found {reasons.Count} disposal reasons");
+            _logger.LogInformation($"✅ Found {reasons.Count} disposal reasons");
             
             return Ok(ApiResponse<object>.SuccessResponse(reasons, "Disposal reasons loaded successfully"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error getting disposal reasons: {Message}", ex.Message);
+            _logger.LogError(ex, "❌ Error getting disposal reasons: {Message}", ex.Message);
             return StatusCode(500, ApiResponse<object>.ErrorResponse("Error getting disposal reasons"));
         }
+    }
+
+    private static string GetDisposalReasonText(Assets.Enums.DisposalReason reason)
+    {
+        return reason switch
+        {
+            Assets.Enums.DisposalReason.Damaged => "تالف/معطوب",
+            Assets.Enums.DisposalReason.Obsolete => "قديم/غير صالح للاستخدام",
+            Assets.Enums.DisposalReason.Lost => "مفقود",
+            Assets.Enums.DisposalReason.Stolen => "مسروق",
+            Assets.Enums.DisposalReason.EndOfLife => "انتهاء العمر الافتراضي",
+            Assets.Enums.DisposalReason.Maintenance => "صيانة وإصلاح شامل",
+            Assets.Enums.DisposalReason.Replacement => "تم الاستبدال",
+            Assets.Enums.DisposalReason.Other => "أخرى",
+            _ => reason.ToString()
+        };
     }
 
     /// <summary>

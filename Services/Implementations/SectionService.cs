@@ -85,7 +85,7 @@ public class SectionService : ISectionService
         var section = new Section
         {
             Name = dto.Name,
-            Code = dto.Code,
+            Code = GenerateSectionCode(dto.Name, dto.DepartmentId), // Auto-generate code
             Description = dto.Description,
             DepartmentId = dto.DepartmentId,
             IsActive = true,
@@ -106,7 +106,7 @@ public class SectionService : ISectionService
             throw new Exception("Section not found");
 
         section.Name = dto.Name;
-        section.Code = dto.Code;
+        section.Code = GenerateSectionCodeForUpdate(dto.Name, dto.DepartmentId, dto.Id); // Update code
         section.Description = dto.Description;
         section.DepartmentId = dto.DepartmentId;
         section.IsActive = dto.IsActive;
@@ -129,4 +129,89 @@ public class SectionService : ISectionService
         await _context.SaveChangesAsync();
         return true;
     }
+
+    #region Code Generation Methods
+
+    private string GenerateSectionCode(string name, int departmentId)
+    {
+        // Get department code for prefix
+        var departmentCode = _context.Departments
+            .Where(d => d.Id == departmentId)
+            .Select(d => d.Code)
+            .FirstOrDefault() ?? "DEPT";
+
+        var baseCode = GenerateBaseCode(name);
+        var fullCode = $"{departmentCode}-{baseCode}";
+        
+        return EnsureUniqueSectionCode(fullCode);
+    }
+
+    private string GenerateSectionCodeForUpdate(string name, int departmentId, int excludeId)
+    {
+        // Get department code for prefix
+        var departmentCode = _context.Departments
+            .Where(d => d.Id == departmentId)
+            .Select(d => d.Code)
+            .FirstOrDefault() ?? "DEPT";
+
+        var baseCode = GenerateBaseCode(name);
+        var fullCode = $"{departmentCode}-{baseCode}";
+        
+        return EnsureUniqueSectionCodeForUpdate(fullCode, excludeId);
+    }
+
+    private string GenerateBaseCode(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "SEC";
+
+        var cleanName = name.Trim().Replace(" ", "");
+        return cleanName.Length > 6 ? cleanName.Substring(0, 6).ToUpper() : cleanName.ToUpper();
+    }
+
+    private string EnsureUniqueSectionCode(string baseCode)
+    {
+        var existingCodes = _context.Sections
+            .Where(s => s.Code.StartsWith(baseCode))
+            .Select(s => s.Code)
+            .AsEnumerable()
+            .ToList();
+
+        if (!existingCodes.Contains(baseCode))
+            return baseCode;
+
+        int counter = 1;
+        string uniqueCode;
+        do
+        {
+            uniqueCode = $"{baseCode}{counter}";
+            counter++;
+        } while (existingCodes.Contains(uniqueCode));
+
+        return uniqueCode;
+    }
+
+    private string EnsureUniqueSectionCodeForUpdate(string baseCode, int excludeId)
+    {
+        var existingCodes = _context.Sections
+            .Where(s => s.Id != excludeId && s.Code.StartsWith(baseCode))
+            .Select(s => s.Code)
+            .AsEnumerable()
+            .ToList();
+
+        if (!existingCodes.Contains(baseCode))
+            return baseCode;
+
+        int counter = 1;
+        string uniqueCode;
+        do
+        {
+            uniqueCode = $"{baseCode}{counter}";
+            counter++;
+        } while (existingCodes.Contains(uniqueCode));
+
+        return uniqueCode;
+    }
+
+    #endregion
 }

@@ -63,6 +63,11 @@ public interface IReportsService
     /// ????? ????? ????
     /// </summary>
     Task<object> GenerateCustomReportAsync(CustomReportRequest request);
+
+    /// <summary>
+    /// الحصول على الأصول حسب الدائرة/القسم مع تفاصيل QR code للطباعة
+    /// </summary>
+    Task<object> GetAssetsByLocationDetailAsync(int? departmentId = null, int? sectionId = null);
 }
 
 /// <summary>

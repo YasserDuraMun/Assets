@@ -70,14 +70,14 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
         console.warn('?? API response not successful:', response.data);
         setDisposals([]);
         
-        // ??? ?? ??? ???? ??????? ???? ?????
+        // إظهار رسالة فقط عند أول تحميل
         if (pagination.current === 1) {
-          message.info('No disposed assets found. Try disposing an asset first.');
+          message.info('لم يتم العثور على أصول مستبعدة. جرّب استبعاد أصل أولاً؛');
         }
       }
     } catch (error) {
       console.error('?? Failed to load disposals:', error);
-      message.error('Failed to load disposed assets');
+      message.error('فشل تحميل الأصول المستبعدة');
       setDisposals([]);
     } finally {
       setLoading(false);
@@ -119,7 +119,20 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
   };
 
   const getReasonColor = (reason: string): string => {
-    switch (reason.toLowerCase()) {
+    const lowerReason = reason.toLowerCase();
+    
+    // Handle Arabic text
+    if (lowerReason.includes('تالف') || lowerReason.includes('معطوب')) return 'red';
+    if (lowerReason.includes('قديم') || lowerReason.includes('غير صالح')) return 'orange';
+    if (lowerReason.includes('مفقود')) return 'purple';
+    if (lowerReason.includes('مسروق')) return 'magenta';
+    if (lowerReason.includes('انتهاء العمر')) return 'blue';
+    if (lowerReason.includes('صيانة') || lowerReason.includes('إصلاح')) return 'cyan';
+    if (lowerReason.includes('استبدال')) return 'green';
+    if (lowerReason.includes('أخرى')) return 'default';
+    
+    // Fallback for English (in case of old data)
+    switch (lowerReason) {
       case 'damaged': return 'red';
       case 'obsolete': return 'orange';
       case 'lost': return 'purple';
@@ -133,26 +146,26 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
 
   const columns = [
     {
-      title: 'Asset Name',
+      title: 'اسم الأصل',
       dataIndex: 'assetName',
       key: 'assetName',
       width: 200,
     },
     {
-      title: 'Serial Number',
+      title: 'الرقم التسلسلي',
       dataIndex: 'assetSerialNumber',
       key: 'assetSerialNumber',
       width: 150,
     },
     {
-      title: 'Disposal Date',
+      title: 'تاريخ الاستبعاد',
       dataIndex: 'disposalDate',
       key: 'disposalDate',
       width: 120,
       render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
-      title: 'Reason',
+      title: 'السبب',
       dataIndex: 'disposalReason',
       key: 'disposalReason',
       width: 150,
@@ -163,27 +176,27 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
       ),
     },
     {
-      title: 'Notes',
+      title: 'ملاحظات',
       dataIndex: 'notes',
       key: 'notes',
       ellipsis: true,
       render: (text: string) => text || '-',
     },
     {
-      title: 'Performed By',
+      title: 'نفذها',
       dataIndex: 'performedBy',
       key: 'performedBy',
       width: 150,
     },
     {
-      title: 'Created',
+      title: 'تاريخ الإنشاء',
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 120,
       render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
-      title: 'Actions',
+      title: 'الإجراءات',
       key: 'actions',
       width: 100,
       fixed: 'right' as const,
@@ -194,7 +207,7 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
           icon={<EyeOutlined />}
           onClick={() => navigate(`/assets/${record.assetId}?includeDeleted=true`)}
         >
-          View Asset
+          عرض الأصل
         </Button>
       ),
     },
@@ -207,13 +220,13 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <CalendarOutlined style={{ marginRight: 8 }} />
-              <span>Disposed Assets</span>
+              <span>الأصول المستبعدة</span>
             </div>
             <Button 
               type="primary" 
               onClick={() => navigate('/assets')}
             >
-              Back to Assets
+              العودة للأصول
             </Button>
           </div>
         }
@@ -222,13 +235,13 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
         <Space size="middle" style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
           <Space>
             <Input.Search
-              placeholder="Search by asset name or serial number"
+              placeholder="البحث باسم الأصل أو الرقم التسلسلي"
               style={{ width: 250 }}
               onSearch={handleSearch}
               enterButton={<SearchOutlined />}
             />
             <Select
-              placeholder="Filter by reason"
+              placeholder="التصفية حسب السبب"
               style={{ width: 200 }}
               allowClear
               onChange={handleReasonFilter}
@@ -240,7 +253,7 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
               ))}
             </Select>
             <RangePicker
-              placeholder={['Start date', 'End date']}
+              placeholder={['تاريخ البداية', 'تاريخ النهاية']}
               onChange={handleDateRangeChange}
               style={{ width: 250 }}
             />
@@ -258,20 +271,20 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => 
-              `${range[0]}-${range[1]} of ${total} disposed assets`,
+              `${range[0]}-${range[1]} من ${total} أصل مستبعد`,
           }}
           onChange={handleTableChange}
           scroll={{ x: 1000 }}
           size="small"
           locale={{
-            emptyText: loading ? 'Loading...' : (
+            emptyText: loading ? 'جاري التحميل...' : (
               <div style={{ padding: 20, textAlign: 'center' }}>
                 <CalendarOutlined style={{ fontSize: 48, color: '#ccc', marginBottom: 16 }} />
-                <div>No disposed assets found</div>
+                <div>لم يتم العثور على أصول مستبعدة</div>
                 <div style={{ color: '#999', marginTop: 8 }}>
                   {disposals.length === 0 && !loading 
-                    ? 'Try disposing an asset from the Assets page first'
-                    : 'Try adjusting your search filters'
+                    ? 'جرّب استبعاد أصل من صفحة الأصول أولاً؛'
+                    : 'جرّب تعديل معايير البحث'
                   }
                 </div>
               </div>

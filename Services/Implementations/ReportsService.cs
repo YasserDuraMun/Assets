@@ -46,6 +46,7 @@ public class ReportsService : IReportsService
 
         var assetsByCategory = await query
             .Include(a => a.Category)
+            .Where(a => a.Category != null)
             .GroupBy(a => a.Category.Name)
             .Select(g => new { Category = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)
@@ -53,7 +54,7 @@ public class ReportsService : IReportsService
 
         var assetsByStatus = await query
             .Include(a => a.Status)
-            .Where(a => !a.IsDeleted)
+            .Where(a => !a.IsDeleted && a.Status != null)
             .GroupBy(a => a.Status.Name)
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)
@@ -76,12 +77,12 @@ public class ReportsService : IReportsService
                 totalValue,
                 currency = "ILS"
             },
-            assetsByCategory = assetsByCategory.Take(10).Select(x => new { category = TranslateToEnglish(x.Category), count = x.Count }),
-            assetsByStatus = assetsByStatus.Select(x => new { status = TranslateToEnglish(x.Status), count = x.Count }),
+            assetsByCategory = assetsByCategory.Take(10).Select(x => new { category = x.Category, count = x.Count }),
+            assetsByStatus = assetsByStatus.Select(x => new { status = x.Status, count = x.Count }),
             charts = new
             {
-                categoryDistribution = assetsByCategory.Select(x => new { label = TranslateToEnglish(x.Category), value = x.Count }),
-                statusDistribution = assetsByStatus.Select(x => new { label = TranslateToEnglish(x.Status), value = x.Count })
+                categoryDistribution = assetsByCategory.Select(x => new { label = x.Category, value = x.Count }),
+                statusDistribution = assetsByStatus.Select(x => new { label = x.Status, value = x.Count })
             }
         };
     }
@@ -119,7 +120,7 @@ public class ReportsService : IReportsService
                 .Select(g => new
                 {
                     reason = (int)g.Key,
-                    reasonText = g.Key.ToString(),
+                    reasonText = GetDisposalReasonText(g.Key),
                     count = g.Count()
                 }),
             recentDisposals = disposals
@@ -131,9 +132,9 @@ public class ReportsService : IReportsService
                     assetSerialNumber = d.Asset.SerialNumber,
                     category = d.Asset.Category?.Name,
                     disposalDate = d.DisposalDate,
-                    reason = d.DisposalReason.ToString(),
+                    reasonText = GetDisposalReasonText(d.DisposalReason),
                     notes = d.Notes,
-                    performedBy = d.PerformedByUser?.Username ?? "System"
+                    performedBy = d.PerformedByUser?.FullName ?? "غير معروف"
                 })
         };
     }
@@ -172,7 +173,7 @@ public class ReportsService : IReportsService
                 .Select(g => new
                 {
                     type = g.Key.ToString(),
-                    typeText = g.Key.ToString(),
+                    typeText = GetMaintenanceTypeText(g.Key),
                     count = g.Count(),
                     totalCost = g.Sum(x => x.Cost ?? 0)
                 }),
@@ -184,7 +185,7 @@ public class ReportsService : IReportsService
                     assetName = m.Asset.Name,
                     assetSerialNumber = m.Asset.SerialNumber,
                     nextMaintenanceDate = m.ScheduledDate!.Value,
-                    type = m.MaintenanceType.ToString(),
+                    type = GetMaintenanceTypeText(m.MaintenanceType),
                     daysUntilDue = (m.ScheduledDate!.Value - DateTime.UtcNow).Days
                 })
         };
@@ -286,9 +287,9 @@ public class ReportsService : IReportsService
         _logger.LogInformation("?? Generating assets by status report");
 
         var statusData = await _context.Assets
-            .Where(a => !a.IsDeleted)
+            .Where(a => !a.IsDeleted && a.Status != null)
             .Include(a => a.Status)
-            .GroupBy(a => new { a.Status.Id, a.Status.Name, a.Status.Color })
+            .GroupBy(a => new { a.Status!.Id, a.Status.Name, a.Status.Color })
             .Select(g => new
             {
                 statusId = g.Key.Id,
@@ -302,7 +303,7 @@ public class ReportsService : IReportsService
         var result = statusData.Select(s => new
         {
             statusId = s.statusId,
-            statusName = TranslateToEnglish(s.statusName),
+            statusName = s.statusName,
             color = s.color,
             assetsCount = s.assetsCount
         }).ToList();
@@ -320,9 +321,9 @@ public class ReportsService : IReportsService
         _logger.LogInformation("?? Generating assets by category report");
 
         var categoryData = await _context.Assets
-            .Where(a => !a.IsDeleted)
+            .Where(a => !a.IsDeleted && a.Category != null)
             .Include(a => a.Category)
-            .GroupBy(a => new { a.Category.Id, a.Category.Name, a.Category.Color })
+            .GroupBy(a => new { a.Category!.Id, a.Category.Name, a.Category.Color })
             .Select(g => new
             {
                 categoryId = g.Key.Id,
@@ -336,7 +337,7 @@ public class ReportsService : IReportsService
         var result = categoryData.Select(c => new
         {
             categoryId = c.categoryId,
-            categoryName = TranslateToEnglish(c.categoryName),
+            categoryName = c.categoryName,
             color = c.color,
             assetsCount = c.assetsCount
         }).ToList();
@@ -500,5 +501,128 @@ public class ReportsService : IReportsService
 
         // Return as-is if already in English
         return arabicText;
+    }
+
+    private static string GetDisposalReasonText(DisposalReason reason)
+    {
+        return reason switch
+        {
+            DisposalReason.Damaged => "تالف/معطوب",
+            DisposalReason.Obsolete => "قديم/غير صالح للاستخدام",
+            DisposalReason.Lost => "مفقود",
+            DisposalReason.Stolen => "مسروق",
+            DisposalReason.EndOfLife => "انتهاء العمر الافتراضي",
+            DisposalReason.Maintenance => "صيانة وإصلاح شامل",
+            DisposalReason.Replacement => "تم الاستبدال",
+            DisposalReason.Other => "أخرى",
+            _ => reason.ToString()
+        };
+    }
+
+    private static string GetMaintenanceTypeText(MaintenanceType type)
+    {
+        return type switch
+        {
+            MaintenanceType.Preventive => "صيانة وقائية",
+            MaintenanceType.Corrective => "صيانة إصلاحية",
+            MaintenanceType.Emergency => "صيانة طارئة",
+            MaintenanceType.Routine => "صيانة دورية",
+            MaintenanceType.Upgrade => "ترقية/تحسين",
+            _ => type.ToString()
+        };
+    }
+
+    /// <summary>
+    /// الحصول على الأصول حسب الدائرة/القسم مع تفاصيل QR code للطباعة
+    /// </summary>
+    public async Task<object> GetAssetsByLocationDetailAsync(int? departmentId = null, int? sectionId = null)
+    {
+        _logger.LogInformation("Getting assets by location detail - DepartmentId: {DeptId}, SectionId: {SectId}", 
+            departmentId, sectionId);
+
+        var query = _context.Assets
+            .Where(a => !a.IsDeleted)
+            .Include(a => a.Category)
+            .Include(a => a.Status)
+            .Include(a => a.CurrentEmployee)
+            .Include(a => a.CurrentWarehouse)
+            .Include(a => a.CurrentDepartment)
+            .Include(a => a.CurrentSection)
+            .AsQueryable();
+
+        // Filter by department if provided
+        if (departmentId.HasValue)
+        {
+            query = query.Where(a => a.CurrentDepartmentId == departmentId.Value);
+        }
+
+        // Filter by section if provided
+        if (sectionId.HasValue)
+        {
+            query = query.Where(a => a.CurrentSectionId == sectionId.Value);
+        }
+
+        var assets = await query
+            .OrderBy(a => a.Name)
+            .Select(a => new
+            {
+                Id = a.Id,
+                Name = a.Name,
+                SerialNumber = a.SerialNumber,
+                Barcode = a.Barcode,
+                QRCode = a.QRCode,
+                CategoryName = a.Category.Name,
+                StatusName = a.Status.Name,
+                StatusColor = a.Status.Color,
+                CurrentLocationType = (int)a.CurrentLocationType,
+                CurrentEmployeeName = a.CurrentEmployee != null ? a.CurrentEmployee.FullName : null,
+                CurrentWarehouseName = a.CurrentWarehouse!= null ? a.CurrentWarehouse.Name : null,
+                CurrentDepartmentName = a.CurrentDepartment != null ? a.CurrentDepartment.Name : null,
+                CurrentSectionName = a.CurrentSection != null ? a.CurrentSection.Name : null,
+                PurchaseDate = a.PurchaseDate,
+                PurchasePrice = a.PurchasePrice,
+                Notes = a.Notes
+            })
+            .ToListAsync();
+
+        // Get location information
+        string? locationFilter = null;
+        string? departmentName = null;
+        string? sectionName = null;
+
+        if (departmentId.HasValue)
+        {
+            var dept = await _context.Departments.FindAsync(departmentId.Value);
+            departmentName = dept?.Name;
+            locationFilter = $"الدائرة: {departmentName}";
+        }
+
+        if (sectionId.HasValue)
+        {
+            var sect = await _context.Sections.FindAsync(sectionId.Value);
+            sectionName = sect?.Name;
+            if (locationFilter != null)
+                locationFilter += $" - القسم: {sectionName}";
+            else
+                locationFilter = $"القسم: {sectionName}";
+        }
+
+        if (locationFilter == null)
+        {
+            locationFilter = "جميع المواقع";
+        }
+
+        return new
+        {
+            Summary = new
+            {
+                TotalAssets = assets.Count,
+                LocationFilter = locationFilter,
+                DepartmentName = departmentName,
+                SectionName = sectionName,
+                GeneratedAt = DateTime.Now
+            },
+            Assets = assets
+        };
     }
 }

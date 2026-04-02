@@ -25,6 +25,15 @@ public class CreateTransferDto
     public string? Notes { get; set; }
 }
 
+public class LocationDetailsDto
+{
+    public LocationType? Type { get; set; }
+    public string? EmployeeName { get; set; }
+    public string? WarehouseName { get; set; }
+    public string? DepartmentName { get; set; }
+    public string? SectionName { get; set; }
+}
+
 public class TransferDto
 {
     public int Id { get; set; }
@@ -35,6 +44,10 @@ public class TransferDto
     
     public string? FromLocation { get; set; }
     public string? ToLocation { get; set; }
+    
+    // تفاصيل الموقع الكاملة
+    public LocationDetailsDto? FromLocationDetails { get; set; }
+    public LocationDetailsDto? ToLocationDetails { get; set; }
     
     public string? Reason { get; set; }
     public string? Notes { get; set; }

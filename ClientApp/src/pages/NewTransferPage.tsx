@@ -38,7 +38,7 @@ export default function NewTransferPage() {
       }
     } catch (error) {
       console.error('Failed to load assets:', error);
-      message.error('Failed to load assets');
+      message.error('فشل تحميل الأصول');
     }
   };
 
@@ -124,7 +124,7 @@ export default function NewTransferPage() {
       }
     } catch (error) {
       console.error('Failed to load asset details:', error);
-      message.error('Failed to load asset details');
+      message.error('فشل تحميل تفاصيل الأصل');
       setSelectedAsset(null);
     }
   };
@@ -144,16 +144,16 @@ export default function NewTransferPage() {
     const locationParts: string[] = [];
     
     if (asset.currentEmployeeName) {
-      locationParts.push(`Employee: ${asset.currentEmployeeName}`);
+      locationParts.push(`موظف: ${asset.currentEmployeeName}`);
     }
     if (asset.currentWarehouseName) {
-      locationParts.push(`Warehouse: ${asset.currentWarehouseName}`);
+      locationParts.push(`مستودع: ${asset.currentWarehouseName}`);
     }
     if (asset.currentDepartmentName) {
-      locationParts.push(`Department: ${asset.currentDepartmentName}`);
+      locationParts.push(`قسم: ${asset.currentDepartmentName}`);
     }
     if (asset.currentSectionName) {
-      locationParts.push(`Section: ${asset.currentSectionName}`);
+      locationParts.push(`شعبة: ${asset.currentSectionName}`);
     }
     
     if (locationParts.length > 0) {
@@ -163,15 +163,15 @@ export default function NewTransferPage() {
     // Fallback to single location type
     switch (locationType) {
       case 'Employee':
-        return 'Employee Location (Name not available)';
+        return 'موقع موظف (الاسم غير متاح)';
       case 'Warehouse':
-        return 'Warehouse Location (Name not available)';
+        return 'موقع مستودع (الاسم غير متاح)';
       case 'Department':
-        return 'Department Location (Name not available)';
+        return 'موقع قسم (الاسم غير متاح)';
       case 'Section':
-        return 'Section Location (Name not available)';
+        return 'موقع شعبة (الاسم غير متاح)';
       default:
-        return 'Unknown Location';
+        return 'موقع غير معروف';
     }
   };
 
@@ -187,13 +187,13 @@ export default function NewTransferPage() {
 
   const handleSubmit = async (values: any) => {
     if (!selectedAsset) {
-      message.error('Please select an asset');
+      message.error('يرجى اختيار أصل');
       return;
     }
 
     // Check if at least one destination is selected
     if (!values.toEmployeeId && !values.toWarehouseId && !values.toDepartmentId && !values.toSectionId) {
-      message.error('Please select at least one destination location');
+      message.error('يرجى اختيار موقع وجهة واحد على الأقل');
       return;
     }
 
@@ -205,7 +205,7 @@ export default function NewTransferPage() {
       values.toSectionId !== selectedAsset.currentSectionId;
 
     if (!hasChange) {
-      message.warning('No changes detected. Please modify at least one location field to create a transfer.');
+      message.warning('لم يتم اكتشاف أي تغييرات. يرجى تعديل حقل موقع واحد على الأقل لإنشاء نقل.');
       return;
     }
 
@@ -245,14 +245,14 @@ export default function NewTransferPage() {
       if (values.toSectionId) transferData.toSectionId = values.toSectionId;
 
       await transferApi.create(transferData);
-      message.success('Transfer completed successfully');
+      message.success('تم إتمام النقل بنجاح');
       navigate('/transfers');
     } catch (error: any) {
       console.error('Failed to create transfer:', error);
       if (error.response?.data?.message) {
         message.error(error.response.data.message);
       } else {
-        message.error('Failed to create transfer');
+        message.error('فشل في إنشاء النقل');
       }
     } finally {
       setLoading(false);
@@ -261,7 +261,7 @@ export default function NewTransferPage() {
 
   return (
     <MainLayout>
-      <Card title={<span><SwapOutlined /> New Asset Transfer</span>}>
+      <Card title={<span><SwapOutlined /> نقل أصل جديد</span>}>
         <Form
           form={form}
           layout="vertical"
@@ -270,16 +270,16 @@ export default function NewTransferPage() {
             transferDate: dayjs(),
           }}
         >
-          <Divider>Asset Selection</Divider>
+          <Divider>اختيار الأصل</Divider>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="assetId"
-                label="Select Asset to Transfer"
-                rules={[{ required: true, message: 'Please select an asset' }]}
+                label="اختر الأصل لنقله"
+                rules={[{ required: true, message: 'يرجى اختيار أصل' }]}
               >
                 <Select
-                  placeholder="Search and select asset"
+                  placeholder="ابحث واختر أصل"
                   showSearch
                   optionFilterProp="children"
                   onChange={handleAssetChange}
@@ -299,8 +299,8 @@ export default function NewTransferPage() {
             <Col span={12}>
               <Form.Item
                 name="transferDate"
-                label="Transfer Date"
-                rules={[{ required: true, message: 'Please select transfer date' }]}
+                label="تاريخ النقل"
+                rules={[{ required: true, message: 'يرجى اختيار تاريخ النقل' }]}
               >
                 <DatePicker style={{ width: '100%' }} />
               </Form.Item>
@@ -309,12 +309,12 @@ export default function NewTransferPage() {
 
           {selectedAsset && (
             <Alert
-              message="Current Asset Location"
+              message="الموقع الحالي للأصل"
               description={
                 <div>
-                  <strong>From:</strong> {getCurrentLocation(selectedAsset)}
+                  <strong>من:</strong> {getCurrentLocation(selectedAsset)}
                   <br />
-                  <strong>Status:</strong> {selectedAsset.statusName || 'Unknown Status'}
+                  <strong>الحالة:</strong> {selectedAsset.statusName || 'حالة غير معروفة'}
                 </div>
               }
               type="info"
@@ -324,16 +324,16 @@ export default function NewTransferPage() {
           )}
 
           <Alert
-            message="Smart Transfer - Current Location Pre-filled"
-            description="The current location details are automatically filled in the form below. You can modify any field - for example, change only the employee while keeping the same department and warehouse."
+            message="نقل ذكي - الموقع الحالي معبأ تلقائياً"
+            description="تم ملء تفاصيل الموقع الحالي تلقائياً في النموذج أدناه. يمكنك تعديل أي حقل - على سبيل المثال، تغيير الموظف فقط مع الاحتفاظ بنفس القسم والمستودع."
             type="success"
             showIcon
             style={{ marginBottom: 16 }}
           />
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="toEmployeeId" label="Employee (Current Pre-filled)">
-                <Select placeholder="Select employee" showSearch optionFilterProp="children" allowClear>
+              <Form.Item name="toEmployeeId" label="الموظف (معبأ تلقائياً)">
+                <Select placeholder="اختر موظف" showSearch optionFilterProp="children" allowClear>
                   {employees.map(emp => (
                     <Select.Option key={emp.id} value={emp.id}>
                       {emp.fullName} ({emp.employeeNumber}) - {emp.departmentName}
@@ -343,8 +343,8 @@ export default function NewTransferPage() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="toWarehouseId" label="Warehouse (Current Pre-filled)">
-                <Select placeholder="Select warehouse" allowClear>
+              <Form.Item name="toWarehouseId" label="المستودع (معبأ تلقائياً)">
+                <Select placeholder="اختر مستودع" allowClear>
                   {warehouses.map(wh => (
                     <Select.Option key={wh.id} value={wh.id}>
                       {wh.name} - {wh.location}
@@ -356,8 +356,8 @@ export default function NewTransferPage() {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="toDepartmentId" label="Department (Current Pre-filled)">
-                <Select placeholder="Select department" onChange={handleToDepartmentChange} allowClear>
+              <Form.Item name="toDepartmentId" label="القسم (معبأ تلقائياً)">
+                <Select placeholder="اختر قسم" onChange={handleToDepartmentChange} allowClear>
                   {departments.map(dept => (
                     <Select.Option key={dept.id} value={dept.id}>
                       {dept.name}
@@ -367,8 +367,8 @@ export default function NewTransferPage() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="toSectionId" label="Section (Current Pre-filled)">
-                <Select placeholder="Select section" allowClear>
+              <Form.Item name="toSectionId" label="الشعبة (معبأ تلقائياً)">
+                <Select placeholder="اختر شعبة" allowClear>
                   {sections.map(sec => (
                     <Select.Option key={sec.id} value={sec.id}>
                       {sec.name}
@@ -379,26 +379,26 @@ export default function NewTransferPage() {
             </Col>
           </Row>
 
-          <Divider>Transfer Details</Divider>
+          <Divider>تفاصيل النقل</Divider>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="reason" label="Transfer Reason">
-                <Select placeholder="Select reason (optional)">
-                  <Select.Option value="Employee Request">Employee Request</Select.Option>
-                  <Select.Option value="Department Transfer">Department Transfer</Select.Option>
-                  <Select.Option value="Maintenance">Maintenance</Select.Option>
-                  <Select.Option value="Warehouse Storage">Warehouse Storage</Select.Option>
-                  <Select.Option value="Project Assignment">Project Assignment</Select.Option>
-                  <Select.Option value="Other">Other</Select.Option>
+              <Form.Item name="reason" label="سبب النقل">
+                <Select placeholder="اختر السبب (اختياري)">
+                  <Select.Option value="Employee Request">طلب موظف</Select.Option>
+                  <Select.Option value="Department Transfer">نقل قسم</Select.Option>
+                  <Select.Option value="Maintenance">صيانة</Select.Option>
+                  <Select.Option value="Warehouse Storage">تخزين في مستودع</Select.Option>
+                  <Select.Option value="Project Assignment">تعيين مشروع</Select.Option>
+                  <Select.Option value="Other">أخرى</Select.Option>
                 </Select>
               </Form.Item>
             </Col>
           </Row>
 
-          <Form.Item name="notes" label="Notes">
+          <Form.Item name="notes" label="ملاحظات">
             <Input.TextArea
               rows={3}
-              placeholder="Additional notes about the transfer (optional)"
+              placeholder="ملاحظات إضافية حول النقل (اختياري)"
             />
           </Form.Item>
 
@@ -406,10 +406,10 @@ export default function NewTransferPage() {
           <Form.Item>
             <Space size="middle">
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                Execute Transfer
+                تنفيذ النقل
               </Button>
               <Button icon={<CloseOutlined />} onClick={() => navigate('/transfers')}>
-                Cancel
+                إلغاء
               </Button>
             </Space>
           </Form.Item>

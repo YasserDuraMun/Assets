@@ -8,13 +8,8 @@ public class CreateWarehouseDto
     [StringLength(200)]
     public string Name { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "??? ???????? ?????")]
-    [StringLength(50)]
-    public string Code { get; set; } = string.Empty;
-
     public string? Location { get; set; }
     public int? ResponsibleEmployeeId { get; set; }
-    public int? Capacity { get; set; }
     public string? Notes { get; set; }
 }
 
@@ -27,13 +22,8 @@ public class UpdateWarehouseDto
     [StringLength(200)]
     public string Name { get; set; } = string.Empty;
 
-    [Required]
-    [StringLength(50)]
-    public string Code { get; set; } = string.Empty;
-
     public string? Location { get; set; }
     public int? ResponsibleEmployeeId { get; set; }
-    public int? Capacity { get; set; }
     public string? Notes { get; set; }
     public bool IsActive { get; set; }
 }
@@ -46,7 +36,6 @@ public class WarehouseDto
     public string? Location { get; set; }
     public int? ResponsibleEmployeeId { get; set; }
     public string? ResponsibleEmployeeName { get; set; }
-    public int? Capacity { get; set; }
     public int CurrentAssetsCount { get; set; }
     public string? Notes { get; set; }
     public bool IsActive { get; set; }

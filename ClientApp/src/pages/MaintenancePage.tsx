@@ -89,12 +89,12 @@ export default function MaintenancePage() {
         setMaintenance([]);
         
         if (pagination.current === 1) {
-          message.info('No maintenance records found. Create maintenance records for your assets.');
+          message.info('لم يتم العثور على سجلات صيانة. إنشاء سجلات صيانة لأصولك.');
         }
       }
     } catch (error) {
       console.error('?? Failed to load maintenance records:', error);
-      message.error('Failed to load maintenance records');
+      message.error('فشل تحميل سجلات الصيانة');
       setMaintenance([]);
     } finally {
       setLoading(false);
@@ -176,31 +176,31 @@ export default function MaintenancePage() {
       };
 
       await maintenanceApi.complete(id, completeData);
-      message.success('Maintenance completed successfully');
+      message.success('تم إكمال الصيانة بنجاح');
       fetchMaintenance();
       fetchStats();
     } catch (error) {
       console.error('Failed to complete maintenance:', error);
-      message.error('Failed to complete maintenance');
+      message.error('فشل إكمال الصيانة');
     }
   };
 
   const handleCancelMaintenance = (id: number) => {
     confirm({
-      title: 'Cancel Maintenance',
-      content: 'Are you sure you want to cancel this maintenance?',
-      okText: 'Yes, Cancel',
+      title: 'إلغاء الصيانة',
+      content: 'هل أنت متأكد من إلغاء هذه الصيانة؟',
+      okText: 'نعم، إلغاء',
       okType: 'danger',
-      cancelText: 'No',
+      cancelText: 'لا',
       async onOk() {
         try {
           await maintenanceApi.cancel(id, 'Cancelled by user');
-          message.success('Maintenance cancelled successfully');
+          message.success('تم إلغاء الصيانة بنجاح');
           fetchMaintenance();
           fetchStats();
         } catch (error) {
           console.error('Failed to cancel maintenance:', error);
-          message.error('Failed to cancel maintenance');
+          message.error('فشل إلغاء الصيانة');
         }
       },
     });
@@ -208,20 +208,20 @@ export default function MaintenancePage() {
 
   const handleDeleteMaintenance = (id: number) => {
     confirm({
-      title: 'Delete Maintenance Record',
-      content: 'Are you sure you want to delete this maintenance record? This action cannot be undone.',
-      okText: 'Yes, Delete',
+      title: 'حذف سجل الصيانة',
+      content: 'هل أنت متأكد من حذف سجل الصيانة هذا؟ لا يمكن التراجع عن هذا الإجراء.',
+      okText: 'نعم، حذف',
       okType: 'danger',
-      cancelText: 'No',
+      cancelText: 'لا',
       async onOk() {
         try {
           await maintenanceApi.delete(id);
-          message.success('Maintenance record deleted successfully');
+          message.success('تم حذف سجل الصيانة بنجاح');
           fetchMaintenance();
           fetchStats();
         } catch (error) {
           console.error('Failed to delete maintenance:', error);
-          message.error('Failed to delete maintenance record');
+          message.error('فشل حذف سجل الصيانة');
         }
       },
     });
@@ -239,11 +239,11 @@ export default function MaintenancePage() {
 
   const getTypeColor = (type: number): string => {
     switch (type) {
-      case 1: return 'blue';      // Preventive (????? ??????)
-      case 2: return 'orange';    // Corrective (????? ???????)
-      case 3: return 'red';       // Emergency (????? ?????)
-      case 4: return 'green';     // Routine (????? ?????)
-      case 5: return 'purple';    // Upgrade (????? ??????)
+      case 1: return 'blue';      // Preventive
+      case 2: return 'orange';    // Corrective
+      case 3: return 'red';       // Emergency
+      case 4: return 'green';     // Routine
+      case 5: return 'purple';    // Upgrade
       default: return 'default';
     }
   };
@@ -255,7 +255,7 @@ export default function MaintenancePage() {
         label: (
           <Space>
             <EyeOutlined />
-            View Asset
+            عرض الأصل
           </Space>
         ),
         onClick: () => navigate(`/assets/${record.assetId}`),
@@ -269,7 +269,7 @@ export default function MaintenancePage() {
         label: (
           <Space>
             <CheckCircleOutlined />
-            Complete
+            إكمال
           </Space>
         ),
         onClick: () => handleCompleteMaintenance(record.id),
@@ -283,7 +283,7 @@ export default function MaintenancePage() {
         label: (
           <Space style={{ color: 'red' }}>
             <ExclamationCircleOutlined />
-            Cancel
+            إلغاء
           </Space>
         ),
         onClick: () => handleCancelMaintenance(record.id),
@@ -296,7 +296,7 @@ export default function MaintenancePage() {
       label: (
         <Space style={{ color: 'red' }}>
           <DeleteOutlined />
-          Delete
+          حذف
         </Space>
       ),
       onClick: () => handleDeleteMaintenance(record.id),
@@ -307,7 +307,7 @@ export default function MaintenancePage() {
 
   const columns = [
     {
-      title: 'Asset',
+      title: 'الأصل',
       key: 'asset',
       width: 200,
       render: (_: any, record: AssetMaintenance) => (
@@ -318,7 +318,7 @@ export default function MaintenancePage() {
       ),
     },
     {
-      title: 'Type',
+      title: 'النوع',
       dataIndex: 'maintenanceType',
       key: 'maintenanceType',
       width: 120,
@@ -329,7 +329,7 @@ export default function MaintenancePage() {
       ),
     },
     {
-      title: 'Description',
+      title: 'الوصف',
       dataIndex: 'description',
       key: 'description',
       ellipsis: true,
@@ -340,14 +340,14 @@ export default function MaintenancePage() {
       ),
     },
     {
-      title: 'Date',
+      title: 'التاريخ',
       dataIndex: 'maintenanceDate',
       key: 'maintenanceDate',
       width: 100,
       render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
-      title: 'Status',
+      title: 'الحالة',
       key: 'status',
       width: 120,
       render: (_: any, record: AssetMaintenance) => (
@@ -360,7 +360,7 @@ export default function MaintenancePage() {
       ),
     },
     {
-      title: 'Cost',
+      title: 'التكلفة',
       dataIndex: 'cost',
       key: 'cost',
       width: 100,
@@ -368,7 +368,7 @@ export default function MaintenancePage() {
         cost ? `${cost.toLocaleString()} ${record.currency}` : '-',
     },
     {
-      title: 'Next Due',
+      title: 'الصيانة التالية',
       dataIndex: 'nextMaintenanceDate',
       key: 'nextMaintenanceDate',
       width: 100,
@@ -383,14 +383,14 @@ export default function MaintenancePage() {
             color: isOverdue ? 'red' : isUpcoming ? 'orange' : 'inherit' 
           }}>
             {dayjs(date).format('DD/MM/YYYY')}
-            {isOverdue && <div style={{ fontSize: 10 }}>OVERDUE</div>}
-            {isUpcoming && !isOverdue && <div style={{ fontSize: 10 }}>DUE SOON</div>}
+            {isOverdue && <div style={{ fontSize: 10 }}>متأخرة</div>}
+            {isUpcoming && !isOverdue && <div style={{ fontSize: 10 }}>قريبة</div>}
           </div>
         );
       },
     },
     {
-      title: 'Performed By',
+      title: 'نفذها',
       dataIndex: 'performedBy',
       key: 'performedBy',
       width: 120,
@@ -398,7 +398,7 @@ export default function MaintenancePage() {
       render: (text: string) => text || '-',
     },
     {
-      title: 'Actions',
+      title: 'الإجراءات',
       key: 'actions',
       width: 80,
       fixed: 'right' as const,
@@ -426,7 +426,7 @@ export default function MaintenancePage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="Total Records"
+                title="إجمالي السجلات"
                 value={stats.totalMaintenanceRecords}
                 prefix={<ToolOutlined />}
               />
@@ -435,7 +435,7 @@ export default function MaintenancePage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="Pending"
+                title="قيد الانتظار"
                 value={stats.pendingMaintenance}
                 valueStyle={{ color: '#1677ff' }}
                 prefix={<ClockCircleOutlined />}
@@ -445,7 +445,7 @@ export default function MaintenancePage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="Overdue"
+                title="متأخرة"
                 value={stats.overdueMaintenance}
                 valueStyle={{ color: '#ff4d4f' }}
                 prefix={<ExclamationCircleOutlined />}
@@ -455,7 +455,7 @@ export default function MaintenancePage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="This Month Cost"
+                title="تكلفة هذا الشهر"
                 value={stats.totalCostThisMonth}
                 precision={0}
                 suffix={stats.currency}
@@ -471,7 +471,7 @@ export default function MaintenancePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <ToolOutlined style={{ marginRight: 8 }} />
-              <span>Maintenance Records</span>
+              <span>سجلات الصيانة</span>
             </div>
             <Space>
               <Button 
@@ -479,7 +479,7 @@ export default function MaintenancePage() {
                 icon={<PlusOutlined />}
                 onClick={() => navigate('/assets')}
               >
-                Schedule Maintenance
+                جدولة صيانة
               </Button>
             </Space>
           </div>
@@ -489,13 +489,13 @@ export default function MaintenancePage() {
         <Space size="middle" style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
           <Space wrap>
             <Input.Search
-              placeholder="Search by asset name, description, or technician"
+              placeholder="البحث باسم الأصل، الوصف، أو الفني"
               style={{ width: 300 }}
               onSearch={handleSearch}
               enterButton={<SearchOutlined />}
             />
             <Select
-              placeholder="Filter by type"
+              placeholder="التصفية حسب النوع"
               style={{ width: 160 }}
               allowClear
               onChange={handleTypeFilter}
@@ -507,7 +507,7 @@ export default function MaintenancePage() {
               ))}
             </Select>
             <Select
-              placeholder="Filter by status"
+              placeholder="التصفية حسب الحالة"
               style={{ width: 160 }}
               allowClear
               onChange={handleStatusFilter}
@@ -519,7 +519,7 @@ export default function MaintenancePage() {
               ))}
             </Select>
             <RangePicker
-              placeholder={['Start date', 'End date']}
+              placeholder={['تاريخ البداية', 'تاريخ النهاية']}
               onChange={handleDateRangeChange}
               style={{ width: 250 }}
             />
@@ -537,20 +537,20 @@ export default function MaintenancePage() {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => 
-              `${range[0]}-${range[1]} of ${total} maintenance records`,
+              `${range[0]}-${range[1]} من ${total} سجل صيانة`,
           }}
           onChange={handleTableChange}
           scroll={{ x: 1200 }}
           size="small"
           locale={{
-            emptyText: loading ? 'Loading...' : (
+            emptyText: loading ? 'جاري التحميل...' : (
               <div style={{ padding: 20, textAlign: 'center' }}>
                 <ToolOutlined style={{ fontSize: 48, color: '#ccc', marginBottom: 16 }} />
-                <div>No maintenance records found</div>
+                <div>لم يتم العثور على سجلات صيانة</div>
                 <div style={{ color: '#999', marginTop: 8 }}>
                   {maintenance.length === 0 && !loading 
-                    ? 'Schedule maintenance for your assets to get started'
-                    : 'Try adjusting your search filters'
+                    ? 'جدول صيانة لأصولك للبدء'
+                    : 'جرّب تعديل معايير البحث'
                   }
                 </div>
               </div>

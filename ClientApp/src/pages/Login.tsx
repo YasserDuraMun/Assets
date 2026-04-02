@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Form, Input, Button, Card, message, Typography } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../api/axios.config';
 
 const { Title } = Typography;
@@ -14,6 +15,7 @@ interface LoginForm {
 export default function Login() {
 const [loading, setLoading] = useState(false);
 const navigate = useNavigate();
+const { login } = useAuth();
 
   const handleLogin = async (values: LoginForm) => {
     setLoading(true);
@@ -21,20 +23,32 @@ const navigate = useNavigate();
       const response = await api.post('/auth/login', values);
       
       if (response.data.success) {
-        localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
-        message.success('Login successful');
+        const userData = response.data.data;
+        console.log('📝 Login Response Data:', userData);
+        console.log('👤 User FullName:', userData.fullName);
+        console.log('👤 User Username:', userData.username);
+        console.log('👤 User Role:', userData.role);
         
-        // ?????? ???? ?? ??????
+        // Use AuthContext login method
+        login(userData.token, {
+          username: userData.username,
+          fullName: userData.fullName,
+          role: userData.role,
+          expiresAt: userData.expiresAt
+        });
+        
+        message.success('تم تسجيل الدخول بنجاح');
+        
+        // Navigate to dashboard
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          navigate('/dashboard');
         }, 1000);
       } else {
-        message.error(response.data.message || 'Login failed');
+        message.error(response.data.message || 'فشل تسجيل الدخول');
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      message.error(error.response?.data?.message || 'Login failed');
+      message.error(error.response?.data?.message || 'فشل تسجيل الدخول');
     } finally {
       setLoading(false);
     }
@@ -50,8 +64,8 @@ const navigate = useNavigate();
     }}>
       <Card style={{ width: 400, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <Title level={2}>Asset Management System</Title>
-          <p>Municipal Asset Management Portal</p>
+          <Title level={2}>نظام إدارة الأصول</Title>
+          <p>بوابة إدارة الأصول البلدية</p>
         </div>
 
         <Form
@@ -62,21 +76,21 @@ const navigate = useNavigate();
         >
           <Form.Item
             name="username"
-            rules={[{ required: true, message: 'Please enter username' }]}
+            rules={[{ required: true, message: 'الرجاء إدخال اسم المستخدم' }]}
           >
             <Input
               prefix={<UserOutlined />}
-              placeholder="Username"
+              placeholder="اسم المستخدم"
             />
           </Form.Item>
 
           <Form.Item
             name="password"
-            rules={[{ required: true, message: 'Please enter password' }]}
+            rules={[{ required: true, message: 'الرجاء إدخال كلمة المرور' }]}
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder="Password"
+              placeholder="كلمة المرور"
             />
           </Form.Item>
 
@@ -87,13 +101,13 @@ const navigate = useNavigate();
               loading={loading}
               style={{ width: '100%' }}
             >
-              Login
+              تسجيل الدخول
             </Button>
           </Form.Item>
         </Form>
 
         <div style={{ textAlign: 'center', marginTop: 16, color: '#666' }}>
-          <small>Default: admin / admin123</small>
+          <small>افتراضي: admin / admin123</small>
         </div>
       </Card>
     </div>

@@ -115,6 +115,7 @@ public class AssetDto
     public decimal? PurchasePrice { get; set; }
     
     public bool HasWarranty { get; set; }
+    public int? WarrantyMonths { get; set; }
     public DateTime? WarrantyExpiryDate { get; set; }
     
     public string? ImagePath { get; set; }

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Assets.Services.Implementations;
 
 /// <summary>
-/// ????? ???? ????? ????? ?????? ????????
+/// خدمة إدارة صيانة الأصول الثابتة
 /// </summary>
 public class MaintenanceService : IMaintenanceService
 {
@@ -87,13 +87,13 @@ public class MaintenanceService : IMaintenanceService
                 AssetName = m.Asset.Name,
                 AssetSerialNumber = m.Asset.SerialNumber,
                 MaintenanceType = m.MaintenanceType,
-                MaintenanceTypeText = m.MaintenanceType.ToString(),
+                MaintenanceTypeText = GetMaintenanceTypeText(m.MaintenanceType),
                 MaintenanceDate = m.MaintenanceDate,
                 Description = m.Description,
                 Cost = m.Cost,
                 Currency = m.Currency,
                 Status = m.Status,
-                StatusText = m.Status.ToString(),
+                StatusText = GetStatusText(m.Status),
                 StatusColor = GetStatusColor(m.Status),
                 NextMaintenanceDate = m.NextMaintenanceDate,
                 IsOverdue = m.NextMaintenanceDate.HasValue && m.NextMaintenanceDate < DateTime.Now,
@@ -163,13 +163,13 @@ public class MaintenanceService : IMaintenanceService
                 AssetName = m.Asset.Name,
                 AssetSerialNumber = m.Asset.SerialNumber,
                 MaintenanceType = m.MaintenanceType,
-                MaintenanceTypeText = m.MaintenanceType.ToString(),
+                MaintenanceTypeText = GetMaintenanceTypeText(m.MaintenanceType),
                 MaintenanceDate = m.MaintenanceDate,
                 Description = m.Description,
                 Cost = m.Cost,
                 Currency = m.Currency,
                 Status = m.Status,
-                StatusText = m.Status.ToString(),
+                StatusText = GetStatusText(m.Status),
                 StatusColor = GetStatusColor(m.Status),
                 NextMaintenanceDate = m.NextMaintenanceDate,
                 IsOverdue = m.NextMaintenanceDate.HasValue && m.NextMaintenanceDate < DateTime.Now,
@@ -185,7 +185,7 @@ public class MaintenanceService : IMaintenanceService
         // Verify asset exists
         var asset = await _context.Assets.FindAsync(dto.AssetId);
         if (asset == null)
-            throw new Exception("????? ??? ?????");
+            throw new Exception("الأصل غير موجود");
 
         var maintenance = new AssetMaintenance
         {
@@ -227,7 +227,7 @@ public class MaintenanceService : IMaintenanceService
     {
         var maintenance = await _context.AssetMaintenances.FindAsync(dto.Id);
         if (maintenance == null)
-            throw new Exception("??? ??????? ??? ?????");
+            throw new Exception("سجل الصيانة غير موجود");
 
         // Update fields
         maintenance.MaintenanceType = dto.MaintenanceType;
@@ -256,7 +256,7 @@ public class MaintenanceService : IMaintenanceService
     {
         var maintenance = await _context.AssetMaintenances.FindAsync(dto.Id);
         if (maintenance == null)
-            throw new Exception("??? ??????? ??? ?????");
+            throw new Exception("سجل الصيانة غير موجود");
 
         maintenance.Status = MaintenanceStatus.Completed;
         maintenance.CompletedDate = dto.CompletedDate;
@@ -275,7 +275,7 @@ public class MaintenanceService : IMaintenanceService
         {
             maintenance.Notes = string.IsNullOrWhiteSpace(maintenance.Notes)
                 ? dto.CompletionNotes
-                : maintenance.Notes + "\n\n??????? ???????: " + dto.CompletionNotes;
+                : maintenance.Notes + "\n\nملاحظات الإكمال: " + dto.CompletionNotes;
         }
 
         await _context.SaveChangesAsync();
@@ -296,8 +296,8 @@ public class MaintenanceService : IMaintenanceService
         if (!string.IsNullOrWhiteSpace(cancellationReason))
         {
             maintenance.Notes = string.IsNullOrWhiteSpace(maintenance.Notes)
-                ? "????: " + cancellationReason
-                : maintenance.Notes + "\n\n????: " + cancellationReason;
+                ? "السبب: " + cancellationReason
+                : maintenance.Notes + "\n\nالسبب: " + cancellationReason;
         }
 
         await _context.SaveChangesAsync();
@@ -324,13 +324,13 @@ public class MaintenanceService : IMaintenanceService
                 AssetName = m.Asset.Name,
                 AssetSerialNumber = m.Asset.SerialNumber,
                 MaintenanceType = m.MaintenanceType,
-                MaintenanceTypeText = m.MaintenanceType.ToString(),
+                MaintenanceTypeText = GetMaintenanceTypeText(m.MaintenanceType),
                 MaintenanceDate = m.MaintenanceDate,
                 Description = m.Description,
                 Cost = m.Cost,
                 Currency = m.Currency,
                 Status = m.Status,
-                StatusText = m.Status.ToString(),
+                StatusText = GetStatusText(m.Status),
                 StatusColor = GetStatusColor(m.Status),
                 NextMaintenanceDate = m.NextMaintenanceDate,
                 IsOverdue = m.NextMaintenanceDate.HasValue && m.NextMaintenanceDate < DateTime.Now,
@@ -357,13 +357,13 @@ public class MaintenanceService : IMaintenanceService
                 AssetName = m.Asset.Name,
                 AssetSerialNumber = m.Asset.SerialNumber,
                 MaintenanceType = m.MaintenanceType,
-                MaintenanceTypeText = m.MaintenanceType.ToString(),
+                MaintenanceTypeText = GetMaintenanceTypeText(m.MaintenanceType),
                 MaintenanceDate = m.MaintenanceDate,
                 Description = m.Description,
                 Cost = m.Cost,
                 Currency = m.Currency,
                 Status = m.Status,
-                StatusText = m.Status.ToString(),
+                StatusText = GetStatusText(m.Status),
                 StatusColor = GetStatusColor(m.Status),
                 NextMaintenanceDate = m.NextMaintenanceDate,
                 IsOverdue = true,
@@ -468,7 +468,7 @@ public class MaintenanceService : IMaintenanceService
     {
         var asset = await _context.Assets.FindAsync(assetId);
         if (asset == null)
-            throw new Exception("????? ??? ?????");
+            throw new Exception("الأصل غير موجود");
 
         var maintenanceRecords = await _context.AssetMaintenances
             .Where(m => m.AssetId == assetId)
@@ -578,11 +578,11 @@ public class MaintenanceService : IMaintenanceService
     {
         return type switch
         {
-            MaintenanceType.Preventive => "????? ??????",
-            MaintenanceType.Corrective => "????? ???????",
-            MaintenanceType.Emergency => "????? ?????",
-            MaintenanceType.Routine => "????? ?????",
-            MaintenanceType.Upgrade => "????? ??????",
+            MaintenanceType.Preventive => "صيانة وقائية",
+            MaintenanceType.Corrective => "صيانة إصلاحية",
+            MaintenanceType.Emergency => "صيانة طارئة",
+            MaintenanceType.Routine => "صيانة دورية",
+            MaintenanceType.Upgrade => "ترقية/تحسين",
             _ => type.ToString()
         };
     }
@@ -591,10 +591,10 @@ public class MaintenanceService : IMaintenanceService
     {
         return status switch
         {
-            MaintenanceStatus.Scheduled => "??????",
-            MaintenanceStatus.InProgress => "??? ???????",
-            MaintenanceStatus.Completed => "??????",
-            MaintenanceStatus.Cancelled => "?????",
+            MaintenanceStatus.Scheduled => "مجدولة",
+            MaintenanceStatus.InProgress => "قيد التنفيذ",
+            MaintenanceStatus.Completed => "مكتملة",
+            MaintenanceStatus.Cancelled => "ملغاة",
             _ => status.ToString()
         };
     }

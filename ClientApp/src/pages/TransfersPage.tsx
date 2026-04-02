@@ -11,6 +11,27 @@ import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
 
+// Helper function to translate transfer reasons
+const getReasonInArabic = (reason: string | undefined): string => {
+  if (!reason) return '-';
+  
+  const translations: { [key: string]: string } = {
+    'Employee Request': 'طلب موظف',
+    'Transfer Request': 'طلب نقل',
+    'Relocation': 'إعادة توزيع',
+    'Department Reorganization': 'إعادة تنظيم الأقسام',
+    'Equipment Upgrade': 'ترقية المعدات',
+    'Maintenance': 'صيانة',
+    'End of Project': 'انتهاء المشروع',
+    'Employee Termination': 'إنهاء خدمة موظف',
+    'New Assignment': 'تكليف جديد',
+    'Temporary Loan': 'إعارة مؤقتة',
+    'Other': 'أخرى'
+  };
+  
+  return translations[reason] || reason;
+};
+
 export default function TransfersPage() {
   const navigate = useNavigate();
   const [transfers, setTransfers] = useState<Transfer[]>([]);
@@ -64,7 +85,7 @@ export default function TransfersPage() {
       }
     } catch (error) {
       console.error('Failed to load transfers:', error);
-      message.error('Failed to load transfers');
+      message.error('فشل تحميل عمليات النقل');
     } finally {
       setLoading(false);
     }
@@ -118,20 +139,20 @@ export default function TransfersPage() {
 
   const columns = [
     {
-      title: 'Asset',
+      title: 'الأصل',
       key: 'asset',
       width: 200,
       render: (_: unknown, record: Transfer) => (
         <div>
           <div style={{ fontWeight: 'bold' }}>{record.assetName}</div>
           <div style={{ fontSize: '12px', color: '#666' }}>
-            S/N: {record.assetSerialNumber}
+            رقم تسلسلي: {record.assetSerialNumber}
           </div>
         </div>
       ),
     },
     {
-      title: 'Transfer Date',
+      title: 'تاريخ النقل',
       dataIndex: 'transferDate',
       key: 'transferDate',
       width: 120,
@@ -140,42 +161,46 @@ export default function TransfersPage() {
         dayjs(a.transferDate).unix() - dayjs(b.transferDate).unix(),
     },
     {
-      title: 'From Location',
+      title: 'من موقع',
       dataIndex: 'fromLocation',
       key: 'fromLocation',
       width: 150,
       render: (location: string) => location ? (
         <Tag color="orange">{location}</Tag>
       ) : (
-        <Tag color="default">Unknown</Tag>
+        <Tag color="default">غير معروف</Tag>
       ),
     },
     {
-      title: 'To Location',
+      title: 'إلى موقع',
       dataIndex: 'toLocation',
       key: 'toLocation',
       width: 150,
       render: (location: string) => location ? (
         <Tag color="green">{location}</Tag>
       ) : (
-        <Tag color="default">Unknown</Tag>
+        <Tag color="default">غير معروف</Tag>
       ),
     },
     {
-      title: 'Reason',
+      title: 'السبب',
       dataIndex: 'reason',
       key: 'reason',
       width: 150,
-      render: (reason: string) => reason || '-',
+      render: (reason: string) => (
+        <Tag color={reason ? 'blue' : 'default'}>
+          {getReasonInArabic(reason)}
+        </Tag>
+      ),
     },
     {
-      title: 'Performed By',
+      title: 'نفذها',
       dataIndex: 'performedBy',
       key: 'performedBy',
       width: 120,
     },
     {
-      title: 'Actions',
+      title: 'الإجراءات',
       key: 'actions',
       width: 120,
       fixed: 'right' as const,
@@ -187,7 +212,7 @@ export default function TransfersPage() {
             icon={<EyeOutlined />}
             onClick={() => navigate(`/transfers/${record.id}`)}
           >
-            View
+            عرض
           </Button>
         </Space>
       ),
@@ -199,13 +224,13 @@ export default function TransfersPage() {
       <Card
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span><SwapOutlined /> Asset Transfers</span>
+            <span><SwapOutlined /> عمليات نقل الأصول</span>
             <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => navigate('/transfers/new')}
             >
-              New Transfer
+              نقل جديد
             </Button>
           </div>
         }
@@ -213,7 +238,7 @@ export default function TransfersPage() {
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Space wrap>
             <Input.Search
-              placeholder="Search by asset name, S/N, or performed by..."
+              placeholder="البحث باسم الأصل، الرقم التسلسلي، أو من نفذها..."
               allowClear
               onSearch={handleSearch}
               onChange={(e) => !e.target.value && handleSearch('')}
@@ -221,7 +246,7 @@ export default function TransfersPage() {
               prefix={<SearchOutlined />}
             />
             <Select
-              placeholder="Filter by Asset"
+              placeholder="التصفية حسب الأصل"
               allowClear
               style={{ width: 200 }}
               onChange={handleAssetFilter}
@@ -235,7 +260,7 @@ export default function TransfersPage() {
               ))}
             </Select>
             <Select
-              placeholder="Filter by Employee"
+              placeholder="التصفية حسب الموظف"
               allowClear
               style={{ width: 200 }}
               onChange={handleEmployeeFilter}
@@ -249,7 +274,7 @@ export default function TransfersPage() {
               ))}
             </Select>
             <RangePicker
-              placeholder={['Start Date', 'End Date']}
+              placeholder={['تاريخ البداية', 'تاريخ النهاية']}
               onChange={handleDateRangeFilter}
               style={{ width: 250 }}
             />
@@ -263,7 +288,7 @@ export default function TransfersPage() {
             pagination={{
               pageSize: 20,
               showSizeChanger: true,
-              showTotal: (total) => `Total ${total} transfers`,
+              showTotal: (total) => `إجمالي ${total} عملية نقل`,
             }}
             scroll={{ x: 1000 }}
           />

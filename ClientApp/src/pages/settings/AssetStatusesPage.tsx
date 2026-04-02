@@ -23,7 +23,7 @@ export default function AssetStatusesPage() {
         setStatuses(response.data.data);
       }
     } catch (error) {
-      message.error('Failed to load statuses');
+      message.error('فشل تحميل الحالات');
     } finally {
       setLoading(false);
     }
@@ -37,72 +37,83 @@ export default function AssetStatusesPage() {
 
   const handleEdit = (record: AssetStatus) => {
     setEditingStatus(record);
-    form.setFieldsValue(record);
+    // Don't include code in the form - it's auto-generated
+    const { code, ...formData } = record;
+    form.setFieldsValue(formData);
     setModalVisible(true);
   };
 
   const handleDelete = async (id: number) => {
     try {
       await statusApi.delete(id);
-      message.success('Status deleted successfully');
+      message.success('تم حذف الحالة بنجاح');
       fetchStatuses();
     } catch (error) {
-      message.error('Failed to delete status');
+      message.error('فشل حذف الحالة');
     }
   };
 
   const handleSubmit = async (values: Partial<AssetStatus>) => {
     try {
       if (editingStatus) {
-        await statusApi.update(editingStatus.id, values);
-        message.success('Status updated successfully');
+        // For updates, ensure we include the ID and preserve isActive
+        const updateData = {
+          ...values,
+          id: editingStatus.id,
+          isActive: values.isActive !== undefined ? values.isActive : editingStatus.isActive
+        };
+        await statusApi.update(editingStatus.id, updateData);
+        message.success('تم تحديث الحالة بنجاح');
       } else {
-        await statusApi.create(values);
-        message.success('Status created successfully');
+        // For creation, don't include code - it will be generated
+        const { code, ...createData } = values;
+        await statusApi.create(createData);
+        message.success('تم إنشاء الحالة بنجاح');
       }
       setModalVisible(false);
       fetchStatuses();
     } catch (error) {
-      message.error('Failed to save status');
+      console.error('Status operation error:', error);
+      message.error(editingStatus ? 'فشل تحديث الحالة' : 'فشل إنشاء الحالة');
     }
   };
 
   const columns = [
     {
-      title: 'Name',
+      title: 'الاسم',
       dataIndex: 'name',
       key: 'name',
     },
     {
-      title: 'Code',
+      title: 'الرمز',
       dataIndex: 'code',
       key: 'code',
     },
     {
-      title: 'Color',
+      title: 'اللون',
       dataIndex: 'color',
       key: 'color',
       render: (color: string) => (
-        <Tag color={color || 'default'}>{color || 'Default'}</Tag>
+        <Tag color={color || 'default'}>{color || 'افتراضي'}</Tag>
       ),
     },
     {
-      title: 'Description',
+      title: 'الوصف',
       dataIndex: 'description',
       key: 'description',
     },
     {
-      title: 'Active',
+      title: 'نشط',
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
         <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'Active' : 'Inactive'}
+          {isActive ? 'نشط' : 'غير نشط'}
         </Tag>
       ),
     },
     {
-      title: 'Actions',
+      title: 'الإجراءات',
       key: 'actions',
       render: (_: unknown, record: AssetStatus) => (
         <Space>
@@ -111,16 +122,16 @@ export default function AssetStatusesPage() {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
-            Edit
+            تعديل
           </Button>
           <Popconfirm
-            title="Are you sure you want to delete this status?"
+            title="هل أنت متأكد من حذف هذه الحالة؟"
             onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
+            okText="نعم"
+            cancelText="لا"
           >
             <Button type="link" danger icon={<DeleteOutlined />}>
-              Delete
+              حذف
             </Button>
           </Popconfirm>
         </Space>
@@ -132,7 +143,7 @@ export default function AssetStatusesPage() {
     <div>
       <div style={{ marginBottom: 16, textAlign: 'right' }}>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          Add Status
+          إضافة حالة
         </Button>
       </div>
 
@@ -145,7 +156,7 @@ export default function AssetStatusesPage() {
       />
 
       <Modal
-        title={editingStatus ? 'Edit Status' : 'Add Status'}
+        title={editingStatus ? 'تعديل الحالة' : 'إضافة حالة'}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onOk={() => form.submit()}
@@ -158,42 +169,36 @@ export default function AssetStatusesPage() {
         >
           <Form.Item
             name="name"
-            label="Name"
-            rules={[{ required: true, message: 'Please enter status name' }]}
+            label="اسم الحالة"
+            rules={[{ required: true, message: 'يرجى إدخال اسم الحالة' }]}
           >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            name="code"
-            label="Code"
-            rules={[{ required: true, message: 'Please enter status code' }]}
-          >
-            <Input />
+            <Input placeholder="مثال: متاح، قيد الصيانة، تالف" />
           </Form.Item>
 
           <Form.Item
             name="color"
-            label="Color"
+            label="اللون"
           >
             <Input type="color" />
           </Form.Item>
 
           <Form.Item
             name="description"
-            label="Description"
+            label="الوصف"
           >
-            <Input.TextArea rows={3} />
+            <Input.TextArea rows={3} placeholder="وصف الحالة (اختياري)" />
           </Form.Item>
 
-          <Form.Item
-            name="isActive"
-            label="Active"
-            valuePropName="checked"
-            initialValue={true}
-          >
-            <Switch />
-          </Form.Item>
+          {editingStatus && (
+            <Form.Item
+              name="isActive"
+              label="نشط"
+              valuePropName="checked"
+              initialValue={true}
+            >
+              <Switch />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
     </div>

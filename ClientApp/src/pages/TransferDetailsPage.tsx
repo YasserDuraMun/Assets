@@ -8,6 +8,50 @@ import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 
+// Helper function to translate transfer reasons
+const getReasonInArabic = (reason: string | undefined): string => {
+  if (!reason) return 'لم يتم توفير سبب';
+  
+  const translations: { [key: string]: string } = {
+    'Employee Request': 'طلب موظف',
+    'Transfer Request': 'طلب نقل',
+    'Relocation': 'إعادة توزيع',
+    'Department Reorganization': 'إعادة تنظيم الأقسام',
+    'Equipment Upgrade': 'ترقية المعدات',
+    'Maintenance': 'صيانة',
+    'End of Project': 'انتهاء المشروع',
+    'Employee Termination': 'إنهاء خدمة موظف',
+    'New Assignment': 'تكليف جديد',
+    'Temporary Loan': 'إعارة مؤقتة',
+    'Other': 'أخرى'
+  };
+  
+  return translations[reason] || reason;
+};
+
+// Helper function to format location details
+const formatLocationDetails = (locationDetails: any, fallbackText: string = 'غير معروف'): string[] => {
+  if (!locationDetails) return [fallbackText];
+
+  const parts: string[] = [];
+  
+  // إضافة تفاصيل الموقع بترتيب منطقي
+  if (locationDetails.employeeName) {
+    parts.push(`👤 موظف: ${locationDetails.employeeName}`);
+  }
+  if (locationDetails.departmentName) {
+    parts.push(`🏢 دائرة: ${locationDetails.departmentName}`);
+  }
+  if (locationDetails.sectionName) {
+    parts.push(`📋 قسم: ${locationDetails.sectionName}`);
+  }
+  if (locationDetails.warehouseName) {
+    parts.push(`🏪 مستودع: ${locationDetails.warehouseName}`);
+  }
+
+  return parts.length > 0 ? parts : [fallbackText];
+};
+
 export default function TransferDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -27,12 +71,12 @@ export default function TransferDetailsPage() {
       if (response.data.success && response.data.data) {
         setTransfer(response.data.data);
       } else {
-        message.error('Transfer not found');
+        message.error('لم يتم العثور على النقل');
         navigate('/transfers');
       }
     } catch (error) {
       console.error('Failed to load transfer:', error);
-      message.error('Failed to load transfer details');
+      message.error('فشل تحميل تفاصيل النقل');
       navigate('/transfers');
     } finally {
       setLoading(false);
@@ -62,7 +106,7 @@ export default function TransferDetailsPage() {
       <MainLayout>
         <Card>
           <div style={{ textAlign: 'center', padding: 50 }}>
-            <Text type="secondary">Transfer not found</Text>
+            <Text type="secondary">لم يتم العثور على النقل</Text>
           </div>
         </Card>
       </MainLayout>
@@ -75,33 +119,33 @@ export default function TransferDetailsPage() {
         <Card>
           <Space>
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/transfers')}>
-              Back to Transfers
+              العودة لعمليات النقل
             </Button>
             <Button 
               type="primary" 
               icon={<EyeOutlined />} 
               onClick={() => navigate(`/assets/${transfer.assetId}`)}
             >
-              View Asset Details
+              عرض تفاصيل الأصل
             </Button>
           </Space>
         </Card>
 
         <Card>
           <Title level={3}>
-            <SwapOutlined /> Transfer Details
+            <SwapOutlined /> تفاصيل النقل
             <Tag color="green" style={{ marginLeft: 16, fontSize: '14px' }}>
-              Completed
+              مكتمل
             </Tag>
           </Title>
           
           <Alert
-            message="Transfer Summary"
+            message="ملخص النقل"
             description={
               <div>
-                <Text strong>{transfer.assetName}</Text> was transferred from{' '}
-                <Tag color="orange">{transfer.fromLocation || 'Unknown'}</Tag> to{' '}
-                <Tag color="green">{transfer.toLocation || 'Unknown'}</Tag> on{' '}
+                <Text strong>{transfer.assetName}</Text> تم نقله من{' '}
+                <Tag color="orange">{transfer.fromLocation || 'غير معروف'}</Tag> إلى{' '}
+                <Tag color="green">{transfer.toLocation || 'غير معروف'}</Tag> في{' '}
                 <Text strong>{formatDateOnly(transfer.transferDate)}</Text>
               </div>
             }
@@ -111,70 +155,81 @@ export default function TransferDetailsPage() {
           />
 
           <Descriptions
-            title="Transfer Information"
+            title="معلومات النقل"
             bordered
             column={2}
             size="middle"
           >
-            <Descriptions.Item label="Transfer ID" span={1}>
+            <Descriptions.Item label="رقم النقل" span={1}>
               <Text strong>#{transfer.id}</Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Transfer Date" span={1}>
+            <Descriptions.Item label="تاريخ النقل" span={1}>
               <Text strong>{formatDateOnly(transfer.transferDate)}</Text>
             </Descriptions.Item>
             
-            <Descriptions.Item label="Asset Name" span={1}>
+            <Descriptions.Item label="اسم الأصل" span={1}>
               <Text strong>{transfer.assetName}</Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Serial Number" span={1}>
+            <Descriptions.Item label="الرقم التسلسلي" span={1}>
               <Text code>{transfer.assetSerialNumber}</Text>
             </Descriptions.Item>
 
-            <Descriptions.Item label="From Location" span={1}>
-              {transfer.fromLocation ? (
-                <Tag color="orange" style={{ fontSize: '14px' }}>
-                  {transfer.fromLocation}
-                </Tag>
+            <Descriptions.Item label="من موقع" span={2}>
+              {transfer.fromLocationDetails ? (
+                <Space direction="vertical" size="small">
+                  {formatLocationDetails(transfer.fromLocationDetails).map((detail: string, index: number) => (
+                    <Tag key={index} color="orange" style={{ fontSize: '14px', marginBottom: '4px' }}>
+                      {detail}
+                    </Tag>
+                  ))}
+                </Space>
               ) : (
-                <Text type="secondary">Unknown</Text>
+                <Text type="secondary">غير معروف</Text>
               )}
             </Descriptions.Item>
-            <Descriptions.Item label="To Location" span={1}>
-              {transfer.toLocation ? (
-                <Tag color="green" style={{ fontSize: '14px' }}>
-                  {transfer.toLocation}
-                </Tag>
+            
+            <Descriptions.Item label="إلى موقع" span={2}>
+              {transfer.toLocationDetails ? (
+                <Space direction="vertical" size="small">
+                  {formatLocationDetails(transfer.toLocationDetails).map((detail: string, index: number) => (
+                    <Tag key={index} color="green" style={{ fontSize: '14px', marginBottom: '4px' }}>
+                      {detail}
+                    </Tag>
+                  ))}
+                </Space>
               ) : (
-                <Text type="secondary">Unknown</Text>
+                <Text type="secondary">غير معروف</Text>
               )}
             </Descriptions.Item>
 
-            <Descriptions.Item label="Transfer Reason" span={2}>
+            <Descriptions.Item label="سبب النقل" span={2}>
               {transfer.reason ? (
-                <Text>{transfer.reason}</Text>
+                <Tag color="blue" style={{ fontSize: '14px' }}>
+                  {getReasonInArabic(transfer.reason)}
+                </Tag>
               ) : (
-                <Text type="secondary">No reason provided</Text>
+                <Text type="secondary">لم يتم توفير سبب</Text>
               )}
             </Descriptions.Item>
 
-            <Descriptions.Item label="Notes" span={2}>
+            <Descriptions.Item label="ملاحظات" span={2}>
               {transfer.notes ? (
                 <Text>{transfer.notes}</Text>
               ) : (
-                <Text type="secondary">No additional notes</Text>
+                <Text type="secondary">لا توجد ملاحظات إضافية</Text>
               )}
             </Descriptions.Item>
 
-            <Descriptions.Item label="Performed By" span={1}>
+            <Descriptions.Item label="نفذه" span={1}>
               <Text strong>{transfer.performedBy}</Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Created Date" span={1}>
+            <Descriptions.Item label="تاريخ الإنشاء" span={1}>
               <Text>{formatDate(transfer.createdAt)}</Text>
             </Descriptions.Item>
           </Descriptions>
         </Card>
 
-        <Card title="Transfer Timeline" size="small">
+        <Card title="الجدول الزمني للنقل" size="small">
           <div style={{ padding: '16px 0' }}>
             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -187,17 +242,17 @@ export default function TransferDetailsPage() {
                   }} 
                 />
                 <div>
-                  <Text strong>Transfer Completed</Text>
+                  <Text strong>تم إكمال النقل</Text>
                   <br />
                   <Text type="secondary">
-                    {formatDate(transfer.createdAt)} by {transfer.performedBy}
+                    {formatDate(transfer.createdAt)} بواسطة {transfer.performedBy}
                   </Text>
                 </div>
               </div>
               
               <div style={{ marginLeft: '6px', borderLeft: '2px solid #f0f0f0', paddingLeft: '18px', minHeight: '40px' }}>
                 <Text type="secondary">
-                  Asset location updated successfully. The asset is now available at the new location.
+                  تم تحديث موقع الأصل بنجاح. الأصل متاح الآن في الموقع الجديد.
                 </Text>
               </div>
             </Space>

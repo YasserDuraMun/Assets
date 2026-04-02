@@ -122,6 +122,11 @@ public class EmployeesController : ControllerBase
             return BadRequest(ApiResponse<object>.ErrorResponse("???? ?????? ??? ??????"));
         }
 
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("???????? ??????? ??? ?????"));
+        }
+
         try
         {
             var employee = await _employeeService.UpdateAsync(dto);
@@ -129,7 +134,13 @@ public class EmployeesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating employee");
+            _logger.LogError(ex, "Error updating employee with ID: {Id}", id);
+            
+            if (ex.Message.Contains("not found"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse("?????? ??? ?????"));
+            }
+            
             return StatusCode(500, ApiResponse<object>.ErrorResponse("??? ?? ????? ??????"));
         }
     }

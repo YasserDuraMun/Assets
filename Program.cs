@@ -1,4 +1,5 @@
 using System.Text;
+using System.Net.NetworkInformation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -9,6 +10,16 @@ using Assets.Services.Interfaces;
 using Assets.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+// Auto-find available port if 5002 is busy
+var port = 5002;
+while (IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners().Any(x => x.Port == port))
+{
+    port++;
+}
+builder.WebHost.UseUrls($"http://localhost:{port}");
+
 
 // Add services to the container.
 
@@ -64,7 +75,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddControllers();
 
-// CORS (?????? ???????? ?? Frontend)
+// CORS (Allow Frontend access)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -73,7 +84,9 @@ builder.Services.AddCors(options =>
             "http://localhost:5173", 
             "https://localhost:5173",
             "http://localhost:5174",
-            "https://localhost:5174"
+            "https://localhost:5174",
+            "http://localhost:5175",
+            "https://localhost:5175"
         )
         .AllowAnyMethod()
         .AllowAnyHeader()
@@ -89,7 +102,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Assets Management API",
         Version = "v1",
-        Description = "???? ????? ???? ?????? - ????? ????"
+        Description = "Assets Management System API - Municipality Version"
     });
 
     // Add JWT Authentication to Swagger
@@ -141,3 +154,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+

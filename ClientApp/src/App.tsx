@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp } from 'antd';
-import { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
 import DashboardPage from './pages/DashboardPage';
 import SettingsPage from './pages/SettingsPage';
@@ -17,63 +17,54 @@ import ReportsPage from './pages/ReportsPage';
 import './App.css';
 
 function App() {
-const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
-
-useEffect(() => {
-  const checkAuth = () => {
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
-  };
-
-  // ???? ?? Authentication ?? ?????
-  const authInterval = setInterval(checkAuth, 1000);
-    
-  // ???? ??? ????? localStorage
-  window.addEventListener('storage', checkAuth);
-    
-  return () => {
-    clearInterval(authInterval);
-    window.removeEventListener('storage', checkAuth);
-  };
-}, []);
-
   return (
-    <ConfigProvider 
-      theme={{
-        token: {
-          colorPrimary: '#1890ff',
-          borderRadius: 6,
-        },
-      }}
-    >
-      <AntdApp>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            
-            {isAuthenticated ? (
-              <>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/assets" element={<AssetsPage />} />
-                <Route path="/assets/add" element={<AddAssetPage />} />
-                <Route path="/assets/:id" element={<AssetDetailsPage />} />
-                <Route path="/assets/:id/edit" element={<EditAssetPage />} />
-                <Route path="/transfers" element={<TransfersPage />} />
-                <Route path="/transfers/new" element={<NewTransferPage />} />
-                <Route path="/transfers/:id" element={<TransferDetailsPage />} />
-                <Route path="/disposals" element={<DisposalsPage />} />
-                <Route path="/maintenance" element={<MaintenancePage />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              </>
-            ) : (
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            )}
-          </Routes>
-        </BrowserRouter>
-      </AntdApp>
-    </ConfigProvider>
+    <AuthProvider>
+      <ConfigProvider 
+        theme={{
+          token: {
+            colorPrimary: '#1890ff',
+            borderRadius: 6,
+          },
+        }}
+      >
+        <AntdApp>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AntdApp>
+      </ConfigProvider>
+    </AuthProvider>
+  );
+}
+
+// Separate component for routes to use AuthContext
+function AppRoutes() {
+  const { isAuthenticated } = useAuth();
+  
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      
+      {isAuthenticated ? (
+        <>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/assets" element={<AssetsPage />} />
+          <Route path="/assets/add" element={<AddAssetPage />} />
+          <Route path="/assets/:id" element={<AssetDetailsPage />} />
+          <Route path="/assets/:id/edit" element={<EditAssetPage />} />
+          <Route path="/transfers" element={<TransfersPage />} />
+          <Route path="/transfers/new" element={<NewTransferPage />} />
+          <Route path="/transfers/:id" element={<TransferDetailsPage />} />
+          <Route path="/disposals" element={<DisposalsPage />} />
+          <Route path="/maintenance" element={<MaintenancePage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        </>
+      ) : (
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      )}
+    </Routes>
   );
 }
 

@@ -8,10 +8,6 @@ public class CreateSectionDto
     [StringLength(200)]
     public string Name { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "??? ????? ?????")]
-    [StringLength(50)]
-    public string Code { get; set; } = string.Empty;
-
     public string? Description { get; set; }
 
     [Required(ErrorMessage = "??????? ??????")]
@@ -28,10 +24,6 @@ public class UpdateSectionDto
     [Required]
     [StringLength(200)]
     public string Name { get; set; } = string.Empty;
-
-    [Required]
-    [StringLength(50)]
-    public string Code { get; set; } = string.Empty;
 
     public string? Description { get; set; }
 

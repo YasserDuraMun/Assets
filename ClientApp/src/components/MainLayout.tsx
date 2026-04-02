@@ -48,43 +48,43 @@ const handleLogout = () => {
     {
       key: '/dashboard',
       icon: <DashboardOutlined />,
-      label: 'Dashboard',
+      label: 'لوحة التحكم',
       onClick: () => navigate('/dashboard')
     },
     {
       key: '/assets',
       icon: <FileOutlined />,
-      label: 'Assets',
+      label: 'الأصول',
       onClick: () => navigate('/assets')
     },
     {
       key: '/transfers',
       icon: <SwapOutlined />,
-      label: 'Transfers',
+      label: 'التحويلات',
       onClick: () => navigate('/transfers')
     },
     {
       key: '/disposals',
       icon: <DeleteOutlined />,
-      label: 'Disposed Assets',
+      label: 'الأصول المستبعدة',
       onClick: () => navigate('/disposals')
     },
     {
       key: '/maintenance',
       icon: <ToolOutlined />,
-      label: 'Maintenance',
+      label: 'الصيانة',
       onClick: () => navigate('/maintenance')
     },
     {
       key: '/reports',
       icon: <BarChartOutlined />,
-      label: 'Reports',
+      label: 'التقارير',
       onClick: () => navigate('/reports')
     },
     {
       key: '/settings',
       icon: <SettingOutlined />,
-      label: 'Settings',
+      label: 'الإعدادات',
       onClick: () => navigate('/settings')
     }
   ];
@@ -100,7 +100,7 @@ const handleLogout = () => {
           borderBottom: '1px solid #f0f0f0'
         }}>
           <Title level={4} style={{ margin: 0 }}>
-            {collapsed ? 'AM' : 'Asset Management'}
+            {collapsed ? 'إأ' : 'إدارة الأصول'}
           </Title>
         </div>
         <Menu
@@ -128,7 +128,9 @@ const handleLogout = () => {
           />
 
           <Space>
-            <Typography.Text strong>Welcome, {user?.fullName || 'User'}</Typography.Text>
+            <Typography.Text strong>
+              Welcome, {user?.fullName || user?.username || 'User'}
+            </Typography.Text>
             <Button
               icon={<LogoutOutlined />}
               onClick={handleLogout}

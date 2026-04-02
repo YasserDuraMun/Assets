@@ -38,16 +38,44 @@ export default function EditAssetPage() {
     }
   }, [id]);
 
+  // Update form when asset data or reference data changes
+  useEffect(() => {
+    if (asset && categories.length > 0 && statuses.length > 0) {
+      console.log('Updating form with complete data'); // Debug log
+      
+      const formValues = {
+        ...asset,
+        currentLocationType: locationType,
+        purchaseDate: asset.purchaseDate ? dayjs(asset.purchaseDate) : null,
+        warrantyExpiryDate: asset.warrantyExpiryDate ? dayjs(asset.warrantyExpiryDate) : null,
+      };
+      
+      form.setFieldsValue(formValues);
+    }
+  }, [asset, categories, statuses, employees, warehouses, departments, locationType, form]);
+
   const loadAssetData = async (assetId: number) => {
     setLoading(true);
     try {
-      // Fetch asset data
+      // Load all reference data first
+      await Promise.all([
+        fetchCategories(),
+        fetchStatuses(),
+        fetchEmployees(),
+        fetchWarehouses(),
+        fetchDepartments(),
+      ]);
+
+      // Then fetch asset data
       const assetResponse = await assetApi.getById(assetId);
       if (assetResponse.data.success && assetResponse.data.data) {
         const assetData = assetResponse.data.data;
-        setAsset(assetData);
-        setHasWarranty(assetData.hasWarranty);
+        console.log('Loading asset data:', assetData); // Debug log
         
+        setAsset(assetData);
+        setHasWarranty(!!assetData.hasWarranty);
+        setSelectedCategory(assetData.categoryId);
+
         // Convert enum number to string for locationType
         const locationTypeMap: Record<number, string> = {
           1: 'Warehouse',
@@ -55,17 +83,10 @@ export default function EditAssetPage() {
           3: 'Department',
           4: 'Section'
         };
-        setLocationType(locationTypeMap[assetData.currentLocationType as number] || 'Warehouse');
-        setSelectedCategory(assetData.categoryId);
-
-        // Load form data
-        await Promise.all([
-          fetchCategories(),
-          fetchStatuses(),
-          fetchEmployees(),
-          fetchWarehouses(),
-          fetchDepartments(),
-        ]);
+        
+        const currentLocationType = locationTypeMap[assetData.currentLocationType as number] || 'Warehouse';
+        setLocationType(currentLocationType);
+        console.log('Current Location Type:', currentLocationType, 'Raw:', assetData.currentLocationType); // Debug log
 
         // Load subcategories if category is selected
         if (assetData.categoryId) {
@@ -77,19 +98,42 @@ export default function EditAssetPage() {
           await fetchSections(assetData.currentDepartmentId);
         }
 
-        // Set form values
-        form.setFieldsValue({
-          ...assetData,
-          purchaseDate: assetData.purchaseDate ? dayjs(assetData.purchaseDate) : null,
-          warrantyExpiryDate: assetData.warrantyExpiryDate ? dayjs(assetData.warrantyExpiryDate) : null,
-        });
+        // Wait for all data to be loaded before setting form values
+        setTimeout(() => {
+          const formValues = {
+            name: assetData.name,
+            description: assetData.description,
+            serialNumber: assetData.serialNumber,
+            barcode: assetData.barcode,
+            qrCode: assetData.qrCode,
+            categoryId: assetData.categoryId,
+            subCategoryId: assetData.subCategoryId,
+            statusId: assetData.statusId,
+            currentLocationType: currentLocationType,
+            currentEmployeeId: assetData.currentEmployeeId,
+            currentWarehouseId: assetData.currentWarehouseId,
+            currentDepartmentId: assetData.currentDepartmentId,
+            currentSectionId: assetData.currentSectionId,
+            purchaseDate: assetData.purchaseDate ? dayjs(assetData.purchaseDate) : null,
+            purchasePrice: assetData.purchasePrice,
+            hasWarranty: assetData.hasWarranty,
+            warrantyMonths: assetData.warrantyMonths,
+            warrantyExpiryDate: assetData.warrantyExpiryDate ? dayjs(assetData.warrantyExpiryDate) : null,
+            notes: assetData.notes,
+          };
+          
+          console.log('Setting detailed form values:', formValues); // Debug log
+          
+          // Set form values with a small delay to ensure all reference data is loaded
+          form.setFieldsValue(formValues);
+        }, 100);
       } else {
-        message.error('Asset not found');
+        message.error('لم يتم العثور على الأصل');
         navigate('/assets');
       }
     } catch (error) {
       console.error('Failed to load asset:', error);
-      message.error('Failed to load asset data');
+      message.error('فشل تحميل بيانات الأصل');
       navigate('/assets');
     } finally {
       setLoading(false);
@@ -100,6 +144,7 @@ export default function EditAssetPage() {
     try {
       const response = await categoryApi.getAll();
       if (response.data.success && response.data.data) {
+        console.log('Categories loaded:', response.data.data.length);
         setCategories(response.data.data);
       }
     } catch (error) {
@@ -111,6 +156,7 @@ export default function EditAssetPage() {
     try {
       const response = await subCategoryApi.getByCategoryId(categoryId);
       if (response.data.success && response.data.data) {
+        console.log('SubCategories loaded for category', categoryId, ':', response.data.data.length);
         setSubCategories(response.data.data);
       }
     } catch (error) {
@@ -123,6 +169,7 @@ export default function EditAssetPage() {
     try {
       const response = await statusApi.getActive();
       if (response.data.success && response.data.data) {
+        console.log('Statuses loaded:', response.data.data.length);
         setStatuses(response.data.data);
       }
     } catch (error) {
@@ -134,6 +181,7 @@ export default function EditAssetPage() {
     try {
       const response = await employeeApi.getActive();
       if (response.data.success && response.data.data) {
+        console.log('Employees loaded:', response.data.data.length);
         setEmployees(response.data.data);
       }
     } catch (error) {
@@ -145,6 +193,7 @@ export default function EditAssetPage() {
     try {
       const response = await warehouseApi.getActive();
       if (response.data.success && response.data.data) {
+        console.log('Warehouses loaded:', response.data.data.length);
         setWarehouses(response.data.data);
       }
     } catch (error) {
@@ -156,6 +205,7 @@ export default function EditAssetPage() {
     try {
       const response = await departmentApi.getAll();
       if (response.data.success && response.data.data) {
+        console.log('Departments loaded:', response.data.data.length);
         setDepartments(response.data.data);
       }
     } catch (error) {
@@ -167,6 +217,7 @@ export default function EditAssetPage() {
     try {
       const response = await sectionApi.getByDepartment(departmentId);
       if (response.data.success && response.data.data) {
+        console.log('Sections loaded for department', departmentId, ':', response.data.data.length);
         setSections(response.data.data);
       }
     } catch (error) {
@@ -226,11 +277,11 @@ export default function EditAssetPage() {
       };
 
       await assetApi.update(parseInt(id), payload);
-      message.success('Asset updated successfully');
+      message.success('تم تحديث الأصل بنجاح');
       navigate(`/assets/${id}`);
     } catch (error) {
       console.error('Failed to update asset:', error);
-      message.error('Failed to update asset');
+      message.error('فشل في تحديث الأصل');
     } finally {
       setSaving(false);
     }
@@ -251,7 +302,7 @@ export default function EditAssetPage() {
       <MainLayout>
         <Card>
           <div style={{ textAlign: 'center', padding: 50 }}>
-            Asset not found
+            لم يتم العثور على الأصل
           </div>
         </Card>
       </MainLayout>
@@ -260,52 +311,52 @@ export default function EditAssetPage() {
 
   return (
     <MainLayout>
-      <Card title={`Edit Asset: ${asset.name}`}>
+      <Card title={`تعديل الأصل: ${asset.name}`}>
         <Form
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
         >
-          <Divider>Basic Information</Divider>
+          <Divider>المعلومات الأساسية</Divider>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="name"
-                label="Asset Name"
-                rules={[{ required: true, message: 'Please enter asset name' }]}
+                label="اسم الأصل"
+                rules={[{ required: true, message: 'الرجاء إدخال اسم الأصل' }]}
               >
-                <Input placeholder="Enter asset name" />
+                <Input placeholder="أدخل اسم الأصل" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="serialNumber"
-                label="Serial Number"
-                rules={[{ required: true, message: 'Please enter serial number' }]}
+                label="الرقم التسلسلي"
+                rules={[{ required: true, message: 'الرجاء إدخال الرقم التسلسلي' }]}
               >
-                <Input placeholder="Enter serial number" />
+                <Input placeholder="أدخل الرقم التسلسلي" />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
             <Col span={8}>
-              <Form.Item name="barcode" label="Barcode">
-                <Input placeholder="Enter barcode" />
+              <Form.Item name="barcode" label="الباركود">
+                <Input placeholder="أدخل الباركود" />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="qrCode" label="QR Code">
-                <Input placeholder="Auto-generated" disabled />
+              <Form.Item name="qrCode" label="رمز QR">
+                <Input placeholder="يتم إنشاؤه تلقائياً" disabled />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item
                 name="statusId"
-                label="Status"
-                rules={[{ required: true, message: 'Please select status' }]}
+                label="الحالة"
+                rules={[{ required: true, message: 'الرجاء اختيار الحالة' }]}
               >
-                <Select placeholder="Select status">
+                <Select placeholder="اختر الحالة">
                   {statuses.map(status => (
                     <Select.Option key={status.id} value={status.id}>
                       {status.name}
@@ -316,19 +367,19 @@ export default function EditAssetPage() {
             </Col>
           </Row>
 
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} placeholder="Enter description" />
+          <Form.Item name="description" label="الوصف">
+            <Input.TextArea rows={3} placeholder="أدخل الوصف" />
           </Form.Item>
 
-          <Divider>Category</Divider>
+          <Divider>الفئة</Divider>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="categoryId"
-                label="Main Category"
-                rules={[{ required: true, message: 'Please select category' }]}
+                label="الفئة الرئيسية"
+                rules={[{ required: true, message: 'الرجاء اختيار الفئة' }]}
               >
-                <Select placeholder="Select category" onChange={handleCategoryChange}>
+                <Select placeholder="اختر الفئة" onChange={handleCategoryChange}>
                   {categories.map(cat => (
                     <Select.Option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -338,8 +389,8 @@ export default function EditAssetPage() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="subCategoryId" label="SubCategory">
-                <Select placeholder="Select subcategory" disabled={!selectedCategory}>
+              <Form.Item name="subCategoryId" label="الفئة الفرعية">
+                <Select placeholder="اختر الفئة الفرعية" disabled={!selectedCategory}>
                   {subCategories.map(sub => (
                     <Select.Option key={sub.id} value={sub.id}>
                       {sub.name}
@@ -350,26 +401,26 @@ export default function EditAssetPage() {
             </Col>
           </Row>
 
-          <Divider>Current Location</Divider>
+          <Divider>الموقع الحالي</Divider>
           <Row gutter={16}>
             <Col span={8}>
               <Form.Item
                 name="currentLocationType"
-                label="Location Type"
+                label="نوع الموقع"
                 rules={[{ required: true }]}
               >
                 <Select onChange={handleLocationTypeChange}>
-                  <Select.Option value="Employee">Employee</Select.Option>
-                  <Select.Option value="Warehouse">Warehouse</Select.Option>
-                  <Select.Option value="Department">Department</Select.Option>
-                  <Select.Option value="Section">Section</Select.Option>
+                  <Select.Option value="Employee">موظف</Select.Option>
+                  <Select.Option value="Warehouse">مستودع</Select.Option>
+                  <Select.Option value="Department">قسم</Select.Option>
+                  <Select.Option value="Section">شعبة</Select.Option>
                 </Select>
               </Form.Item>
             </Col>
             <Col span={16}>
               {locationType === 'Employee' && (
-                <Form.Item name="currentEmployeeId" label="Employee" rules={[{ required: true }]}>
-                  <Select placeholder="Select employee" showSearch optionFilterProp="children">
+                <Form.Item name="currentEmployeeId" label="الموظف" rules={[{ required: true }]}>
+                  <Select placeholder="اختر الموظف" showSearch optionFilterProp="children">
                     {employees.map(emp => (
                       <Select.Option key={emp.id} value={emp.id}>
                         {emp.fullName} ({emp.employeeNumber})
@@ -379,8 +430,8 @@ export default function EditAssetPage() {
                 </Form.Item>
               )}
               {locationType === 'Warehouse' && (
-                <Form.Item name="currentWarehouseId" label="Warehouse" rules={[{ required: true }]}>
-                  <Select placeholder="Select warehouse">
+                <Form.Item name="currentWarehouseId" label="المستودع" rules={[{ required: true }]}>
+                  <Select placeholder="اختر المستودع">
                     {warehouses.map(wh => (
                       <Select.Option key={wh.id} value={wh.id}>
                         {wh.name}
@@ -390,8 +441,8 @@ export default function EditAssetPage() {
                 </Form.Item>
               )}
               {locationType === 'Department' && (
-                <Form.Item name="currentDepartmentId" label="Department" rules={[{ required: true }]}>
-                  <Select placeholder="Select department">
+                <Form.Item name="currentDepartmentId" label="القسم" rules={[{ required: true }]}>
+                  <Select placeholder="اختر القسم">
                     {departments.map(dept => (
                       <Select.Option key={dept.id} value={dept.id}>
                         {dept.name}
@@ -402,20 +453,11 @@ export default function EditAssetPage() {
               )}
               {locationType === 'Section' && (
                 <>
-                  <Form.Item name="currentDepartmentId" label="Department" rules={[{ required: true }]}>
-                    <Select placeholder="Select department" onChange={handleDepartmentChange}>
+                  <Form.Item name="currentDepartmentId" label="القسم" rules={[{ required: true }]}>
+                    <Select placeholder="اختر القسم" onChange={handleDepartmentChange}>
                       {departments.map(dept => (
                         <Select.Option key={dept.id} value={dept.id}>
                           {dept.name}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item name="currentSectionId" label="Section" rules={[{ required: true }]}>
-                    <Select placeholder="Select section">
-                      {sections.map(sec => (
-                        <Select.Option key={sec.id} value={sec.id}>
-                          {sec.name}
                         </Select.Option>
                       ))}
                     </Select>
@@ -425,15 +467,31 @@ export default function EditAssetPage() {
             </Col>
           </Row>
 
-          <Divider>Purchase Information</Divider>
+          {locationType === 'Section' && (
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item name="currentSectionId" label="الشعبة" rules={[{ required: true }]}>
+                  <Select placeholder="اختر الشعبة">
+                    {sections.map(sec => (
+                      <Select.Option key={sec.id} value={sec.id}>
+                        {sec.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+          )}
+
+          <Divider>معلومات الشراء</Divider>
           <Row gutter={16}>
             <Col span={8}>
-              <Form.Item name="purchaseDate" label="Purchase Date">
+              <Form.Item name="purchaseDate" label="تاريخ الشراء">
                 <DatePicker style={{ width: '100%' }} />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="purchasePrice" label="Purchase Price">
+              <Form.Item name="purchasePrice" label="سعر الشراء">
                 <InputNumber
                   style={{ width: '100%' }}
                   min={0}
@@ -444,17 +502,17 @@ export default function EditAssetPage() {
             </Col>
           </Row>
 
-          <Divider>Warranty Information</Divider>
+          <Divider>معلومات الضمان</Divider>
           <Row gutter={16}>
             <Col span={8}>
-              <Form.Item name="hasWarranty" label="Has Warranty" valuePropName="checked">
+              <Form.Item name="hasWarranty" label="يوجد ضمان" valuePropName="checked">
                 <Switch onChange={setHasWarranty} />
               </Form.Item>
             </Col>
             {hasWarranty && (
               <>
                 <Col span={8}>
-                  <Form.Item name="warrantyMonths" label="Warranty Period (Months)">
+                  <Form.Item name="warrantyMonths" label="مدة الضمان (بالأشهر)">
                     <InputNumber
                       style={{ width: '100%' }}
                       min={1}
@@ -466,7 +524,7 @@ export default function EditAssetPage() {
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item name="warrantyExpiryDate" label="Warranty Expiry Date">
+                  <Form.Item name="warrantyExpiryDate" label="تاريخ انتهاء الضمان">
                     <DatePicker style={{ width: '100%' }} disabled />
                   </Form.Item>
                 </Col>
@@ -478,10 +536,10 @@ export default function EditAssetPage() {
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={saving}>
-                Update Asset
+                حفظ التعديلات
               </Button>
               <Button icon={<CloseOutlined />} onClick={() => navigate(`/assets/${id}`)}>
-                Cancel
+                إلغاء
               </Button>
             </Space>
           </Form.Item>

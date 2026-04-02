@@ -16,6 +16,14 @@ export interface CreateTransferData {
   notes?: string;
 }
 
+export interface LocationDetails {
+  type?: number;
+  employeeName?: string;
+  warehouseName?: string;
+  departmentName?: string;
+  sectionName?: string;
+}
+
 export interface Transfer {
   id: number;
   assetId: number;
@@ -24,6 +32,8 @@ export interface Transfer {
   transferDate: string;
   fromLocation?: string;
   toLocation?: string;
+  fromLocationDetails?: LocationDetails;
+  toLocationDetails?: LocationDetails;
   reason?: string;
   notes?: string;
   performedBy: string;

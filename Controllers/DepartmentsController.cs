@@ -99,6 +99,11 @@ public class DepartmentsController : ControllerBase
             return BadRequest(ApiResponse<object>.ErrorResponse("???? ??????? ??? ??????"));
         }
 
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("???????? ??????? ??? ?????"));
+        }
+
         try
         {
             var department = await _departmentService.UpdateAsync(dto);
@@ -106,7 +111,13 @@ public class DepartmentsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating department");
+            _logger.LogError(ex, "Error updating department with ID: {Id}", id);
+            
+            if (ex.Message.Contains("not found"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse("??????? ??? ??????"));
+            }
+            
             return StatusCode(500, ApiResponse<object>.ErrorResponse("??? ?? ????? ???????"));
         }
     }

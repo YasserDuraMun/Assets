@@ -102,6 +102,11 @@ public class StatusesController : ControllerBase
             return BadRequest(ApiResponse<object>.ErrorResponse("???? ?????? ??? ??????"));
         }
 
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("???????? ??????? ??? ?????"));
+        }
+
         try
         {
             var status = await _statusService.UpdateAsync(dto);
@@ -109,7 +114,13 @@ public class StatusesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating status");
+            _logger.LogError(ex, "Error updating status with ID: {Id}", id);
+            
+            if (ex.Message.Contains("not found"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse("?????? ??? ??????"));
+            }
+            
             return StatusCode(500, ApiResponse<object>.ErrorResponse("??? ?? ????? ??????"));
         }
     }

@@ -135,6 +135,7 @@ public class AssetService : IAssetService
             PurchaseDate = asset.PurchaseDate,
             PurchasePrice = asset.PurchasePrice,
             HasWarranty = asset.HasWarranty,
+            WarrantyMonths = asset.WarrantyMonths,
             WarrantyExpiryDate = asset.WarrantyExpiryDate,
             ImagePath = asset.ImagePath,
             Notes = asset.Notes,
@@ -187,6 +188,10 @@ public class AssetService : IAssetService
         _context.Assets.Add(asset);
         await _context.SaveChangesAsync();
 
+        // Generate QR code automatically after asset is created
+        asset.QRCode = $"ASSET-{asset.Id}-{asset.SerialNumber}";
+        await _context.SaveChangesAsync();
+
         return (await GetByIdAsync(asset.Id))!;
     }
 
@@ -207,6 +212,12 @@ public class AssetService : IAssetService
         asset.Notes = dto.Notes;
         asset.UpdatedBy = userId;
         asset.UpdatedAt = DateTime.UtcNow;
+
+        // Update QR code if serial number changed or if QR code doesn't exist
+        if (string.IsNullOrEmpty(asset.QRCode) || asset.QRCode != $"ASSET-{asset.Id}-{asset.SerialNumber}")
+        {
+            asset.QRCode = $"ASSET-{asset.Id}-{asset.SerialNumber}";
+        }
 
         await _context.SaveChangesAsync();
 
@@ -231,9 +242,16 @@ public class AssetService : IAssetService
 
     public async Task<string> GenerateQRCodeAsync(int assetId)
     {
-        // TODO: Implement QR Code generation
-        // For now, return a placeholder
-        return $"QR-ASSET-{assetId}";
+        var asset = await _context.Assets
+            .Include(a => a.Category)
+            .FirstOrDefaultAsync(a => a.Id == assetId);
+
+        if (asset == null)
+            return string.Empty;
+
+        // Generate QR code content with asset information
+        var qrContent = $"ASSET-{assetId}-{asset.SerialNumber}";
+        return qrContent;
     }
 
     public async Task<List<AssetListDto>> GetByEmployeeAsync(int employeeId)
@@ -297,11 +315,11 @@ public class AssetService : IAssetService
     {
         return asset.CurrentLocationType switch
         {
-            LocationType.Employee => asset.CurrentEmployee?.FullName,
-            LocationType.Warehouse => asset.CurrentWarehouse?.Name,
-            LocationType.Department => asset.CurrentDepartment?.Name,
-            LocationType.Section => asset.CurrentSection?.Name,
-            _ => null
+            LocationType.Employee => asset.CurrentEmployee?.FullName ?? "???? ??? ????",
+            LocationType.Warehouse => asset.CurrentWarehouse?.Name ?? "?????? ??? ????",
+            LocationType.Department => asset.CurrentDepartment?.Name ?? "????? ??? ?????",
+            LocationType.Section => asset.CurrentSection?.Name ?? "??? ??? ????",
+            _ => "???? ??? ?????"
         };
     }
 }

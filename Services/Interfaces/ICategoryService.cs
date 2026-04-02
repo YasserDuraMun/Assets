@@ -13,5 +13,6 @@ public interface ICategoryService
     // SubCategories
     Task<List<SubCategoryDto>> GetSubCategoriesAsync(int categoryId);
     Task<SubCategoryDto> CreateSubCategoryAsync(CreateSubCategoryDto dto);
+    Task<SubCategoryDto> UpdateSubCategoryAsync(UpdateSubCategoryDto dto);
     Task<bool> DeleteSubCategoryAsync(int id);
 }

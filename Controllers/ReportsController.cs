@@ -234,5 +234,24 @@ namespace Assets.Controllers
             var fileName = $"report_{reportType}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
             return File(result.Data!, "text/csv", fileName);
         }
+
+        /// <summary>
+        /// Get assets by department/section for QR code printing
+        /// </summary>
+        [HttpGet("assets-by-location-detail")]
+        public async Task<IActionResult> GetAssetsByLocationDetail(
+            [FromQuery] int? departmentId = null, 
+            [FromQuery] int? sectionId = null)
+        {
+            try
+            {
+                var result = await _reportsService.GetAssetsByLocationDetailAsync(departmentId, sectionId);
+                return Ok(ApiResponse<object>.SuccessResponse(result));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.ErrorResponse($"Error generating assets by location detail: {ex.Message}"));
+            }
+        }
     }
 }

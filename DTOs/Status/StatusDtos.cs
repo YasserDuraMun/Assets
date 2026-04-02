@@ -6,6 +6,7 @@ public class StatusDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty; // Auto-generated, read-only
     public string? Description { get; set; }
     public string? Color { get; set; }
     public string? Icon { get; set; }

@@ -107,7 +107,7 @@ public class EmployeeService : IEmployeeService
         var employee = new Employee
         {
             FullName = dto.FullName,
-            EmployeeNumber = dto.EmployeeNumber,
+            EmployeeNumber = dto.EmployeeNumber, // Use user-provided employee number
             NationalId = dto.NationalId,
             Phone = dto.Phone,
             Email = dto.Email,
@@ -133,7 +133,7 @@ public class EmployeeService : IEmployeeService
             throw new Exception("Employee not found");
 
         employee.FullName = dto.FullName;
-        employee.EmployeeNumber = dto.EmployeeNumber;
+        employee.EmployeeNumber = dto.EmployeeNumber; // Use user-provided employee number
         employee.NationalId = dto.NationalId;
         employee.Phone = dto.Phone;
         employee.Email = dto.Email;

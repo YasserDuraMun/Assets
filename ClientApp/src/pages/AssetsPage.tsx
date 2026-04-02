@@ -61,7 +61,7 @@ const [filters, setFilters] = useState({
       }
     } catch (error) {
       console.error('Failed to load assets:', error);
-      message.error('Failed to load assets');
+      message.error('فشل تحميل الأصول');
     } finally {
       setLoading(false);
     }
@@ -92,16 +92,16 @@ const [filters, setFilters] = useState({
   const handleDelete = async (id: number) => {
     try {
       await assetApi.delete(id);
-      message.success('Asset deleted successfully');
+      message.success('تم حذف الأصل بنجاح');
       fetchAssets();
     } catch (error) {
-      message.error('Failed to delete asset');
+      message.error('فشل حذف الأصل');
     }
   };
 
   const handleDispose = (asset: Asset) => {
     if (asset.statusName === 'Disposed') {
-      message.warning('This asset has already been disposed');
+      message.warning('تم استبعاد هذا الأصل مسبقاً');
       return;
     }
     setSelectedAssetForDisposal(asset);
@@ -144,25 +144,25 @@ const [filters, setFilters] = useState({
 
   const columns = [
     {
-      title: 'Serial Number',
+      title: 'الرقم التسلسلي',
       dataIndex: 'serialNumber',
       key: 'serialNumber',
       width: 150,
     },
     {
-      title: 'Name',
+      title: 'الاسم',
       dataIndex: 'name',
       key: 'name',
       width: 200,
     },
     {
-      title: 'Category',
+      title: 'الفئة',
       dataIndex: 'categoryName',
       key: 'categoryName',
       width: 150,
     },
     {
-      title: 'Status',
+      title: 'الحالة',
       dataIndex: 'statusName',
       key: 'statusName',
       width: 120,
@@ -171,33 +171,33 @@ const [filters, setFilters] = useState({
       ),
     },
     {
-      title: 'Current Location',
+      title: 'الموقع الحالي',
       key: 'location',
       width: 200,
       render: (_: unknown, record: Asset) => {
         switch (record.currentLocationType) {
           case 'Employee':
-            return <Tag color="blue">Employee: {record.currentEmployeeName}</Tag>;
+            return <Tag color="blue">موظف: {record.currentEmployeeName}</Tag>;
           case 'Warehouse':
-            return <Tag color="green">Warehouse: {record.currentWarehouseName}</Tag>;
+            return <Tag color="green">مستودع: {record.currentWarehouseName}</Tag>;
           case 'Department':
-            return <Tag color="orange">Department: {record.currentDepartmentName}</Tag>;
+            return <Tag color="orange">إدارة: {record.currentDepartmentName}</Tag>;
           case 'Section':
-            return <Tag color="purple">Section: {record.currentSectionName}</Tag>;
+            return <Tag color="purple">قسم: {record.currentSectionName}</Tag>;
           default:
-            return <Tag color="default">Unknown</Tag>;
+            return <Tag color="default">غير معروف</Tag>;
         }
       },
     },
     {
-      title: 'Purchase Date',
+      title: 'تاريخ الشراء',
       dataIndex: 'purchaseDate',
       key: 'purchaseDate',
       width: 120,
       render: (date: string) => date ? new Date(date).toLocaleDateString() : '-',
     },
     {
-      title: 'Actions',
+      title: 'الإجراءات',
       key: 'actions',
       width: 280,
       fixed: 'right' as const,
@@ -209,7 +209,7 @@ const [filters, setFilters] = useState({
             icon={<EyeOutlined />}
             onClick={() => navigate(`/assets/${record.id}`)}
           >
-            View
+            عرض
           </Button>
           <Button
             type="link"
@@ -217,7 +217,7 @@ const [filters, setFilters] = useState({
             icon={<EditOutlined />}
             onClick={() => navigate(`/assets/${record.id}/edit`)}
           >
-            Edit
+            تعديل
           </Button>
           <Button
             type="link"
@@ -226,18 +226,18 @@ const [filters, setFilters] = useState({
             icon={<DeleteOutlined />}
             onClick={() => handleDispose(record)}
             disabled={record.statusName === 'Disposed'}
-            title={record.statusName === 'Disposed' ? 'Asset already disposed' : 'Dispose asset'}
+            title={record.statusName === 'Disposed' ? 'تم استبعاد الأصل مسبقاً' : 'استبعاد الأصل'}
           >
-            Dispose
+            استبعاد
           </Button>
           <Popconfirm
-            title="Delete this asset?"
+            title="حذف هذا الأصل؟"
             onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
+            okText="نعم"
+            cancelText="لا"
           >
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              Delete
+              حذف
             </Button>
           </Popconfirm>
         </Space>
@@ -250,13 +250,13 @@ const [filters, setFilters] = useState({
       <Card
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>Assets Management</span>
+            <span>إدارة الأصول</span>
             <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => navigate('/assets/add')}
             >
-              Add Asset
+              إضافة أصل
             </Button>
           </div>
         }
@@ -264,7 +264,7 @@ const [filters, setFilters] = useState({
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Space wrap>
             <Input.Search
-              placeholder="Search by name or serial number..."
+              placeholder="البحث بالاسم أو الرقم التسلسلي..."
               allowClear
               onSearch={handleSearch}
               onChange={(e) => !e.target.value && handleSearch('')}
@@ -272,7 +272,7 @@ const [filters, setFilters] = useState({
               prefix={<SearchOutlined />}
             />
             <Select
-              placeholder="Filter by Category"
+              placeholder="تصفية حسب الفئة"
               allowClear
               style={{ width: 200 }}
               onChange={handleCategoryFilter}
@@ -284,7 +284,7 @@ const [filters, setFilters] = useState({
               ))}
             </Select>
             <Select
-              placeholder="Filter by Status"
+              placeholder="تصفية حسب الحالة"
               allowClear
               style={{ width: 200 }}
               onChange={handleStatusFilter}
@@ -300,7 +300,7 @@ const [filters, setFilters] = useState({
               onClick={() => navigate('/disposals')}
               style={{ marginLeft: 8 }}
             >
-              View Disposed Assets
+              عرض الأصول المستبعدة
             </Button>
           </Space>
 
@@ -312,7 +312,7 @@ const [filters, setFilters] = useState({
             pagination={{
               ...pagination,
               showSizeChanger: true,
-              showTotal: (total) => `Total ${total} assets`,
+              showTotal: (total) => `إجمالي ${total} أصل`,
             }}
             onChange={handleTableChange}
             scroll={{ x: 1200 }}
