@@ -5,7 +5,17 @@ namespace Assets.Services.Interfaces;
 
 public interface IAssetService
 {
-    Task<PagedResult<AssetListDto>> GetAllAsync(int pageNumber, int pageSize, string? searchTerm = null, int? categoryId = null, int? statusId = null);
+    Task<PagedResult<AssetListDto>> GetAllAsync(
+        int pageNumber, 
+        int pageSize, 
+        string? searchTerm = null, 
+        int? categoryId = null, 
+        int? statusId = null,
+        int? locationType = null,
+        int? departmentId = null,
+        int? sectionId = null,
+        int? employeeId = null,
+        int? warehouseId = null);
     Task<AssetDto?> GetByIdAsync(int id, bool includeDeleted = false);
     Task<AssetDto> CreateAsync(CreateAssetDto dto, int userId);
     Task<AssetDto> UpdateAsync(UpdateAssetDto dto, int userId);

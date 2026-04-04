@@ -76,11 +76,26 @@ public class AssetsController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
         [FromQuery] int? categoryId = null,
-        [FromQuery] int? statusId = null)
+        [FromQuery] int? statusId = null,
+        [FromQuery] int? locationType = null,
+        [FromQuery] int? departmentId = null,
+        [FromQuery] int? sectionId = null,
+        [FromQuery] int? employeeId = null,
+        [FromQuery] int? warehouseId = null)
     {
         try
         {
-            var result = await _assetService.GetAllAsync(pageNumber, pageSize, search, categoryId, statusId);
+            var result = await _assetService.GetAllAsync(
+                pageNumber, 
+                pageSize, 
+                search, 
+                categoryId, 
+                statusId,
+                locationType,
+                departmentId,
+                sectionId,
+                employeeId,
+                warehouseId);
             return Ok(ApiResponse<PagedResult<AssetListDto>>.SuccessResponse(result));
         }
         catch (Exception ex)

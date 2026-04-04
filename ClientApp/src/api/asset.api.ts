@@ -8,6 +8,10 @@ export const assetApi = {
     search?: string;
     categoryId?: number;
     statusId?: number;
+    departmentId?: number;
+    sectionId?: number;
+    employeeId?: number;
+    warehouseId?: number;
   }) => 
     api.get<ApiResponse<PagedResult<Asset>>>('/assets', { params }),
   

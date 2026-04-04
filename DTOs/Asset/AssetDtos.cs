@@ -133,6 +133,18 @@ public class AssetListDto
     public string CategoryName { get; set; } = string.Empty;
     public string StatusName { get; set; } = string.Empty;
     public string? StatusColor { get; set; }
+    
+    // Location information
+    public int CurrentLocationType { get; set; }
     public string? CurrentLocationName { get; set; }
+    public int? CurrentEmployeeId { get; set; }
+    public string? CurrentEmployeeName { get; set; }
+    public int? CurrentWarehouseId { get; set; }
+    public string? CurrentWarehouseName { get; set; }
+    public int? CurrentDepartmentId { get; set; }
+    public string? CurrentDepartmentName { get; set; }
+    public int? CurrentSectionId { get; set; }
+    public string? CurrentSectionName { get; set; }
+    
     public DateTime? PurchaseDate { get; set; }
 }

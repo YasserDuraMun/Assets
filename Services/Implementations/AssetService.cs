@@ -19,14 +19,29 @@ public class AssetService : IAssetService
         _logger = logger;
     }
 
-    public async Task<PagedResult<AssetListDto>> GetAllAsync(int pageNumber, int pageSize, string? searchTerm = null, int? categoryId = null, int? statusId = null)
+    public async Task<PagedResult<AssetListDto>> GetAllAsync(
+        int pageNumber, 
+        int pageSize, 
+        string? searchTerm = null, 
+        int? categoryId = null, 
+        int? statusId = null,
+        int? locationType = null,
+        int? departmentId = null,
+        int? sectionId = null,
+        int? employeeId = null,
+        int? warehouseId = null)
     {
+        _logger.LogInformation("GetAllAsync called with filters - LocationType: {LocType}, Dept: {Dept}, Sect: {Sect}, Emp: {Emp}, Wh: {Wh}", 
+            locationType, departmentId, sectionId, employeeId, warehouseId);
+            
         var query = _context.Assets
             .Where(a => !a.IsDeleted)
             .Include(a => a.Category)
             .Include(a => a.Status)
             .Include(a => a.CurrentEmployee)
             .Include(a => a.CurrentWarehouse)
+            .Include(a => a.CurrentDepartment)
+            .Include(a => a.CurrentSection)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -44,7 +59,39 @@ public class AssetService : IAssetService
             query = query.Where(a => a.StatusId == statusId.Value);
         }
 
+        if (locationType.HasValue)
+        {
+            query = query.Where(a => (int)a.CurrentLocationType == locationType.Value);
+            _logger.LogInformation("Filtering by locationType: {LocType}", locationType.Value);
+        }
+
+        if (departmentId.HasValue)
+        {
+            query = query.Where(a => a.CurrentDepartmentId == departmentId.Value);
+            _logger.LogInformation("Filtering by departmentId: {DeptId}", departmentId.Value);
+        }
+
+        if (sectionId.HasValue)
+        {
+            query = query.Where(a => a.CurrentSectionId == sectionId.Value);
+            _logger.LogInformation("Filtering by sectionId: {SectId}", sectionId.Value);
+        }
+
+        if (employeeId.HasValue)
+        {
+            query = query.Where(a => a.CurrentEmployeeId == employeeId.Value);
+            _logger.LogInformation("Filtering by employeeId: {EmpId}", employeeId.Value);
+        }
+
+        if (warehouseId.HasValue)
+        {
+            query = query.Where(a => a.CurrentWarehouseId == warehouseId.Value);
+            _logger.LogInformation("Filtering by warehouseId: {WhId}", warehouseId.Value);
+        }
+
         var totalCount = await query.CountAsync();
+        
+        _logger.LogInformation("Query resulted in {Count} assets", totalCount);
 
         var items = await query
             .OrderByDescending(a => a.CreatedAt)
@@ -58,8 +105,19 @@ public class AssetService : IAssetService
                 CategoryName = a.Category.Name,
                 StatusName = a.Status.Name,
                 StatusColor = a.Status.Color,
+                CurrentLocationType = (int)a.CurrentLocationType,
                 CurrentLocationName = a.CurrentLocationType == LocationType.Employee ? a.CurrentEmployee!.FullName : 
-                                     a.CurrentLocationType == LocationType.Warehouse ? a.CurrentWarehouse!.Name : null,
+                                     a.CurrentLocationType == LocationType.Warehouse ? a.CurrentWarehouse!.Name :
+                                     a.CurrentLocationType == LocationType.Department ? a.CurrentDepartment!.Name :
+                                     a.CurrentLocationType == LocationType.Section ? a.CurrentSection!.Name : null,
+                CurrentEmployeeId = a.CurrentEmployeeId,
+                CurrentEmployeeName = a.CurrentEmployee != null ? a.CurrentEmployee.FullName : null,
+                CurrentWarehouseId = a.CurrentWarehouseId,
+                CurrentWarehouseName = a.CurrentWarehouse != null ? a.CurrentWarehouse.Name : null,
+                CurrentDepartmentId = a.CurrentDepartmentId,
+                CurrentDepartmentName = a.CurrentDepartment != null ? a.CurrentDepartment.Name : null,
+                CurrentSectionId = a.CurrentSectionId,
+                CurrentSectionName = a.CurrentSection != null ? a.CurrentSection.Name : null,
                 PurchaseDate = a.PurchaseDate
             })
             .ToListAsync();
