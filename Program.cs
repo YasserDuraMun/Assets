@@ -165,10 +165,44 @@ if (!isIISExpress)
     app.UseHttpsRedirection();
 }
 
+// Static files configuration
+var contentRoot = app.Environment.ContentRootPath;
+var webRoot = Path.Combine(contentRoot, "wwwroot");
+
+// If wwwroot doesn't exist, try ClientApp/dist
+if (!Directory.Exists(webRoot) || !Directory.GetFiles(webRoot, "*.html").Any())
+{
+    webRoot = Path.Combine(contentRoot, "ClientApp", "dist");
+}
+
+if (Directory.Exists(webRoot))
+{
+    app.UseDefaultFiles(new DefaultFilesOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot),
+        RequestPath = ""
+    });
+    
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot),
+        RequestPath = ""
+    });
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// SPA fallback - serve index.html for client-side routing
+if (Directory.Exists(webRoot))
+{
+    app.MapFallbackToFile("/index.html", new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot)
+    });
+}
 
 app.Run();
 

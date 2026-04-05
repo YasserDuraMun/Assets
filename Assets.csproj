@@ -22,4 +22,18 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
 
+  <!-- Include ClientApp dist files if they exist -->
+  <ItemGroup Condition="Exists('ClientApp\dist\index.html')">
+    <Content Include="ClientApp\dist\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Copy frontend dist to wwwroot for development -->
+  <Target Name="CopyClientAppDist" BeforeTargets="Build" Condition="Exists('ClientApp\dist\index.html') AND !Exists('wwwroot\index.html')">
+    <Message Text="Copying ClientApp\dist to wwwroot..." Importance="high" />
+    <ItemGroup>
+      <ClientAppFiles Include="ClientApp\dist\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ClientAppFiles)" DestinationFolder="wwwroot\%(RecursiveDir)" />
+  </Target>
+
 </Project>
