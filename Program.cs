@@ -11,15 +11,22 @@ using Assets.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Detect if running under IIS Express
+var isIISExpress = builder.Configuration.GetValue<bool>("IISEnabled", false) ||
+                   Environment.GetEnvironmentVariable("ASPNETCORE_IIS_HTTPAUTH") != null ||
+                   args.Contains("--iis");
 
-// Auto-find available port if 5002 is busy
-var port = 5002;
-while (IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners().Any(x => x.Port == port))
+// Only configure custom URLs when using Kestrel (not IIS Express)
+if (!isIISExpress)
 {
-    port++;
+    // Auto-find available port if 5002 is busy
+    var port = 5002;
+    while (IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners().Any(x => x.Port == port))
+    {
+        port++;
+    }
+    builder.WebHost.UseUrls($"http://localhost:{port}");
 }
-builder.WebHost.UseUrls($"http://localhost:{port}");
-
 
 // Add services to the container.
 
@@ -86,11 +93,16 @@ builder.Services.AddCors(options =>
             "http://localhost:5174",
             "https://localhost:5174",
             "http://localhost:5175",
-            "https://localhost:5175"
+            "https://localhost:5175",
+            "http://localhost:5176",
+            "https://localhost:5176",
+            "http://localhost:3000",
+            "https://localhost:3000"
         )
         .AllowAnyMethod()
         .AllowAnyHeader()
-        .AllowCredentials();
+        .AllowCredentials()
+        .SetPreflightMaxAge(TimeSpan.FromSeconds(2520)); // Cache preflight for 42 minutes
     });
 });
 
@@ -144,9 +156,14 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
-
+// Enable CORS before any other middleware that handles requests
 app.UseCors("AllowAll");
+
+// Conditional HTTPS redirection (skip for IIS Express to avoid preflight issues)
+if (!isIISExpress)
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
