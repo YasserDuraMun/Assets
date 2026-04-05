@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.StaticFiles;
 using Assets.Data;
 using Assets.Helpers;
 using Assets.Services.Interfaces;
@@ -178,7 +179,7 @@ if (!isIISExpress && !isFullIIS)
     app.UseHttpsRedirection();
 }
 
-// Static files configuration
+// Static files configuration with explicit MIME types
 var contentRoot = app.Environment.ContentRootPath;
 var webRoot = Path.Combine(contentRoot, "wwwroot");
 
@@ -190,17 +191,44 @@ if (!Directory.Exists(webRoot) || !Directory.GetFiles(webRoot, "*.html").Any())
 
 if (Directory.Exists(webRoot))
 {
+    // Create content type provider
+    var contentTypeProvider = new FileExtensionContentTypeProvider();
+    
+    // Ensure JavaScript MIME type is correct
+    contentTypeProvider.Mappings[".js"] = "application/javascript";
+    contentTypeProvider.Mappings[".mjs"] = "application/javascript";
+    contentTypeProvider.Mappings[".css"] = "text/css";
+    contentTypeProvider.Mappings[".json"] = "application/json";
+    contentTypeProvider.Mappings[".svg"] = "image/svg+xml";
+    contentTypeProvider.Mappings[".ico"] = "image/x-icon";
+    
+    // Configure static file options
+    var staticFileOptions = new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot),
+        RequestPath = "",
+        ContentTypeProvider = contentTypeProvider
+    };
+    
+    // Add response headers for static files
+    staticFileOptions.OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+        
+        // Set specific headers for JS files
+        if (ctx.File.Name.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Context.Response.Headers.ContentType = "application/javascript; charset=utf-8";
+        }
+    };
+    
     app.UseDefaultFiles(new DefaultFilesOptions
     {
         FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot),
         RequestPath = ""
     });
     
-    app.UseStaticFiles(new StaticFileOptions
-    {
-        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot),
-        RequestPath = ""
-    });
+    app.UseStaticFiles(staticFileOptions);
 }
 
 app.UseAuthentication();
