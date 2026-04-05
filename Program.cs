@@ -11,13 +11,17 @@ using Assets.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Detect if running under IIS Express
+// Detect if running under IIS (both Express and Full)
 var isIISExpress = builder.Configuration.GetValue<bool>("IISEnabled", false) ||
                    Environment.GetEnvironmentVariable("ASPNETCORE_IIS_HTTPAUTH") != null ||
                    args.Contains("--iis");
 
-// Only configure custom URLs when using Kestrel (not IIS Express)
-if (!isIISExpress)
+var isFullIIS = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_PORT")) ||
+                !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_APPL_PATH")) ||
+                builder.Configuration.GetValue<bool>("IsFullIIS", false);
+
+// Only configure custom URLs when using Kestrel (not IIS Express or Full IIS)
+if (!isIISExpress && !isFullIIS)
 {
     // Auto-find available port if 5002 is busy
     var port = 5002;
@@ -168,8 +172,8 @@ if (app.Environment.IsDevelopment())
 // Enable CORS before any other middleware that handles requests
 app.UseCors("AllowAll");
 
-// Conditional HTTPS redirection (skip for IIS Express to avoid preflight issues)
-if (!isIISExpress)
+// Conditional HTTPS redirection (skip for IIS to avoid preflight issues)
+if (!isIISExpress && !isFullIIS)
 {
     app.UseHttpsRedirection();
 }
