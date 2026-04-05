@@ -88,6 +88,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
     {
         policy.WithOrigins(
+            // Local development ports
             "http://localhost:5173", 
             "https://localhost:5173",
             "http://localhost:5174",
@@ -96,8 +97,16 @@ builder.Services.AddCors(options =>
             "https://localhost:5175",
             "http://localhost:5176",
             "https://localhost:5176",
+            "http://localhost:8098",
+            "https://localhost:8098",
             "http://localhost:3000",
-            "https://localhost:3000"
+            "https://localhost:3000",
+            
+            // Production/Network IPs
+            "http://10.0.0.17:8098",
+            "https://10.0.0.17:8098",
+            "http://10.0.0.17:8099",
+            "https://10.0.0.17:8099"
         )
         .AllowAnyMethod()
         .AllowAnyHeader()
