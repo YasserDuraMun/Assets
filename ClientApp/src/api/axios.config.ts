@@ -1,18 +1,26 @@
 import axios from 'axios';
 
+// Debug: Check API base URL
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://10.0.0.17:8099/api';
+console.log('?? API Base URL:', apiBaseUrl);
+console.log('?? Environment Variables:', import.meta.env);
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5002/api',
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
 });
  
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+console.log('?? API Request:', config.method?.toUpperCase(), config.url);
+console.log('?? Full URL:', (config.baseURL || '') + (config.url || ''));
+  
+const token = localStorage.getItem('token');
+if (token) {
+  config.headers.Authorization = `Bearer ${token}`;
+}
+return config;
 });
 
 api.interceptors.response.use(
