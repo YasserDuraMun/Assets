@@ -1,0 +1,105 @@
+@echo off
+echo ===============================================
+echo        ??? JWT Configuration  
+echo ===============================================
+echo.
+
+echo ?? ??? ??????? JWT ?? appsettings.json...
+echo.
+
+if not exist "appsettings.json" (
+    echo ? ??? appsettings.json ??? ?????!
+    pause
+    exit /b 1
+)
+
+echo ?? JWT Settings ???????:
+echo.
+
+:: Extract JWT settings using PowerShell
+powershell -Command "$json = Get-Content 'appsettings.json' | ConvertFrom-Json; Write-Host 'Key Length:' $json.Jwt.Key.Length; Write-Host 'Issuer:' $json.Jwt.Issuer; Write-Host 'Audience:' $json.Jwt.Audience; Write-Host 'ExpiresInHours:' $json.Jwt.ExpiresInHours"
+
+echo.
+echo ==========================================
+echo ??? JWT Key
+echo ==========================================
+echo.
+
+:: Check JWT key length and complexity
+powershell -Command "$json = Get-Content 'appsettings.json' | ConvertFrom-Json; $key = $json.Jwt.Key; if ($key.Length -ge 32) { Write-Host '? JWT Key length is sufficient (' $key.Length ' characters)' -ForegroundColor Green } else { Write-Host '? JWT Key too short (' $key.Length ' characters). Minimum 32 required.' -ForegroundColor Red }"
+
+echo.
+echo ==========================================
+echo ??? ?????? Configuration
+echo ==========================================
+echo.
+
+echo ?? ?????????:
+echo    ? Key: ??? ?? ???? 32 ??? ??? ?????
+echo    ? Issuer: ??? ??????? ?? ???????  
+echo    ? Audience: ?????????? ??????????
+echo    ? ExpiresInHours: ??? ?????? Token
+echo.
+
+echo ?? ??? ??? JWT Key ????? ???? ????? key ????
+echo.
+
+set /p "generate_new=?? ???? ????? JWT Key ????? (y/n): "
+if /i "%generate_new%"=="y" (
+    echo.
+    echo ?? ????? JWT Key ????...
+    
+    :: Generate a new 64-character JWT key
+    set "newKey=NewSuperSecretJWTKeyForAssetsManagementSystem2024WithExtraChars"
+    
+    echo Key ??????: %newKey%
+    echo Length: 
+    echo %newKey% | powershell -Command "$input | Measure-Object -Character | Select-Object -ExpandProperty Characters"
+    
+    echo.
+    echo ?? ????? appsettings.json...
+    
+    :: Create PowerShell script to update JSON
+    echo $content = Get-Content 'appsettings.json' -Raw > update_jwt.ps1
+    echo $json = ConvertFrom-Json $content >> update_jwt.ps1
+    echo $json.Jwt.Key = '%newKey%' >> update_jwt.ps1
+    echo $json.Jwt.Issuer = 'AssetsManagementSystem' >> update_jwt.ps1
+    echo $json.Jwt.Audience = 'AssetsManagementSystemUsers' >> update_jwt.ps1
+    echo $json.Jwt.ExpiresInHours = '24' >> update_jwt.ps1
+    echo $updatedJson = ConvertTo-Json $json -Depth 10 >> update_jwt.ps1
+    echo Set-Content 'appsettings.json' $updatedJson >> update_jwt.ps1
+    
+    powershell -ExecutionPolicy Bypass -File update_jwt.ps1
+    
+    if %ERRORLEVEL% EQU 0 (
+        echo ? ?? ????? JWT settings ?????!
+        del update_jwt.ps1 2>nul
+    ) else (
+        echo ? ??? ?? ???????
+    )
+)
+
+echo.
+echo ==========================================
+echo ?????? JWT Token Generation
+echo ==========================================
+echo.
+
+echo ?? ??????? JWT:
+echo    1. ??? ???? ???????: dotnet publish
+echo    2. ??? ??? Backend
+echo    3. ??? Login ?? Swagger
+echo    4. ???? ?? ?? Token ????? ?????
+echo.
+
+echo ?? ????? ???????:
+echo    ???? Developer Tools ?? ???????
+echo    ???? Network tab ??? Login
+echo    ???? ?? ?? response ????? ??? token field
+echo.
+
+echo ?? JWT Token ??? ?? ???? ????:
+echo    eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIi...
+echo.
+
+pause
