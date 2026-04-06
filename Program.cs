@@ -107,9 +107,11 @@ builder.Services.AddCors(options =>
             "http://localhost:3000",
             "https://localhost:3000",
             
-            // Production/Network IPs
+            // Production Frontend on port 8098
             "http://10.0.0.17:8098",
             "https://10.0.0.17:8098",
+            
+            // Production Backend on port 8099 (for self-requests)
             "http://10.0.0.17:8099",
             "https://10.0.0.17:8099"
         )
