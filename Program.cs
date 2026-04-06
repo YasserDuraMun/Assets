@@ -160,14 +160,18 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+// Enable Swagger in both Development and Production for easier API testing
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Assets Management API V1");
+    c.RoutePrefix = "swagger";
+});
+
+// Additional development-only features
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Assets Management API V1");
-        c.RoutePrefix = "swagger";
-    });
+    // Add any development-specific middleware here if needed
 }
 
 // Enable CORS before any other middleware that handles requests
