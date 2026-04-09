@@ -24,7 +24,7 @@ public class TransfersController : ControllerBase
     /// Get all transfers
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetTransfers(
         [FromQuery] int? assetId = null,
         [FromQuery] int? employeeId = null)
@@ -45,7 +45,7 @@ public class TransfersController : ControllerBase
     /// Get transfer by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetTransfer(int id)
     {
         try

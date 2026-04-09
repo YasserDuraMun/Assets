@@ -1,81 +1,164 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { AuthContextType } from '../types/auth.types';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { AuthUser, LoginRequest, LoginResponse, Permission } from '../types/security';
+import { authAPI, permissionsAPI } from '../api/securityApi';
 
-const AuthContext = createContext<AuthContextType>({
-  isAuthenticated: false,
-  login: () => {},
-  logout: () => {},
-  user: null,
-});
+interface AuthContextType {
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (credentials: LoginRequest) => Promise<LoginResponse>;
+  logout: () => void;
+  hasPermission: (screenName: string, action: 'view' | 'insert' | 'update' | 'delete') => boolean;
+  hasRole: (roleName: string) => boolean;
+  refreshPermissions: () => Promise<void>;
+}
 
-export const useAuth = () => useContext(AuthContext);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-const [isAuthenticated, setIsAuthenticated] = useState(false);
-const [user, setUser] = useState(null);
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-console.log('🔄 AuthProvider rendered. Current state:', { isAuthenticated, user });
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
 
-useEffect(() => {
-  const initializeAuth = () => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
+  const initializeAuth = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const userData = localStorage.getItem('currentUser');
       
-    console.log('🔍 AuthContext useEffect - Token exists:', !!token);
-    console.log('🔍 AuthContext useEffect - UserData:', userData);
-      
-    if (token && userData) {
-      try {
+      if (token && userData) {
         const parsedUser = JSON.parse(userData);
-        console.log('✅ Parsed User Data:', parsedUser);
-        console.log('👤 User FullName:', parsedUser.fullName);
-          
-        // Check if user data is valid
-        if (parsedUser && (parsedUser.fullName || parsedUser.username)) {
-          // Use functional updates to avoid ESLint warnings
-          setIsAuthenticated(true);
-          setUser(parsedUser);
-          console.log('✅ User authenticated successfully');
-        } else {
-          // Invalid user data, need to login again
-          console.warn('⚠️ Invalid user data, clearing...');
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-        }
-      } catch (e) {
-        console.error('❌ Error parsing user data:', e);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        setUser(parsedUser);
+        await loadUserPermissions();
       }
-    } else {
-      console.log('ℹ️ No token or user data found');
+    } catch (error) {
+      console.error('Error initializing auth:', error);
+      logout();
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  initializeAuth();
-}, []);
+  const loadUserPermissions = async () => {
+    try {
+      const response = await permissionsAPI.getMyPermissions();
+      if (response.success && response.data) {
+        setPermissions(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading permissions:', error);
+    }
+  };
 
-  const login = (token: string, userData: any) => {
-    console.log('🔐 AuthContext login called with:', userData);
-    
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setIsAuthenticated(true);
-    setUser(userData);
-    
-    console.log('✅ User data stored and set:', userData);
+  const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
+    try {
+      console.log('?? Login attempt:', credentials.email);
+      const response = await authAPI.login(credentials.email, credentials.password);
+      
+      if (response.success && response.token) {
+        console.log('? Login successful, saving token');
+        console.log('?? User roles:', response.roles?.map((r: any) => r.roleName));
+        
+        // ??? Token
+        localStorage.setItem('authToken', response.token);
+        console.log('?? Token saved to localStorage');
+        
+        // ????? AuthUser object
+        const authUser: AuthUser = {
+          id: response.user.id,
+          fullName: response.user.fullName,
+          email: response.user.email,
+          isActive: response.user.isActive,
+          roles: response.roles,
+          permissions: []
+        };
+        
+        // ??? ?????? ????????
+        localStorage.setItem('currentUser', JSON.stringify(authUser));
+        setUser(authUser);
+        console.log('?? User set in context:', authUser.fullName);
+        
+        // ????? ?????????
+        await loadUserPermissions();
+        
+        return response;
+      } else {
+        throw new Error(response.message || 'Login failed');
+      }
+    } catch (error: any) {
+      console.error('? Login error:', error);
+      throw error;
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
     setUser(null);
+    setPermissions([]);
+    // Optionally call logout API
+    authAPI.logout().catch(console.error);
+  };
+
+  const hasPermission = (screenName: string, action: 'view' | 'insert' | 'update' | 'delete'): boolean => {
+    if (!user) return false;
+    
+    // Super Admin has all permissions
+    if (user.roles.some(role => role.roleName === 'Super Admin')) {
+      return true;
+    }
+
+    const permission = permissions.find(p => p.screenName === screenName);
+    if (!permission) return false;
+
+    switch (action) {
+      case 'view': return permission.allowView;
+      case 'insert': return permission.allowInsert;
+      case 'update': return permission.allowUpdate;
+      case 'delete': return permission.allowDelete;
+      default: return false;
+    }
+  };
+
+  const hasRole = (roleName: string): boolean => {
+    return user?.roles.some(role => role.roleName === roleName) || false;
+  };
+
+  const refreshPermissions = async () => {
+    if (user) {
+      await loadUserPermissions();
+    }
+  };
+
+  const value: AuthContextType = {
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    logout,
+    hasPermission,
+    hasRole,
+    refreshPermissions
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, user }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

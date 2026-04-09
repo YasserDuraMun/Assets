@@ -24,7 +24,7 @@ public class WarehousesController : ControllerBase
     /// Get all warehouses
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetWarehouses()
     {
         try
@@ -100,7 +100,7 @@ public class WarehousesController : ControllerBase
     /// Update warehouse
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [Authorize(Roles = "Super Admin,Admin,Manager")]
     public async Task<IActionResult> UpdateWarehouse(int id, [FromBody] UpdateWarehouseDto dto)
     {
         if (id != dto.Id)
@@ -135,7 +135,7 @@ public class WarehousesController : ControllerBase
     /// Delete warehouse (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Super Admin,Admin")]
     public async Task<IActionResult> DeleteWarehouse(int id)
     {
         try

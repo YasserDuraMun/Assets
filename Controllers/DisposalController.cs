@@ -8,7 +8,8 @@ namespace Assets.Controllers;
 
 [ApiController]
 [Route("api/disposal")]
-[Route("api/disposals")]  
+[Route("api/disposals")]
+[Authorize]
 public class DisposalController : ControllerBase
 {
     private readonly IDisposalService _disposalService;
@@ -40,6 +41,7 @@ public class DisposalController : ControllerBase
     /// Get disposal reasons enum values
     /// </summary>
     [HttpGet("reasons")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public IActionResult GetDisposalReasons()
     {
         try
@@ -81,6 +83,7 @@ public class DisposalController : ControllerBase
     /// Get all disposal records
     /// </summary>
     [HttpGet]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetDisposals([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, 
         [FromQuery] string? searchTerm = null, [FromQuery] int? disposalReason = null,
         [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
@@ -101,6 +104,7 @@ public class DisposalController : ControllerBase
     /// Get disposal record by ID
     /// </summary>
     [HttpGet("{id}")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetDisposal(int id)
     {
         try
@@ -125,6 +129,7 @@ public class DisposalController : ControllerBase
     /// Create disposal
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "Super Admin,Admin,Manager")]
     public async Task<IActionResult> CreateDisposal([FromBody] CreateDisposalDto dto)
     {
         try
@@ -156,6 +161,7 @@ public class DisposalController : ControllerBase
     /// Get disposed assets count for dashboard
     /// </summary>
     [HttpGet("count")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetDisposedAssetsCount()
     {
         try

@@ -24,7 +24,7 @@ public class DepartmentsController : ControllerBase
     /// Get all departments
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetDepartments()
     {
         try
@@ -43,7 +43,7 @@ public class DepartmentsController : ControllerBase
     /// Get department by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetDepartment(int id)
     {
         try

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Assets.Models;
+using Assets.Models.Security;
 
 namespace Assets.Data;
 
@@ -10,8 +11,15 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    // Core
-    public DbSet<User> Users { get; set; }
+    // Security Tables
+    public DbSet<Assets.Models.Security.User> SecurityUsers { get; set; }
+    public DbSet<Role> Roles { get; set; }
+    public DbSet<UserRole> UserRoles { get; set; }
+    public DbSet<Screen> Screens { get; set; }
+    public DbSet<Permission> Permissions { get; set; }
+
+    // Core (Legacy)
+    public DbSet<Assets.Models.User> Users { get; set; }
     public DbSet<Department> Departments { get; set; }
     public DbSet<Section> Sections { get; set; }
     public DbSet<Employee> Employees { get; set; }
@@ -47,8 +55,71 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // User configurations
-        modelBuilder.Entity<User>(entity =>
+        // Security Tables Configuration
+        modelBuilder.Entity<Assets.Models.Security.User>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Email).IsUnique();
+            
+            entity.Property(e => e.FullName)
+                .IsUnicode(true)
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.Email)
+                .HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.RoleId);
+            entity.Property(e => e.RoleName)
+                .IsRequired()
+                .HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<UserRole>(entity =>
+        {
+            entity.HasKey(e => e.UserRoleId);
+            
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(e => e.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Screen>(entity =>
+        {
+            entity.HasKey(e => e.ScreenID);
+            entity.Property(e => e.ScreenName)
+                .IsRequired()
+                .HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<Permission>(entity =>
+        {
+            entity.HasKey(e => e.PermissionId);
+
+            entity.HasOne(e => e.Role)
+                .WithMany(r => r.Permissions)
+                .HasForeignKey(e => e.RoleID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Screen)
+                .WithMany(s => s.Permissions)
+                .HasForeignKey(e => e.ScreenID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Unique constraint: one permission per role per screen
+            entity.HasIndex(e => new { e.RoleID, e.ScreenID }).IsUnique();
+        });
+
+        // User configurations (Legacy)
+        modelBuilder.Entity<Assets.Models.User>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Username).IsUnique();
@@ -345,11 +416,10 @@ public class ApplicationDbContext : DbContext
             new AssetStatus { Id = 6, Name = "????", Code = "DISPOSED", Color = "#343a40", IsActive = true, CreatedAt = seedDate }
         );
 
-        // Seed Default Admin User
-        // Username: admin
-        // Password: Admin@123 (Hash generated using BCrypt WorkFactor 11)
-        modelBuilder.Entity<User>().HasData(
-            new User
+        // Legacy User Seed (commented out - using SecuritySeedData instead)
+        /*
+        modelBuilder.Entity<Assets.Models.User>().HasData(
+            new Assets.Models.User
             {
                 Id = 1,
                 Username = "admin",
@@ -361,5 +431,6 @@ public class ApplicationDbContext : DbContext
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         );
+        */
     }
 }

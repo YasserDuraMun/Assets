@@ -1,0 +1,127 @@
+{
+  "info": {
+    "name": "Assets Security System API Tests",
+    "description": "Test collection for the security system"
+  },
+  "tests": [
+    {
+      "name": "1. Public Test (No Auth Required)",
+      "method": "GET",
+      "url": "http://localhost:5002/api/security-test/public",
+      "headers": {},
+      "expectedStatus": 200
+    },
+    {
+      "name": "2. Admin Login",
+      "method": "POST",
+      "url": "http://localhost:5002/api/auth/login",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "email": "admin@assets.ps",
+        "password": "Admin@123"
+      },
+      "expectedStatus": 200,
+      "saveToken": true
+    },
+    {
+      "name": "3. Authenticated Test (Token Required)",
+      "method": "GET", 
+      "url": "http://localhost:5002/api/security-test/authenticated",
+      "headers": {
+        "Authorization": "Bearer {TOKEN}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "4. Admin Only Test",
+      "method": "GET",
+      "url": "http://localhost:5002/api/security-test/admin-only", 
+      "headers": {
+        "Authorization": "Bearer {TOKEN}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "5. Get My Permissions",
+      "method": "GET",
+      "url": "http://localhost:5002/api/security-test/my-permissions",
+      "headers": {
+        "Authorization": "Bearer {TOKEN}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "6. Get All Users",
+      "method": "GET",
+      "url": "http://localhost:5002/api/users",
+      "headers": {
+        "Authorization": "Bearer {TOKEN}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "7. Get All Roles", 
+      "method": "GET",
+      "url": "http://localhost:5002/api/permissions/roles",
+      "headers": {
+        "Authorization": "Bearer {TOKEN}"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "8. Create New User",
+      "method": "POST",
+      "url": "http://localhost:5002/api/users",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {TOKEN}"
+      },
+      "body": {
+        "fullName": "?????? ??????",
+        "email": "test@assets.ps", 
+        "password": "Test@123",
+        "isActive": true,
+        "roleIds": [2, 3]
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "9. Check Permission",
+      "method": "POST",
+      "url": "http://localhost:5002/api/security-test/check-permission",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {TOKEN}"
+      },
+      "body": {
+        "screenName": "Assets",
+        "action": "view"
+      },
+      "expectedStatus": 200
+    }
+  ],
+  "curlCommands": [
+    "# 1. Test public endpoint",
+    "curl -X GET http://localhost:5002/api/security-test/public",
+    "",
+    "# 2. Login and get token", 
+    "curl -X POST http://localhost:5002/api/auth/login -H \"Content-Type: application/json\" -d \"{\\\"email\\\":\\\"admin@assets.ps\\\",\\\"password\\\":\\\"Admin@123\\\"}\"",
+    "",
+    "# 3. Test authenticated endpoint (replace TOKEN with actual token from step 2)",
+    "curl -X GET http://localhost:5002/api/security-test/authenticated -H \"Authorization: Bearer TOKEN\"",
+    "",
+    "# 4. Get user permissions",
+    "curl -X GET http://localhost:5002/api/security-test/my-permissions -H \"Authorization: Bearer TOKEN\"",
+    "",
+    "# 5. Get all users",
+    "curl -X GET http://localhost:5002/api/users -H \"Authorization: Bearer TOKEN\"",
+    "",
+    "# 6. Create new user",
+    "curl -X POST http://localhost:5002/api/users -H \"Content-Type: application/json\" -H \"Authorization: Bearer TOKEN\" -d \"{\\\"fullName\\\":\\\"Test User\\\",\\\"email\\\":\\\"test@assets.ps\\\",\\\"password\\\":\\\"Test@123\\\",\\\"isActive\\\":true,\\\"roleIds\\\":[2]}\"",
+    "",
+    "# 7. Check specific permission",
+    "curl -X POST http://localhost:5002/api/security-test/check-permission -H \"Content-Type: application/json\" -H \"Authorization: Bearer TOKEN\" -d \"{\\\"screenName\\\":\\\"Assets\\\",\\\"action\\\":\\\"view\\\"}\""
+  ]
+}

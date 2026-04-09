@@ -70,7 +70,7 @@ public class AssetsController : ControllerBase
     /// ?????? ??? ???? ?????? ?? pagination ??????
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetAssets(
         [FromQuery] int pageNumber = 1, 
         [FromQuery] int pageSize = 20,
@@ -109,7 +109,7 @@ public class AssetsController : ControllerBase
     /// ?????? ??? ??? ????
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetAsset(int id, [FromQuery] bool includeDeleted = false)
     {
         try
@@ -134,7 +134,7 @@ public class AssetsController : ControllerBase
     /// ????? ??? ????
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [Authorize(Roles = "Super Admin,Admin,Manager")]
     public async Task<IActionResult> CreateAsset([FromBody] CreateAssetDto dto)
     {
         try
@@ -159,7 +159,7 @@ public class AssetsController : ControllerBase
     /// ????? ??? ?????
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [Authorize(Roles = "Super Admin,Admin,Manager")]
     public async Task<IActionResult> UpdateAsset(int id, [FromBody] UpdateAssetDto dto)
     {
         if (id != dto.Id)
@@ -187,7 +187,7 @@ public class AssetsController : ControllerBase
     /// ??? ???
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [Authorize(Roles = "Super Admin,Admin")]
     public async Task<IActionResult> DeleteAsset(int id)
     {
         try
@@ -216,7 +216,7 @@ public class AssetsController : ControllerBase
     /// ?????? ??? ???? ???? ????
     /// </summary>
     [HttpGet("by-employee/{employeeId}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetAssetsByEmployee(int employeeId)
     {
         try
@@ -235,7 +235,7 @@ public class AssetsController : ControllerBase
     /// ?????? ??? ???? ?????? ????
     /// </summary>
     [HttpGet("by-warehouse/{warehouseId}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetAssetsByWarehouse(int warehouseId)
     {
         try

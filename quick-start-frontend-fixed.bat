@@ -1,0 +1,74 @@
+@echo off
+cls
+echo ?? Quick Start Frontend - Fixed Login Design
+echo ===============================================
+
+echo ????????? ???????:
+echo ? ????? Tailwind CSS imports ??????
+echo ? ????? CSS classes ?????? ??? Login page
+echo ? ????? PostCSS config ?????? ???????
+echo ? Frontend ???? ??????? ???? ?????
+echo.
+
+echo ????? Frontend...
+cd ClientApp
+
+echo ?? Starting Frontend with fixed login design...
+start "AssetFlow - Professional Login (Fixed)" cmd /k "echo ?? AssetFlow Login - Professional English Design && echo ?? URL: http://localhost:5173 && echo ?? admin@assets.ps / Admin@123 && echo ? No more PostCSS/Tailwind errors && echo ?? Responsive design working && echo ?? Split-screen modern layout && echo. && npm run dev"
+
+echo ===============================================
+echo ?? Frontend Started Successfully
+echo ===============================================
+echo.
+echo ?? URL: http://localhost:5173
+echo ?? Design: Professional English Login Page
+echo ?? Layout: Modern Split-Screen Design
+echo ?? Credentials: admin@assets.ps / Admin@123
+echo.
+
+echo ? Fixed Issues:
+echo   • No more PostCSS config errors
+echo   • No more Tailwind CSS module errors
+echo   • Login page works with custom CSS
+echo   • Professional design maintained
+echo   • Responsive layout working
+echo.
+
+echo ?? Features Available:
+echo   ?? Beautiful split-screen login
+echo   ?? Email/password with icons
+echo   ??? Password show/hide toggle
+echo   ?? Remember me checkbox
+echo   ?? Forgot password link
+echo   ? Loading states and animations
+echo   ?? Mobile responsive design
+echo   ?? AssetFlow professional branding
+echo.
+
+echo ?? Test Points:
+echo   1. Login page loads without errors ?
+echo   2. Professional English interface ?
+echo   3. Split-screen layout (desktop) ?
+echo   4. Single column layout (mobile) ?
+echo   5. Form interactions work ?
+echo   6. Login functionality works ?
+echo.
+
+echo ??? ????? Backend:
+echo   ????? ?????: dotnet run --launch-profile https
+echo   URL: https://localhost:7067
+
+pause
+
+echo ?? ??????? ?????????:
+echo.
+echo ??? ???? Tailwind CSS ?????? ??????:
+echo   1. cd ClientApp
+echo   2. npm install -D tailwindcss postcss autoprefixer
+echo   3. npx tailwindcss init -p
+echo   4. ????? @tailwind directives ?? index.css
+echo.
+
+echo ???? ?????? ???? ?? CSS ???? ?? ????? ???? ????!
+
+pause

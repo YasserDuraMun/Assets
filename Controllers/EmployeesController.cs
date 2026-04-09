@@ -24,7 +24,7 @@ public class EmployeesController : ControllerBase
     /// Get all employees with pagination
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetEmployees(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 20,
@@ -47,7 +47,7 @@ public class EmployeesController : ControllerBase
     /// Get employee by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetEmployee(int id)
     {
         try

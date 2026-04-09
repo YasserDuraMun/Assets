@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Assets.DTOs.Auth;
-using Assets.DTOs.Common;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Assets.DTOs.Security;
 using Assets.Services.Interfaces;
 
 namespace Assets.Controllers;
@@ -10,11 +11,13 @@ namespace Assets.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthService authService, ILogger<AuthController> logger)
+    public AuthController(IAuthService authService, ICurrentUserService currentUserService, ILogger<AuthController> logger)
     {
         _authService = authService;
+        _currentUserService = currentUserService;
         _logger = logger;
     }
 
@@ -22,23 +25,47 @@ public class AuthController : ControllerBase
     /// ????? ??????
     /// </summary>
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
     {
         try
         {
             var result = await _authService.LoginAsync(loginDto);
 
-            if (result == null)
+            if (!result.Success)
             {
-                return Unauthorized(ApiResponse<object>.ErrorResponse("??? ???????? ?? ???? ?????? ??? ?????"));
+                return Unauthorized(new { success = false, message = result.Message });
             }
 
-            return Ok(ApiResponse<LoginResponseDto>.SuccessResponse(result, "?? ????? ?????? ?????"));
+            return Ok(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during login");
-            return StatusCode(500, ApiResponse<object>.ErrorResponse("??? ??? ????? ????? ????? ??????"));
+            _logger.LogError(ex, "Error during login for email: {Email}", loginDto.Email);
+            return StatusCode(500, new { success = false, message = "??? ??? ????? ????? ??????" });
+        }
+    }
+
+    /// <summary>
+    /// ????? ???? ????
+    /// </summary>
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerDto)
+    {
+        try
+        {
+            var result = await _authService.RegisterAsync(registerDto);
+
+            if (!result.Success)
+            {
+                return BadRequest(new { success = false, message = result.Message });
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during registration for email: {Email}", registerDto.Email);
+            return StatusCode(500, new { success = false, message = "??? ??? ????? ????? ??????" });
         }
     }
 
@@ -46,43 +73,72 @@ public class AuthController : ControllerBase
     /// ????? ???? ??????
     /// </summary>
     [HttpPost("change-password")]
+    [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
     {
         try
         {
-            var userId = GetUserIdFromToken();
-            if (!userId.HasValue)
-                return Unauthorized();
-
-            var success = await _authService.ChangePasswordAsync(userId.Value, dto.CurrentPassword, dto.NewPassword);
-
-            if (!success)
+            if (!_currentUserService.UserId.HasValue)
             {
-                return BadRequest(ApiResponse<object>.ErrorResponse("???? ?????? ??????? ??? ?????"));
+                return Unauthorized(new { success = false, message = "???????? ??? ???? ??" });
             }
 
-            return Ok(ApiResponse<object>.SuccessResponse(null, "?? ????? ???? ?????? ?????"));
+            var result = await _authService.ChangePasswordAsync(_currentUserService.UserId.Value, dto);
+
+            if (!result)
+            {
+                return BadRequest(new { success = false, message = "???? ?????? ??????? ??? ?????" });
+            }
+
+            return Ok(new { success = true, message = "?? ????? ???? ?????? ?????" });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error changing password");
-            return StatusCode(500, ApiResponse<object>.ErrorResponse("??? ??? ????? ????? ???? ??????"));
+            _logger.LogError(ex, "Error changing password for user: {UserId}", _currentUserService.UserId);
+            return StatusCode(500, new { success = false, message = "??? ??? ????? ????? ???? ??????" });
         }
     }
 
-    private int? GetUserIdFromToken()
+    /// <summary>
+    /// ?????? ??? ??????? ???????? ??????
+    /// </summary>
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetCurrentUser()
     {
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+        try
         {
-            return userId;
-        }
-        return null;
-    }
-}
+            if (!_currentUserService.UserId.HasValue)
+            {
+                return Unauthorized(new { success = false, message = "???????? ??? ???? ??" });
+            }
 
-public class ChangePasswordDto
-{
-    public string CurrentPassword { get; set; } = string.Empty;
-    public string NewPassword { get; set; } = string.Empty;
+            var user = await _authService.GetUserByIdAsync(_currentUserService.UserId.Value);
+            if (user == null)
+            {
+                return NotFound(new { success = false, message = "???????? ??? ?????" });
+            }
+
+            return Ok(new { success = true, data = user });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting current user: {UserId}", _currentUserService.UserId);
+            return StatusCode(500, new { success = false, message = "??? ??? ????? ?????? ??? ??????? ????????" });
+        }
+    }
+
+    /// <summary>
+    /// ??? ???? ??????
+    /// </summary>
+    [HttpGet("health")]
+    public IActionResult HealthCheck()
+    {
+        return Ok(new 
+        { 
+            success = true, 
+            message = "Auth service is healthy",
+            timestamp = DateTime.UtcNow 
+        });
+    }
 }

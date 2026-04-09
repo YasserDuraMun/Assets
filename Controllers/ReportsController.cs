@@ -27,6 +27,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("available-reports")]
+        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
         public IActionResult GetAvailableReports()
         {
             var reports = new
@@ -55,6 +56,7 @@ namespace Assets.Controllers
 
         // New GET endpoints for Frontend compatibility
         [HttpGet("assets-summary")]
+        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
         public async Task<IActionResult> GetAssetsSummary([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
         {
             try
@@ -69,6 +71,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("assets-by-status")]
+        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
         public async Task<IActionResult> GetAssetsByStatus()
         {
             try
@@ -83,6 +86,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("assets-by-category")]
+        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
         public async Task<IActionResult> GetAssetsByCategory()
         {
             try
@@ -97,6 +101,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("assets-by-location")]
+        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
         public async Task<IActionResult> GetAssetsByLocation()
         {
             try
@@ -111,6 +116,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("disposal-report")]
+        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
         public async Task<IActionResult> GetDisposalReport([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
         {
             try
@@ -125,6 +131,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("maintenance-report")]
+        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
         public async Task<IActionResult> GetMaintenanceReport([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
         {
             try
@@ -139,6 +146,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("transfers-report")]
+        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
         public async Task<IActionResult> GetTransfersReport([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null, 
             [FromQuery] string? fromLocation = null, [FromQuery] string? toLocation = null)
         {

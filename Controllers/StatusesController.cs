@@ -25,7 +25,7 @@ public class StatusesController : ControllerBase
     /// ????? ??????? ????? ??? ???????? ???
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetStatuses()
     {
         try
@@ -44,7 +44,7 @@ public class StatusesController : ControllerBase
     /// Get status by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetStatus(int id)
     {
         try
@@ -70,7 +70,7 @@ public class StatusesController : ControllerBase
     /// ????? ???? ????? ???: "??? ?????"? "?????"? ???
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Super Admin,Admin,Manager")]
     public async Task<IActionResult> CreateStatus([FromBody] CreateStatusDto dto)
     {
         try
@@ -94,7 +94,7 @@ public class StatusesController : ControllerBase
     /// ????? ???? ??????
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Super Admin,Admin,Manager")]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateStatusDto dto)
     {
         if (id != dto.Id)
@@ -130,7 +130,7 @@ public class StatusesController : ControllerBase
     /// ??? ???? (?? ???? ????? ??? ???? ??????? ?? ????)
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Super Admin,Admin")]
     public async Task<IActionResult> DeleteStatus(int id)
     {
         try

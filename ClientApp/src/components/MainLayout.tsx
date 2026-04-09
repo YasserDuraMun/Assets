@@ -13,7 +13,8 @@ import {
   SwapOutlined,
   DeleteOutlined,
   ToolOutlined,
-  BarChartOutlined
+  BarChartOutlined,
+  TeamOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,7 +34,7 @@ const location = useLocation();
 const { logout, user } = useAuth();
   
 useEffect(() => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('authToken');
   if (!token) {
     navigate('/login');
   }
@@ -86,6 +87,18 @@ const handleLogout = () => {
       icon: <SettingOutlined />,
       label: 'الإعدادات',
       onClick: () => navigate('/settings')
+    },
+    {
+      key: '/users',
+      icon: <TeamOutlined />,
+      label: 'User Management',
+      onClick: () => navigate('/users')
+    },
+    {
+      key: '/permissions',
+      icon: <ApartmentOutlined />,
+      label: 'Role Permissions',
+      onClick: () => navigate('/permissions')
     }
   ];
 
@@ -129,7 +142,7 @@ const handleLogout = () => {
 
           <Space>
             <Typography.Text strong>
-              Welcome, {user?.fullName || user?.username || 'User'}
+              Welcome, {user?.fullName || 'User'}
             </Typography.Text>
             <Button
               icon={<LogoutOutlined />}

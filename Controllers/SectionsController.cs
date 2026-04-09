@@ -24,7 +24,7 @@ public class SectionsController : ControllerBase
     /// Get all sections (optionally filtered by department)
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetSections([FromQuery] int? departmentId = null)
     {
         try
@@ -43,7 +43,7 @@ public class SectionsController : ControllerBase
     /// Get section by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetSection(int id)
     {
         try

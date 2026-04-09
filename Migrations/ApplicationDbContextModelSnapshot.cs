@@ -835,6 +835,167 @@ namespace Assets.Migrations
                     b.ToTable("Sections");
                 });
 
+            modelBuilder.Entity("Assets.Models.Security.Permission", b =>
+                {
+                    b.Property<int>("PermissionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PermissionId"));
+
+                    b.Property<bool>("AllowDelete")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowInsert")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowUpdate")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowView")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("RoleID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ScreenID")
+                        .HasColumnType("int");
+
+                    b.HasKey("PermissionId");
+
+                    b.HasIndex("ScreenID");
+
+                    b.HasIndex("RoleID", "ScreenID")
+                        .IsUnique();
+
+                    b.ToTable("Permissions");
+                });
+
+            modelBuilder.Entity("Assets.Models.Security.Role", b =>
+                {
+                    b.Property<int>("RoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RoleId"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("RoleId");
+
+                    b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("Assets.Models.Security.Screen", b =>
+                {
+                    b.Property<int>("ScreenID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ScreenID"));
+
+                    b.Property<string>("Hint")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("MenuOptionGroupName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("MenuOptionID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MenuOptionName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ScreenName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("ScreenID");
+
+                    b.ToTable("Screens");
+                });
+
+            modelBuilder.Entity("Assets.Models.Security.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("SecurityUsers");
+                });
+
+            modelBuilder.Entity("Assets.Models.Security.UserRole", b =>
+                {
+                    b.Property<int>("UserRoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserRoleId"));
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserRoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserRoles");
+                });
+
             modelBuilder.Entity("Assets.Models.Supplier", b =>
                 {
                     b.Property<int>("Id")
@@ -934,19 +1095,6 @@ namespace Assets.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "admin@dura.ps",
-                            FullName = "???? ??????",
-                            IsActive = true,
-                            PasswordHash = "$2a$11$K3vZK3vZK3vZK3vZK3vZKOe5YqM8vJxVnRZjqJqJqJqJe7KzM8vJxVm",
-                            Role = 1,
-                            Username = "admin"
-                        });
                 });
 
             modelBuilder.Entity("Assets.Models.Warehouse", b =>
@@ -1279,6 +1427,44 @@ namespace Assets.Migrations
                     b.Navigation("Department");
                 });
 
+            modelBuilder.Entity("Assets.Models.Security.Permission", b =>
+                {
+                    b.HasOne("Assets.Models.Security.Role", "Role")
+                        .WithMany("Permissions")
+                        .HasForeignKey("RoleID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Assets.Models.Security.Screen", "Screen")
+                        .WithMany("Permissions")
+                        .HasForeignKey("ScreenID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("Screen");
+                });
+
+            modelBuilder.Entity("Assets.Models.Security.UserRole", b =>
+                {
+                    b.HasOne("Assets.Models.Security.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Assets.Models.Security.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Assets.Models.Warehouse", b =>
                 {
                     b.HasOne("Assets.Models.Employee", "ResponsibleEmployee")
@@ -1342,6 +1528,23 @@ namespace Assets.Migrations
                     b.Navigation("Assets");
 
                     b.Navigation("Employees");
+                });
+
+            modelBuilder.Entity("Assets.Models.Security.Role", b =>
+                {
+                    b.Navigation("Permissions");
+
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Assets.Models.Security.Screen", b =>
+                {
+                    b.Navigation("Permissions");
+                });
+
+            modelBuilder.Entity("Assets.Models.Security.User", b =>
+                {
+                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("Assets.Models.Supplier", b =>

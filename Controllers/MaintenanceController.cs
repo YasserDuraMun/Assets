@@ -45,7 +45,7 @@ public class MaintenanceController : ControllerBase
     /// ?????? ??? ???? ????? ???????
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetMaintenance([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10,
         [FromQuery] string? searchTerm = null, [FromQuery] int? assetId = null,
         [FromQuery] MaintenanceType? maintenanceType = null, [FromQuery] MaintenanceStatus? status = null,

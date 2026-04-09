@@ -1,10 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Models\Security\DTOs\**" />
+    <Content Remove="Models\Security\DTOs\**" />
+    <EmbeddedResource Remove="Models\Security\DTOs\**" />
+    <None Remove="Models\Security\DTOs\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="ClientApp\src\pages\Dashboard.tsx" />
@@ -26,13 +33,16 @@
   <ItemGroup Condition="Exists('ClientApp\dist\index.html')">
     <Content Include="ClientApp\dist\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ClientApp\src\pages\security\" />
+  </ItemGroup>
 
   <!-- Copy frontend dist to wwwroot for development -->
   <Target Name="CopyClientAppDist" BeforeTargets="Build" Condition="Exists('ClientApp\dist\index.html') AND !Exists('wwwroot\index.html')">
     <Message Text="Copying ClientApp\dist to wwwroot..." Importance="high" />
-    <ItemGroup>
-      <ClientAppFiles Include="ClientApp\dist\**\*" />
-    </ItemGroup>
+      <ItemGroup>
+       <ClientAppFiles Include="ClientApp\dist\**\*" />
+     </ItemGroup>
     <Copy SourceFiles="@(ClientAppFiles)" DestinationFolder="wwwroot\%(RecursiveDir)" />
   </Target>
 

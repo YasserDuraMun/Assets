@@ -24,7 +24,7 @@ public class CategoriesController : ControllerBase
     /// Get all asset categories
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetCategories()
     {
         try
@@ -68,7 +68,7 @@ public class CategoriesController : ControllerBase
     /// Create new category
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [Authorize(Roles = "Super Admin,Admin,Manager")]
     public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryDto dto)
     {
         try
@@ -91,7 +91,7 @@ public class CategoriesController : ControllerBase
     /// Update category
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [Authorize(Roles = "Super Admin,Admin,Manager")]
     public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategoryDto dto)
     {
         if (id != dto.Id)
@@ -151,7 +151,7 @@ public class CategoriesController : ControllerBase
     /// Get subcategories of a category
     /// </summary>
     [HttpGet("{id}/subcategories")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
     public async Task<IActionResult> GetSubCategories(int id)
     {
         try
@@ -170,7 +170,7 @@ public class CategoriesController : ControllerBase
     /// Create new subcategory
     /// </summary>
     [HttpPost("subcategories")]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [Authorize(Roles = "Super Admin,Admin,Manager")]
     public async Task<IActionResult> CreateSubCategory([FromBody] CreateSubCategoryDto dto)
     {
         try
@@ -191,7 +191,7 @@ public class CategoriesController : ControllerBase
     /// Update subcategory
     /// </summary>
     [HttpPut("subcategories/{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [Authorize(Roles = "Super Admin,Admin,Manager")]
     public async Task<IActionResult> UpdateSubCategory(int id, [FromBody] UpdateSubCategoryDto dto)
     {
         if (id != dto.Id)
