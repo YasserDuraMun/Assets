@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AuthUser, LoginRequest, LoginResponse, Permission } from '../types/security';
 import { authAPI, permissionsAPI } from '../api/securityApi';
 
@@ -15,38 +15,6 @@ interface AuthContextType {
   refreshPermissions: () => Promise<void>;
 }
 
-// Permissions reducer for reliable state management
-interface PermissionsState {
-  permissions: Permission[];
-  isLoaded: boolean;
-  lastUpdateTime: number;
-}
-
-type PermissionsAction = 
-  | { type: 'SET_PERMISSIONS'; payload: Permission[] }
-  | { type: 'CLEAR_PERMISSIONS' };
-
-const permissionsReducer = (state: PermissionsState, action: PermissionsAction): PermissionsState => {
-  switch (action.type) {
-    case 'SET_PERMISSIONS':
-      console.log('?? REDUCER: Setting permissions:', action.payload.length);
-      return {
-        permissions: action.payload,
-        isLoaded: true,
-        lastUpdateTime: Date.now()
-      };
-    case 'CLEAR_PERMISSIONS':
-      console.log('?? REDUCER: Clearing permissions');
-      return {
-        permissions: [],
-        isLoaded: false,
-        lastUpdateTime: 0
-      };
-    default:
-      return state;
-  }
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
@@ -54,45 +22,15 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-const [user, setUser] = useState<AuthUser | null>(null);
-const [isLoading, setIsLoading] = useState(true);
-const [permissionsLoading, setPermissionsLoading] = useState(false);
-  
-// Use useReducer for more reliable state management
-const [permissionsState, dispatchPermissions] = useReducer(permissionsReducer, {
-  permissions: [],
-  isLoaded: false,
-  lastUpdateTime: 0
-});
-  
-const { permissions } = permissionsState;
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(false);
 
   // Initialize authentication on mount
   useEffect(() => {
     initializeAuth();
   }, []);
-
-  // Debug useEffect to monitor permissions state changes
-  useEffect(() => {
-    console.log('?? PERMISSIONS STATE CHANGED:', permissions.length, 'items');
-    console.log('?? Permissions array:', permissions);
-    
-    if (permissions.length > 0) {
-      const dashboardPerm = permissions.find(p => p.screenName === 'Dashboard');
-      console.log('?? Dashboard permission in state:', dashboardPerm);
-      
-      // Verify all permissions in state
-      console.log('?? All permissions in state:');
-      permissions.forEach((perm, index) => {
-        console.log(`  ${index + 1}. ${perm.screenName} - View: ${perm.allowView}`);
-      });
-      
-      console.log('? REACT STATE UPDATE SUCCESSFUL! Permissions are now in state.');
-    } else {
-      console.log('?? CRITICAL: Permissions state is still EMPTY after setPermissions call!');
-      console.log('?? This indicates a fundamental React state update issue.');
-    }
-  }, [permissions]);
 
   const initializeAuth = async () => {
     console.log('?? AuthContext: Initializing authentication...');
@@ -136,39 +74,24 @@ const { permissions } = permissionsState;
     console.log(`?? AuthContext: Loading permissions for user ${currentUser.email} (ID: ${currentUser.id})`);
     
     try {
-      // Check for Super Admin first - they get all permissions automatically
+      // Check if user is Super Admin - they get all permissions automatically
       const isSuperAdmin = currentUser.roles.some(role => role.roleName === 'Super Admin');
       
       if (isSuperAdmin) {
-        console.log('?? AuthContext: Super Admin detected - granting all permissions');
-        const superAdminPermissions = createAdminPermissions();
-        dispatchPermissions({ type: 'SET_PERMISSIONS', payload: superAdminPermissions });
+        console.log('?? AuthContext: User is Super Admin - granting all permissions');
+        const superAdminPermissions = createSuperAdminPermissions();
+        setPermissions(superAdminPermissions);
         console.log(`? AuthContext: Super Admin permissions set (${superAdminPermissions.length} screens)`);
         return;
       }
 
-      // For all other users (including Admin), load from API
-      console.log('?? AuthContext: Loading permissions from API for non-Super Admin user');
+      // For regular users, load from API
+      console.log('?? AuthContext: Regular user - loading permissions from API');
       const response = await permissionsAPI.getMyPermissions();
       
-      // Enhanced error handling for API response
-      if (!response) {
-        console.error('? AuthContext: No response from permissions API');
-        dispatchPermissions({ type: 'CLEAR_PERMISSIONS' });
-        return;
-      }
-
-      // Check if response is HTML (error page) instead of JSON
-      if (typeof response === 'string' || !Object.prototype.hasOwnProperty.call(response, 'success')) {
-        console.error('? AuthContext: API returned HTML error page instead of JSON:', response);
-        console.log('?? AuthContext: This usually means token is expired or API endpoint failed');
-        dispatchPermissions({ type: 'CLEAR_PERMISSIONS' });
-        return;
-      }
-
-      if (!response.success || !Array.isArray(response.data)) {
+      if (!response || !response.success || !Array.isArray(response.data)) {
         console.error('? AuthContext: Invalid API response:', response);
-        dispatchPermissions({ type: 'CLEAR_PERMISSIONS' });
+        setPermissions([]);
         return;
       }
 
@@ -176,37 +99,41 @@ const { permissions } = permissionsState;
       console.log('?? AuthContext: Raw API data:', response.data);
 
       // Convert API data to Permission objects with guaranteed types
-      const loadedPermissions: Permission[] = response.data.map((perm: any, index: number) => {
-        console.log(`?? MAPPING Permission ${index}: ${perm.screenName} - View:${perm.allowView}`);
-        return {
-          screenName: String(perm.screenName || ''),
-          allowView: Boolean(perm.allowView),
-          allowInsert: Boolean(perm.allowInsert),
-          allowUpdate: Boolean(perm.allowUpdate),
-          allowDelete: Boolean(perm.allowDelete)
-        };
+      const loadedPermissions: Permission[] = response.data.map((perm: any) => ({
+        screenName: String(perm.screenName || ''),
+        allowView: Boolean(perm.allowView),
+        allowInsert: Boolean(perm.allowInsert),
+        allowUpdate: Boolean(perm.allowUpdate),
+        allowDelete: Boolean(perm.allowDelete)
+      }));
+
+      // Validate we have the expected permissions
+      const dashboardPermission = loadedPermissions.find(p => p.screenName === 'Dashboard');
+      if (dashboardPermission) {
+        console.log('? AuthContext: Dashboard permission found:', dashboardPermission);
+      } else {
+        console.log('?? AuthContext: No Dashboard permission found in loaded data');
+      }
+
+      // Set permissions
+      setPermissions(loadedPermissions);
+      console.log(`? AuthContext: Permissions loaded successfully (${loadedPermissions.length} total)`);
+      
+      // Log each permission for debugging
+      loadedPermissions.forEach((perm, index) => {
+        console.log(`?? AuthContext: Permission ${index + 1}: ${perm.screenName} - View:${perm.allowView}, Insert:${perm.allowInsert}, Update:${perm.allowUpdate}, Delete:${perm.allowDelete}`);
       });
-
-      console.log('?? Mapped permissions array:', loadedPermissions);
-      console.log('?? Dashboard permission check:', loadedPermissions.find(p => p.screenName === 'Dashboard'));
-
-      console.log('?? USING useReducer: Direct dispatch to set permissions');
-      
-      // Use reducer dispatch - more reliable than useState
-      dispatchPermissions({ type: 'SET_PERMISSIONS', payload: loadedPermissions });
-      
-      console.log('?? dispatchPermissions called - state should be reliable now');
 
     } catch (error) {
       console.error('? AuthContext: Error loading permissions:', error);
-      dispatchPermissions({ type: 'CLEAR_PERMISSIONS' });
+      setPermissions([]);
     } finally {
       setPermissionsLoading(false);
       console.log('? AuthContext: Permission loading complete');
     }
   };
 
-  const createAdminPermissions = (): Permission[] => {
+  const createSuperAdminPermissions = (): Permission[] => {
     const allScreens = [
       'Dashboard', 'Assets', 'Categories', 'Departments', 'Employees',
       'Warehouses', 'Transfers', 'Disposal', 'Maintenance', 'Reports',
@@ -279,7 +206,7 @@ const { permissions } = permissionsState;
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
     setUser(null);
-    dispatchPermissions({ type: 'CLEAR_PERMISSIONS' });
+    setPermissions([]);
     setPermissionsLoading(false);
   };
 
@@ -288,19 +215,11 @@ const { permissions } = permissionsState;
     console.log(`??? AuthContext: User authenticated: ${!!user}`);
     console.log(`??? AuthContext: Permissions loaded: ${permissions.length}`);
     console.log(`??? AuthContext: Permissions loading: ${permissionsLoading}`);
-    console.log(`??? AuthContext: PermissionsState:`, permissionsState);
     
     // Must have authenticated user
     if (!user) {
       console.log('? AuthContext: No authenticated user');
       return false;
-    }
-
-    // Super Admin gets everything automatically
-    const isSuperAdmin = user.roles.some(role => role.roleName === 'Super Admin');
-    if (isSuperAdmin) {
-      console.log('?? AuthContext: Super Admin access granted automatically');
-      return true;
     }
 
     // Don't check permissions while they're still loading
@@ -309,25 +228,17 @@ const { permissions } = permissionsState;
       return false;
     }
 
-    // CRITICAL: Check if permissions were recently loaded but hasPermission is called too early
-    const timeSinceLoad = Date.now() - permissionsState.lastUpdateTime;
-    if (!permissionsState.isLoaded && timeSinceLoad < 1000) {
-      console.log('? AuthContext: Permissions recently updated but not yet loaded, waiting...');
-      return false;
-    }
-
-    // Debug reducer state
-    console.log(`?? REDUCER STATE: isLoaded=${permissionsState.isLoaded}, count=${permissions.length}, lastUpdate=${permissionsState.lastUpdateTime}`);
-    
-    if (permissions.length === 0) {
-      console.log(`?? CRITICAL: Permissions array is EMPTY!`);
-      console.log(`?? This indicates permissions were not loaded properly via reducer.`);
-      return false;
+    // Super Admin gets everything
+    const isSuperAdmin = user.roles.some(role => role.roleName === 'Super Admin');
+    if (isSuperAdmin) {
+      console.log('?? AuthContext: Super Admin access granted');
+      return true;
     }
 
     // Find the specific permission
     console.log(`?? AuthContext: Looking for ${screenName} in ${permissions.length} permissions`);
     
+    // Debug: Log all available screens
     const availableScreens = permissions.map(p => p.screenName);
     console.log(`?? AuthContext: Available screens: [${availableScreens.join(', ')}]`);
 

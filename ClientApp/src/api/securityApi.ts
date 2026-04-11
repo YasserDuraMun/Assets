@@ -1,4 +1,4 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 
 // ????? Base URL - ?????? ??????? ?? .env ?? ?????? ??????????
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:44385/api';
@@ -114,7 +114,9 @@ export const permissionsAPI = {
     return response.data;
   },
   getMyPermissions: async () => {
-    const response = await apiClient.get('/security-test/my-permissions');
+    console.log('🔍 API: Calling SecurityTest/my-permissions');
+    const response = await apiClient.get('SecurityTest/my-permissions');
+    console.log('📋 API: Response received:', response.data);
     return response.data;
   },
 };
