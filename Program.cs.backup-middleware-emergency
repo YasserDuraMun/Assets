@@ -258,21 +258,15 @@ try
         Console.WriteLine("Application will continue without complete security data");
     }
 
-    // Map Controllers (always needed for API)
-    app.MapControllers();
-
-    // Static files handling (optional for SPA)
+    // Static files handling
     var contentRoot = app.Environment.ContentRootPath;
     var webRoot = Path.Combine(contentRoot, "wwwroot");
     if (Directory.Exists(webRoot))
     {
         app.UseStaticFiles();
+        app.MapControllers();
         app.MapFallbackToFile("/index.html");
         Console.WriteLine("?? Static Files Configured");
-    }
-    else
-    {
-        Console.WriteLine("?? No wwwroot directory found - API only mode");
     }
 
     // Log startup completion

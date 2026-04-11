@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp } from 'antd';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import Login from './components/Login';
 import UserManagement from './components/UserManagement';
 import RolePermissionsPage from './pages/RolePermissionsPage';
@@ -65,18 +66,101 @@ function AppRoutes() {
       
       {isAuthenticated ? (
         <>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/assets" element={<AssetsPage />} />
-          <Route path="/assets/add" element={<AddAssetPage />} />
-          <Route path="/assets/:id" element={<AssetDetailsPage />} />
-          <Route path="/assets/:id/edit" element={<EditAssetPage />} />
-          <Route path="/transfers" element={<TransfersPage />} />
-          <Route path="/transfers/new" element={<NewTransferPage />} />
-          <Route path="/transfers/:id" element={<TransferDetailsPage />} />
-          <Route path="/disposals" element={<DisposalsPage />} />
-          <Route path="/maintenance" element={<MaintenancePage />} />
-          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/dashboard" element={
+            <PermissionGuard screenName="Dashboard" action="view">
+              <DashboardPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/settings" element={
+            <PermissionGuard screenName="Settings" action="view">
+              <SettingsPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/assets" element={
+            <PermissionGuard screenName="Assets" action="view">
+              <AssetsPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/assets/add" element={
+            <PermissionGuard screenName="Assets" action="insert">
+              <AddAssetPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/assets/:id" element={
+            <PermissionGuard screenName="Assets" action="view">
+              <AssetDetailsPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/assets/:id/edit" element={
+            <PermissionGuard screenName="Assets" action="update">
+              <EditAssetPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/categories" element={
+            <PermissionGuard screenName="Categories" action="view">
+              <SettingsPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/departments" element={
+            <PermissionGuard screenName="Departments" action="view">
+              <SettingsPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/employees" element={
+            <PermissionGuard screenName="Employees" action="view">
+              <SettingsPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/warehouses" element={
+            <PermissionGuard screenName="Warehouses" action="view">
+              <SettingsPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/transfers" element={
+            <PermissionGuard screenName="Transfers" action="view">
+              <TransfersPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/transfers/new" element={
+            <PermissionGuard screenName="Transfers" action="insert">
+              <NewTransferPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/transfers/:id" element={
+            <PermissionGuard screenName="Transfers" action="view">
+              <TransferDetailsPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/disposal" element={
+            <PermissionGuard screenName="Disposal" action="view">
+              <DisposalsPage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/maintenance" element={
+            <PermissionGuard screenName="Maintenance" action="view">
+              <MaintenancePage />
+            </PermissionGuard>
+          } />
+          
+          <Route path="/reports" element={
+            <PermissionGuard screenName="Reports" action="view">
+              <ReportsPage />
+            </PermissionGuard>
+          } />
           
           {/* Security Management Routes */}
           <Route 

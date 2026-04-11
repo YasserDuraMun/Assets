@@ -91,37 +91,63 @@ public class PermissionsController : ControllerBase
     {
         try
         {
-            // This is a simplified version - you might need to implement role-based permissions differently
-            // based on your database schema
+            _logger.LogInformation("Updating permissions for role {RoleId} with {Count} permissions", roleId, request.Permissions.Count);
+
+            // Verify role exists
+            var role = await _context.Roles.FindAsync(roleId);
+            if (role == null)
+            {
+                return NotFound(new { success = false, message = "Role not found" });
+            }
+
+            // Remove existing permissions for this role
+            var existingPermissions = await _context.Permissions
+                .Where(p => p.RoleID == roleId)
+                .ToListAsync();
             
-            foreach (var permission in request.Permissions)
+            _context.Permissions.RemoveRange(existingPermissions);
+            await _context.SaveChangesAsync();
+
+            // Add new permissions
+            foreach (var permissionDto in request.Permissions)
             {
                 // Find or create screen
                 var screen = await _context.Screens
-                    .FirstOrDefaultAsync(s => s.ScreenName == permission.ScreenName);
+                    .FirstOrDefaultAsync(s => s.ScreenName == permissionDto.ScreenName);
                 
                 if (screen == null)
                 {
                     screen = new Models.Security.Screen 
                     { 
-                        ScreenName = permission.ScreenName
+                        ScreenName = permissionDto.ScreenName
                     };
                     _context.Screens.Add(screen);
                     await _context.SaveChangesAsync();
                 }
 
-                // Update or create permission for this role
-                // Note: This assumes you have a mechanism to link roles to permissions
-                // You might need to adjust this based on your actual database schema
+                // Create new permission
+                var permission = new Models.Security.Permission
+                {
+                    RoleID = roleId,
+                    ScreenID = screen.ScreenID,
+                    AllowView = permissionDto.AllowView,
+                    AllowInsert = permissionDto.AllowInsert,
+                    AllowUpdate = permissionDto.AllowUpdate,
+                    AllowDelete = permissionDto.AllowDelete
+                };
+
+                _context.Permissions.Add(permission);
             }
 
             await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("Successfully updated permissions for role {RoleId}", roleId);
             return Ok(new { success = true, message = "Role permissions updated successfully" });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating role permissions for role {RoleId}", roleId);
-            return StatusCode(500, new { success = false, message = "Error updating role permissions" });
+            return StatusCode(500, new { success = false, message = "Error updating role permissions: " + ex.Message });
         }
     }
 

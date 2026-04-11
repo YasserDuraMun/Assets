@@ -141,10 +141,10 @@ const RolePermissionsPage: React.FC = () => {
   
   const { hasPermission } = useAuth();
 
-  // Available screens in the system - Updated to match database
+  // Available screens in the system
   const availableScreens = [
-    'Dashboard', 'Assets', 'Categories', 'Departments', 'Employees', 'Warehouses', 
-    'Transfers', 'Disposal', 'Maintenance', 'Reports', 'Users', 'Permissions'
+    'Dashboard', 'Assets', 'Categories', 'Statuses', 'Warehouses', 'Departments',
+    'Employees', 'Transfers', 'Disposals', 'Maintenance', 'Reports', 'Settings', 'Users', 'Permissions'
   ];
 
   const getScreenIcon = (screenName: string) => {
@@ -242,46 +242,19 @@ const RolePermissionsPage: React.FC = () => {
 
     try {
       setSaving(true);
-      setMessage(null); // Clear previous messages
-      
-      console.log('?? Saving permissions for role:', rolePermissions.roleName);
-      console.log('?? Permissions data:', rolePermissions.permissions);
       
       const response = await permissionsAPI.updateRolePermissions(
         rolePermissions.roleId, 
         rolePermissions.permissions
       );
       
-      console.log('? Save response:', response);
-      
       if (response.success) {
-        setMessage({type: 'success', text: `Permissions for ${rolePermissions.roleName} updated successfully! ??`});
-        
-        // Auto-hide success message after 5 seconds
-        setTimeout(() => {
-          setMessage(null);
-        }, 5000);
-        
+        setMessage({type: 'success', text: 'Role permissions updated successfully!'});
       } else {
-        setMessage({type: 'error', text: response.message || 'Failed to update role permissions'});
+        setMessage({type: 'error', text: 'Failed to update role permissions'});
       }
-    } catch (error: any) {
-      console.error('? Error saving permissions:', error);
-      
-      let errorMessage = 'Failed to save permissions. ';
-      if (error.response?.data?.message) {
-        errorMessage += error.response.data.message;
-      } else if (error.response?.status === 403) {
-        errorMessage += 'You don\'t have permission to modify role permissions.';
-      } else if (error.response?.status === 404) {
-        errorMessage += 'Role not found.';
-      } else if (error.message) {
-        errorMessage += error.message;
-      } else {
-        errorMessage += 'Please try again or contact support.';
-      }
-      
-      setMessage({type: 'error', text: errorMessage});
+    } catch (error) {
+      setMessage({type: 'error', text: 'Failed to save permissions'});
     } finally {
       setSaving(false);
     }
@@ -772,7 +745,7 @@ const RolePermissionsPage: React.FC = () => {
                 marginTop: '24px',
                 display: 'flex',
                 gap: '12px',
-                flexWrap: 'wrap' as const
+                flexWrap: 'wrap'
               }}>
                 <button
                   style={{

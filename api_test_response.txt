@@ -1,0 +1,18 @@
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0100    566 100    566   0      0  18587      0                              0100    566 100    566   0      0  18237      0                              0100    566 100    566   0      0  17934      0                              0
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام إدارة الأصول</title>
+    <script type="module" crossorigin src="/assets/index-BlSXSh_x.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-XXNh3IA1.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import PermissionGuard, { RoleGuard } from '../components/PermissionGuard';
 import { Link } from 'react-router-dom';
 
@@ -79,7 +79,7 @@ const Dashboard: React.FC = () => {
                 ??????? <span className="font-medium">{user?.fullName}</span>
               </div>
               <div className="flex flex-wrap gap-1">
-                {user?.roles.map((role) => (
+                {user?.roles.map((role: any) => (
                   <span
                     key={role.roleId}
                     className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"

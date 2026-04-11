@@ -11,11 +11,13 @@ namespace Assets.Controllers
     {
         private readonly ICurrentUserService _currentUserService;
         private readonly IPermissionService _permissionService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public SecurityTestController(ICurrentUserService currentUserService, IPermissionService permissionService)
+        public SecurityTestController(ICurrentUserService currentUserService, IPermissionService permissionService, IHttpContextAccessor httpContextAccessor)
         {
             _currentUserService = currentUserService;
             _permissionService = permissionService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         /// <summary>
@@ -74,28 +76,82 @@ namespace Assets.Controllers
         }
 
         /// <summary>
-        /// ?????? ??? ??????? ???????? ??????
+        /// ???? ??? ????????? ??????? ????????
         /// </summary>
         [HttpGet("my-permissions")]
         [Authorize]
         public async Task<IActionResult> GetMyPermissions()
         {
-            if (!_currentUserService.UserId.HasValue)
+            try
             {
-                return Unauthorized();
+                Console.WriteLine("?? === Starting GetMyPermissions ===");
+                
+                // ??? ??? HttpContext ???? User
+                var httpContext = _httpContextAccessor.HttpContext;
+                Console.WriteLine($"?? HttpContext exists: {httpContext != null}");
+                Console.WriteLine($"?? User exists: {httpContext?.User != null}");
+                Console.WriteLine($"?? User authenticated: {httpContext?.User?.Identity?.IsAuthenticated}");
+                
+                // ??? ??? Claims
+                if (httpContext?.User != null)
+                {
+                    var claims = httpContext.User.Claims.ToList();
+                    Console.WriteLine($"?? Total claims: {claims.Count}");
+                    
+                    foreach (var claim in claims)
+                    {
+                        Console.WriteLine($"??? Claim: {claim.Type} = {claim.Value}");
+                    }
+                }
+
+                if (!_currentUserService.UserId.HasValue)
+                {
+                    Console.WriteLine("? CurrentUserService.UserId is null");
+                    return Unauthorized(new { success = false, message = "User not authenticated - UserId is null" });
+                }
+
+                var userId = _currentUserService.UserId.Value;
+                Console.WriteLine($"?? Getting permissions for user ID: {userId}");
+                Console.WriteLine($"?? User email: {_currentUserService.Email}");
+
+                var permissions = await _permissionService.GetUserPermissionsAsync(userId);
+                var roles = await _currentUserService.GetUserRolesAsync();
+
+                Console.WriteLine($"?? User roles: {string.Join(", ", roles)}");
+                Console.WriteLine($"??? Found {permissions.Count()} permissions");
+
+                // ????? ????????? ??? ??????? ??????? ??? frontend
+                var permissionsList = permissions.Select(p => new 
+                {
+                    screenName = p.ScreenName,
+                    allowView = p.AllowView,
+                    allowInsert = p.AllowInsert,
+                    allowUpdate = p.AllowUpdate,
+                    allowDelete = p.AllowDelete
+                }).ToList();
+
+                Console.WriteLine($"?? Permissions details:");
+                foreach (var perm in permissionsList)
+                {
+                    Console.WriteLine($"?? {perm.screenName}: View={perm.allowView}, Insert={perm.allowInsert}, Update={perm.allowUpdate}, Delete={perm.allowDelete}");
+                }
+
+                Console.WriteLine("? === GetMyPermissions completed successfully ===");
+
+                return Ok(new 
+                { 
+                    success = true,
+                    data = permissionsList,
+                    userId = _currentUserService.UserId,
+                    roles = roles
+                });
             }
-
-            var permissions = await _permissionService.GetUserPermissionsAsync(_currentUserService.UserId.Value);
-            var roles = await _currentUserService.GetUserRolesAsync();
-
-            return Ok(new 
-            { 
-                success = true,
-                userId = _currentUserService.UserId,
-                roles = roles,
-                permissions = permissions.GroupBy(p => p.ScreenName)
-                    .ToDictionary(g => g.Key, g => g.First())
-            });
+            catch (Exception ex)
+            {
+                Console.WriteLine($"? Error getting user permissions: {ex.Message}");
+                Console.WriteLine($"? Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { success = false, message = "Error getting user permissions: " + ex.Message });
+            }
         }
 
         /// <summary>

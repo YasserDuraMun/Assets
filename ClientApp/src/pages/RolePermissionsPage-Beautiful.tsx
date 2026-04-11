@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { permissionsAPI } from '../api/securityApi';
 import MainLayout from '../components/MainLayout';
 
-// Inline styles for beautiful table design
+// Inline styles for beautiful design
 const styles = {
   container: {
     padding: '24px',
@@ -85,8 +85,46 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap' as const,
     gap: '16px'
+  },
+  permissionsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+    gap: '24px',
+    padding: '32px'
+  },
+  permissionCard: {
+    border: '1px solid #e5e7eb',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    transition: 'all 0.3s ease'
+  },
+  cardHeader: {
+    padding: '16px 20px',
+    background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+    borderBottom: '1px solid #e5e7eb',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  cardBody: {
+    padding: '20px'
+  },
+  permissionRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 0',
+    borderBottom: '1px solid #f1f5f9'
+  },
+  permissionLabel: {
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#374151',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
   },
   saveButton: {
     padding: '14px 28px',
@@ -107,7 +145,7 @@ const styles = {
     border: '1px solid #bfdbfe',
     borderRadius: '8px',
     padding: '20px',
-    margin: '24px 32px 0 32px'
+    marginTop: '24px'
   }
 };
 
@@ -141,20 +179,54 @@ const RolePermissionsPage: React.FC = () => {
   
   const { hasPermission } = useAuth();
 
-  // Available screens in the system - Updated to match database
+  // Available screens in the system
   const availableScreens = [
-    'Dashboard', 'Assets', 'Categories', 'Departments', 'Employees', 'Warehouses', 
-    'Transfers', 'Disposal', 'Maintenance', 'Reports', 'Users', 'Permissions'
+    'Dashboard',
+    'Assets', 
+    'Categories',
+    'Statuses',
+    'Warehouses',
+    'Departments',
+    'Employees',
+    'Transfers',
+    'Disposals',
+    'Maintenance',
+    'Reports',
+    'Settings',
+    'Users',
+    'Permissions'
   ];
 
   const getScreenIcon = (screenName: string) => {
     const icons: {[key: string]: string} = {
-      'Dashboard': '??', 'Assets': '??', 'Categories': '??', 'Statuses': '???',
-      'Warehouses': '??', 'Departments': '???', 'Employees': '??', 'Transfers': '??',
-      'Disposals': '???', 'Maintenance': '??', 'Reports': '??', 'Settings': '??',
-      'Users': '??', 'Permissions': '???'
+      'Dashboard': '??',
+      'Assets': '??',
+      'Categories': '??',
+      'Statuses': '???',
+      'Warehouses': '??',
+      'Departments': '???',
+      'Employees': '??',
+      'Transfers': '??',
+      'Disposals': '???',
+      'Maintenance': '??',
+      'Reports': '??',
+      'Settings': '??',
+      'Users': '??',
+      'Permissions': '???'
     };
     return icons[screenName] || '??';
+  };
+
+  const getPermissionColor = (permission: string, enabled: boolean) => {
+    if (!enabled) return { bg: '#f1f5f9', color: '#64748b' };
+    
+    const colors: {[key: string]: {bg: string, color: string}} = {
+      'allowView': { bg: '#dbeafe', color: '#1d4ed8' },
+      'allowInsert': { bg: '#dcfce7', color: '#16a34a' },
+      'allowUpdate': { bg: '#fef3c7', color: '#d97706' },
+      'allowDelete': { bg: '#fecaca', color: '#dc2626' }
+    };
+    return colors[permission] || { bg: '#f3f4f6', color: '#374151' };
   };
 
   useEffect(() => {
@@ -242,52 +314,26 @@ const RolePermissionsPage: React.FC = () => {
 
     try {
       setSaving(true);
-      setMessage(null); // Clear previous messages
-      
-      console.log('?? Saving permissions for role:', rolePermissions.roleName);
-      console.log('?? Permissions data:', rolePermissions.permissions);
       
       const response = await permissionsAPI.updateRolePermissions(
         rolePermissions.roleId, 
         rolePermissions.permissions
       );
       
-      console.log('? Save response:', response);
-      
       if (response.success) {
-        setMessage({type: 'success', text: `Permissions for ${rolePermissions.roleName} updated successfully! ??`});
-        
-        // Auto-hide success message after 5 seconds
-        setTimeout(() => {
-          setMessage(null);
-        }, 5000);
-        
+        setMessage({type: 'success', text: 'Role permissions updated successfully!'});
       } else {
-        setMessage({type: 'error', text: response.message || 'Failed to update role permissions'});
+        setMessage({type: 'error', text: 'Failed to update role permissions'});
       }
-    } catch (error: any) {
-      console.error('? Error saving permissions:', error);
-      
-      let errorMessage = 'Failed to save permissions. ';
-      if (error.response?.data?.message) {
-        errorMessage += error.response.data.message;
-      } else if (error.response?.status === 403) {
-        errorMessage += 'You don\'t have permission to modify role permissions.';
-      } else if (error.response?.status === 404) {
-        errorMessage += 'Role not found.';
-      } else if (error.message) {
-        errorMessage += error.message;
-      } else {
-        errorMessage += 'Please try again or contact support.';
-      }
-      
-      setMessage({type: 'error', text: errorMessage});
+    } catch (error) {
+      setMessage({type: 'error', text: 'Failed to save permissions'});
+      console.error('Error saving permissions:', error);
     } finally {
       setSaving(false);
     }
   };
 
-  const ToggleSwitch = ({ checked, onChange, color = '#7c3aed' }: { checked: boolean, onChange: (value: boolean) => void, color?: string }) => (
+  const ToggleSwitch = ({ checked, onChange }: { checked: boolean, onChange: (value: boolean) => void }) => (
     <label style={{
       position: 'relative',
       display: 'inline-block',
@@ -307,10 +353,9 @@ const RolePermissionsPage: React.FC = () => {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: checked ? color : '#cbd5e0',
+        backgroundColor: checked ? '#7c3aed' : '#cbd5e0',
         borderRadius: '24px',
-        transition: 'all 0.3s ease',
-        boxShadow: checked ? `0 2px 8px ${color}40` : 'none'
+        transition: 'all 0.3s ease'
       }}>
         <div style={{
           position: 'absolute',
@@ -321,8 +366,7 @@ const RolePermissionsPage: React.FC = () => {
           bottom: '2px',
           backgroundColor: 'white',
           borderRadius: '50%',
-          transition: 'all 0.3s ease',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+          transition: 'all 0.3s ease'
         }}></div>
       </div>
     </label>
@@ -410,7 +454,7 @@ const RolePermissionsPage: React.FC = () => {
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px'}}>
             <div>
               <h1 style={styles.headerTitle}>??? Role Permissions Management</h1>
-              <p style={styles.headerSubtitle}>Configure access permissions for each role in the system using our beautiful table interface</p>
+              <p style={styles.headerSubtitle}>Configure access permissions for each role in the system</p>
               <div style={styles.statsContainer}>
                 <div style={styles.statItem}>
                   <div style={{...styles.statDot, backgroundColor: '#10b981'}}></div>
@@ -537,7 +581,7 @@ const RolePermissionsPage: React.FC = () => {
                   ??? Permissions for: <span style={{color: '#7c3aed'}}>{rolePermissions.roleName}</span>
                 </h3>
                 <p style={{fontSize: '14px', color: '#6b7280', margin: '0'}}>
-                  Use the beautiful table below to easily manage permissions - click toggle switches to enable/disable
+                  Configure what this role can access and modify
                 </p>
               </div>
               
@@ -565,345 +609,130 @@ const RolePermissionsPage: React.FC = () => {
               )}
             </div>
 
-            {/* Beautiful Permissions Table */}
-            <div style={{padding: '32px'}}>
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                border: '1px solid #e5e7eb'
-              }}>
-                {/* Table Header */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
-                  gap: '0',
-                  background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-                  borderBottom: '2px solid #e5e7eb'
-                }}>
-                  <div style={{
-                    padding: '20px 24px',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: '#374151',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    borderRight: '1px solid #e5e7eb'
-                  }}>
-                    <span style={{fontSize: '18px'}}>??</span>
-                    <span>Screen / Module</span>
-                  </div>
-                  <div style={{
-                    padding: '20px 24px',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: '#1d4ed8',
-                    textAlign: 'center',
-                    borderRight: '1px solid #e5e7eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}>
-                    <span>???</span>
-                    <span>VIEW</span>
-                  </div>
-                  <div style={{
-                    padding: '20px 24px',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: '#16a34a',
-                    textAlign: 'center',
-                    borderRight: '1px solid #e5e7eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}>
-                    <span>?</span>
-                    <span>INSERT</span>
-                  </div>
-                  <div style={{
-                    padding: '20px 24px',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: '#d97706',
-                    textAlign: 'center',
-                    borderRight: '1px solid #e5e7eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}>
-                    <span>??</span>
-                    <span>UPDATE</span>
-                  </div>
-                  <div style={{
-                    padding: '20px 24px',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: '#dc2626',
-                    textAlign: 'center',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}>
-                    <span>???</span>
-                    <span>DELETE</span>
-                  </div>
-                </div>
-
-                {/* Table Rows */}
-                {rolePermissions.permissions.map((permission, index) => (
-                  <div
-                    key={permission.screenName}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
-                      gap: '0',
-                      borderBottom: index < rolePermissions.permissions.length - 1 ? '1px solid #f1f5f9' : 'none',
-                      backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8fafc',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor = '#eff6ff';
-                      e.currentTarget.style.transform = 'scale(1.002)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}
-                  >
-                    {/* Screen Name Column */}
-                    <div style={{
-                      padding: '20px 24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      borderRight: '1px solid #f1f5f9'
-                    }}>
-                      <span style={{fontSize: '24px'}}>{getScreenIcon(permission.screenName)}</span>
-                      <div>
-                        <h4 style={{
-                          fontSize: '16px',
-                          fontWeight: '600',
-                          color: '#1f2937',
-                          margin: '0 0 2px 0'
-                        }}>
-                          {permission.screenName}
-                        </h4>
-                        <p style={{
-                          fontSize: '12px',
-                          color: '#6b7280',
-                          margin: '0'
-                        }}>
-                          System Module
-                        </p>
-                      </div>
+            {/* Permissions Grid */}
+            <div style={styles.permissionsGrid}>
+              {rolePermissions.permissions.map((permission) => (
+                <div
+                  key={permission.screenName}
+                  style={styles.permissionCard}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.12)';
+                    e.currentTarget.style.borderColor = '#c7d2fe';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                  }}
+                >
+                  {/* Card Header */}
+                  <div style={styles.cardHeader}>
+                    <span style={{fontSize: '24px'}}>{getScreenIcon(permission.screenName)}</span>
+                    <div>
+                      <h4 style={{fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: '0'}}>
+                        {permission.screenName}
+                      </h4>
+                      <p style={{fontSize: '12px', color: '#6b7280', margin: '2px 0 0 0'}}>
+                        Screen Access Control
+                      </p>
                     </div>
+                  </div>
 
-                    {/* View Permission Column */}
-                    <div style={{
-                      padding: '20px 24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRight: '1px solid #f1f5f9'
-                    }}>
+                  {/* Card Body */}
+                  <div style={styles.cardBody}>
+                    <div style={styles.permissionRow}>
+                      <div style={styles.permissionLabel}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          ...getPermissionColor('allowView', permission.allowView)
+                        }}>
+                          ??? VIEW
+                        </span>
+                        <span>Can see this screen</span>
+                      </div>
                       <ToggleSwitch
                         checked={permission.allowView}
                         onChange={(value) => handlePermissionChange(permission.screenName, 'allowView', value)}
-                        color="#1d4ed8"
                       />
                     </div>
 
-                    {/* Insert Permission Column */}
-                    <div style={{
-                      padding: '20px 24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRight: '1px solid #f1f5f9'
-                    }}>
+                    <div style={styles.permissionRow}>
+                      <div style={styles.permissionLabel}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          ...getPermissionColor('allowInsert', permission.allowInsert)
+                        }}>
+                          ? INSERT
+                        </span>
+                        <span>Can create new records</span>
+                      </div>
                       <ToggleSwitch
                         checked={permission.allowInsert}
                         onChange={(value) => handlePermissionChange(permission.screenName, 'allowInsert', value)}
-                        color="#16a34a"
                       />
                     </div>
 
-                    {/* Update Permission Column */}
-                    <div style={{
-                      padding: '20px 24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRight: '1px solid #f1f5f9'
-                    }}>
+                    <div style={styles.permissionRow}>
+                      <div style={styles.permissionLabel}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          ...getPermissionColor('allowUpdate', permission.allowUpdate)
+                        }}>
+                          ?? UPDATE
+                        </span>
+                        <span>Can modify existing records</span>
+                      </div>
                       <ToggleSwitch
                         checked={permission.allowUpdate}
                         onChange={(value) => handlePermissionChange(permission.screenName, 'allowUpdate', value)}
-                        color="#d97706"
                       />
                     </div>
 
-                    {/* Delete Permission Column */}
-                    <div style={{
-                      padding: '20px 24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
+                    <div style={{...styles.permissionRow, borderBottom: 'none'}}>
+                      <div style={styles.permissionLabel}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          ...getPermissionColor('allowDelete', permission.allowDelete)
+                        }}>
+                          ??? DELETE
+                        </span>
+                        <span>Can remove records</span>
+                      </div>
                       <ToggleSwitch
                         checked={permission.allowDelete}
                         onChange={(value) => handlePermissionChange(permission.screenName, 'allowDelete', value)}
-                        color="#dc2626"
                       />
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Quick Actions */}
-              <div style={{
-                marginTop: '24px',
-                display: 'flex',
-                gap: '12px',
-                flexWrap: 'wrap' as const
-              }}>
-                <button
-                  style={{
-                    padding: '12px 20px',
-                    backgroundColor: '#dbeafe',
-                    color: '#1d4ed8',
-                    border: '1px solid #bfdbfe',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                  onClick={() => {
-                    const updatedPermissions = rolePermissions.permissions.map(p => ({
-                      ...p,
-                      allowView: true,
-                      allowInsert: true,
-                      allowUpdate: true,
-                      allowDelete: true
-                    }));
-                    setRolePermissions({ ...rolePermissions, permissions: updatedPermissions });
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#bfdbfe';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(29, 78, 216, 0.2)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '#dbeafe';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  <span style={{fontSize: '16px'}}>?</span>
-                  <span>Enable All Permissions</span>
-                </button>
-
-                <button
-                  style={{
-                    padding: '12px 20px',
-                    backgroundColor: '#fee2e2',
-                    color: '#dc2626',
-                    border: '1px solid #fecaca',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                  onClick={() => {
-                    const updatedPermissions = rolePermissions.permissions.map(p => ({
-                      ...p,
-                      allowView: false,
-                      allowInsert: false,
-                      allowUpdate: false,
-                      allowDelete: false
-                    }));
-                    setRolePermissions({ ...rolePermissions, permissions: updatedPermissions });
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#fecaca';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(220, 38, 38, 0.2)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '#fee2e2';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  <span style={{fontSize: '16px'}}>?</span>
-                  <span>Disable All Permissions</span>
-                </button>
-
-                <button
-                  style={{
-                    padding: '12px 20px',
-                    backgroundColor: '#dcfce7',
-                    color: '#16a34a',
-                    border: '1px solid #bbf7d0',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                  onClick={() => {
-                    const updatedPermissions = rolePermissions.permissions.map(p => ({
-                      ...p,
-                      allowView: true,
-                      allowInsert: false,
-                      allowUpdate: false,
-                      allowDelete: false
-                    }));
-                    setRolePermissions({ ...rolePermissions, permissions: updatedPermissions });
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#bbf7d0';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(22, 163, 74, 0.2)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '#dcfce7';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  <span style={{fontSize: '16px'}}>???</span>
-                  <span>View Only Mode</span>
-                </button>
-              </div>
+                </div>
+              ))}
             </div>
 
             {/* Info Box */}
             <div style={styles.infoBox}>
-              <h4 style={{fontSize: '16px', fontWeight: '600', color: '#1e40af', margin: '0 0 12px 0'}}>
-                ?? Beautiful Table Permission Management:
+              <h4 style={{fontSize: '14px', fontWeight: '600', color: '#1e40af', margin: '0 0 12px 0'}}>
+                ?? Permission Guidelines:
               </h4>
               <div style={{fontSize: '13px', color: '#1e3a8a', lineHeight: '1.6'}}>
                 <p style={{margin: '0 0 8px 0'}}>
-                  <strong>?? Important:</strong> All changes will be applied to users with the <strong>{rolePermissions.roleName}</strong> role.
+                  <strong>?? Important:</strong> Changes will be applied to all users with the <strong>{rolePermissions.roleName}</strong> role.
                 </p>
                 <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px', marginTop: '12px'}}>
                   <div><strong>??? View:</strong> Access to see the screen/data</div>
@@ -911,9 +740,6 @@ const RolePermissionsPage: React.FC = () => {
                   <div><strong>?? Update:</strong> Permission to modify existing records</div>
                   <div><strong>??? Delete:</strong> Permission to remove records</div>
                 </div>
-                <p style={{margin: '12px 0 0 0', padding: '12px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)'}}>
-                  <strong>?? How to use:</strong> Simply click the toggle switches in the table to enable/disable permissions. Use quick action buttons for bulk operations. Don't forget to <strong>Save Permissions</strong> when done!
-                </p>
               </div>
             </div>
           </div>
@@ -963,7 +789,7 @@ const RolePermissionsPage: React.FC = () => {
               ???
             </div>
             <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>Select a Role to Manage</h3>
-            <p style={{color: '#6b7280'}}>Choose a role from the dropdown above to view and edit its permissions in our beautiful table interface.</p>
+            <p style={{color: '#6b7280'}}>Choose a role from the dropdown above to configure its permissions.</p>
           </div>
         )}
       </div>

@@ -17,7 +17,7 @@ import {
   TeamOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import type { User } from '../types';
 
 const { Header, Sider, Content } = Layout;
@@ -31,7 +31,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 const [collapsed, setCollapsed] = useState(false);
 const navigate = useNavigate();
 const location = useLocation();
-const { logout, user } = useAuth();
+const { logout, user, hasPermission } = useAuth();
   
 useEffect(() => {
   const token = localStorage.getItem('authToken');
@@ -45,62 +45,117 @@ const handleLogout = () => {
   navigate('/login');
 };
 
-  const menuItems = [
+  // تعريف كافة عناصر القائمة مع شروط الصلاحيات
+  const allMenuItems = [
     {
       key: '/dashboard',
       icon: <DashboardOutlined />,
       label: 'لوحة التحكم',
-      onClick: () => navigate('/dashboard')
+      onClick: () => navigate('/dashboard'),
+      permission: 'Dashboard',
+      action: 'view' as const
     },
     {
       key: '/assets',
       icon: <FileOutlined />,
       label: 'الأصول',
-      onClick: () => navigate('/assets')
+      onClick: () => navigate('/assets'),
+      permission: 'Assets',
+      action: 'view' as const
+    },
+    {
+      key: '/categories',
+      icon: <ApartmentOutlined />,
+      label: 'التصنيفات',
+      onClick: () => navigate('/categories'),
+      permission: 'Categories',
+      action: 'view' as const
+    },
+    {
+      key: '/departments',
+      icon: <ShopOutlined />,
+      label: 'الأقسام',
+      onClick: () => navigate('/departments'),
+      permission: 'Departments',
+      action: 'view' as const
+    },
+    {
+      key: '/employees',
+      icon: <TeamOutlined />,
+      label: 'الموظفين',
+      onClick: () => navigate('/employees'),
+      permission: 'Employees',
+      action: 'view' as const
+    },
+    {
+      key: '/warehouses',
+      icon: <ShopOutlined />,
+      label: 'المخازن',
+      onClick: () => navigate('/warehouses'),
+      permission: 'Warehouses',
+      action: 'view' as const
     },
     {
       key: '/transfers',
       icon: <SwapOutlined />,
       label: 'التحويلات',
-      onClick: () => navigate('/transfers')
+      onClick: () => navigate('/transfers'),
+      permission: 'Transfers',
+      action: 'view' as const
     },
     {
-      key: '/disposals',
+      key: '/disposal',
       icon: <DeleteOutlined />,
       label: 'الأصول المستبعدة',
-      onClick: () => navigate('/disposals')
+      onClick: () => navigate('/disposal'),
+      permission: 'Disposal',
+      action: 'view' as const
     },
     {
       key: '/maintenance',
       icon: <ToolOutlined />,
       label: 'الصيانة',
-      onClick: () => navigate('/maintenance')
+      onClick: () => navigate('/maintenance'),
+      permission: 'Maintenance',
+      action: 'view' as const
     },
     {
       key: '/reports',
       icon: <BarChartOutlined />,
       label: 'التقارير',
-      onClick: () => navigate('/reports')
-    },
-    {
-      key: '/settings',
-      icon: <SettingOutlined />,
-      label: 'الإعدادات',
-      onClick: () => navigate('/settings')
+      onClick: () => navigate('/reports'),
+      permission: 'Reports',
+      action: 'view' as const
     },
     {
       key: '/users',
       icon: <TeamOutlined />,
       label: 'User Management',
-      onClick: () => navigate('/users')
+      onClick: () => navigate('/users'),
+      permission: 'Users',
+      action: 'view' as const
     },
     {
       key: '/permissions',
       icon: <ApartmentOutlined />,
       label: 'Role Permissions',
-      onClick: () => navigate('/permissions')
+      onClick: () => navigate('/permissions'),
+      permission: 'Permissions',
+      action: 'view' as const
     }
   ];
+
+  // فلترة عناصر القائمة بناءً على الصلاحيات
+  const menuItems = allMenuItems.filter(item => {
+    const canAccess = hasPermission(item.permission, item.action);
+    console.log(`🔍 Menu access check: ${item.permission}.${item.action} = ${canAccess}`);
+    return canAccess;
+  }).map(item => ({
+    key: item.key,
+    icon: item.icon,
+    label: item.label,
+    onClick: item.onClick
+  }));
 
   return (
     <Layout style={{ minHeight: '100vh' }}>

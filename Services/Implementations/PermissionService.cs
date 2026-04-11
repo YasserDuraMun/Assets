@@ -54,10 +54,33 @@ namespace Assets.Services.Implementations
         {
             try
             {
-                var permissions = await _context.SecurityUsers
-                    .Where(u => u.Id == userId)
-                    .SelectMany(u => u.UserRoles)
-                    .SelectMany(ur => ur.Role.Permissions)
+                _logger.LogInformation("?? Getting permissions for user ID: {UserId}", userId);
+
+                // First, get user with roles
+                var user = await _context.SecurityUsers
+                    .Include(u => u.UserRoles)
+                        .ThenInclude(ur => ur.Role)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (user == null)
+                {
+                    _logger.LogWarning("? User not found: {UserId}", userId);
+                    return new List<PermissionDto>();
+                }
+
+                _logger.LogInformation("?? User found: {UserEmail}, Roles: {RoleCount}", user.Email, user.UserRoles.Count);
+                
+                foreach (var userRole in user.UserRoles)
+                {
+                    _logger.LogInformation("?? User role: {RoleName} (ID: {RoleId})", userRole.Role.RoleName, userRole.Role.RoleId);
+                }
+
+                // Get permissions for all user roles
+                var roleIds = user.UserRoles.Select(ur => ur.RoleId).ToList();
+                _logger.LogInformation("?? Looking for permissions in roles: [{RoleIds}]", string.Join(", ", roleIds));
+
+                var permissions = await _context.Permissions
+                    .Where(p => roleIds.Contains(p.RoleID))
                     .Include(p => p.Role)
                     .Include(p => p.Screen)
                     .Select(p => new PermissionDto
@@ -74,11 +97,19 @@ namespace Assets.Services.Implementations
                     })
                     .ToListAsync();
 
+                _logger.LogInformation("??? Found {PermissionCount} permissions", permissions.Count);
+                
+                foreach (var perm in permissions)
+                {
+                    _logger.LogInformation("?? {ScreenName}: View={AllowView}, Insert={AllowInsert}, Update={AllowUpdate}, Delete={AllowDelete}", 
+                        perm.ScreenName, perm.AllowView, perm.AllowInsert, perm.AllowUpdate, perm.AllowDelete);
+                }
+
                 return permissions;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting permissions for user {UserId}", userId);
+                _logger.LogError(ex, "? Error getting permissions for user {UserId}", userId);
                 return new List<PermissionDto>();
             }
         }

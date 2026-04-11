@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 interface PermissionGuardProps {
   screenName: string;
@@ -14,12 +14,59 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
   children,
   fallback = null
 }) => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
 
-  if (!hasPermission(screenName, action)) {
+  console.log(`??? PermissionGuard: Checking ${screenName}.${action} for user ${user?.fullName}`);
+  
+  const hasAccess = hasPermission(screenName, action);
+  
+  if (!hasAccess) {
+    console.log(`? PermissionGuard: Access denied for ${screenName}.${action}`);
+    
+    // ??? ?? ???? fallback? ???? ????? ?????
+    if (!fallback) {
+      return (
+        <div style={{
+          minHeight: '200px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '8px',
+          border: '1px solid #e9ecef'
+        }}>
+          <div style={{
+            textAlign: 'center',
+            color: '#6c757d'
+          }}>
+            <div style={{
+              fontSize: '48px',
+              marginBottom: '16px'
+            }}>
+              ??
+            </div>
+            <h3 style={{
+              margin: '0 0 8px 0',
+              color: '#495057'
+            }}>
+              Access Denied
+            </h3>
+            <p style={{margin: '0'}}>
+              You don't have permission to access this section.
+            </p>
+            <small style={{ color: '#adb5bd', marginTop: '8px', display: 'block' }}>
+              Required: {screenName}.{action}
+            </small>
+          </div>
+        </div>
+      );
+    }
+    
     return <>{fallback}</>;
   }
 
+  console.log(`? PermissionGuard: Access granted for ${screenName}.${action}`);
   return <>{children}</>;
 };
 

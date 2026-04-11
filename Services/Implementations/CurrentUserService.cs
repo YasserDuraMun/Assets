@@ -9,11 +9,13 @@ namespace Assets.Services.Implementations
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<CurrentUserService> _logger;
 
-        public CurrentUserService(IHttpContextAccessor httpContextAccessor, ApplicationDbContext context)
+        public CurrentUserService(IHttpContextAccessor httpContextAccessor, ApplicationDbContext context, ILogger<CurrentUserService> logger)
         {
             _httpContextAccessor = httpContextAccessor;
             _context = context;
+            _logger = logger;
         }
 
         public int? UserId
@@ -21,7 +23,14 @@ namespace Assets.Services.Implementations
             get
             {
                 var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("userId");
-                return int.TryParse(userIdClaim?.Value, out var userId) ? userId : null;
+                if (userIdClaim?.Value != null && int.TryParse(userIdClaim.Value, out var userId))
+                {
+                    _logger.LogDebug("?? Getting UserId from token: {UserId} (Claim: {Claim})", userId, userIdClaim.Value);
+                    return userId;
+                }
+                
+                _logger.LogDebug("?? Getting UserId from token: null (Claim: {Claim})", userIdClaim?.Value);
+                return null;
             }
         }
 
@@ -32,7 +41,10 @@ namespace Assets.Services.Implementations
         public async Task<bool> HasPermissionAsync(string screenName, string action)
         {
             if (!UserId.HasValue)
+            {
+                _logger.LogWarning("? No UserId available for permission check");
                 return false;
+            }
 
             return await HasPermissionInternalAsync(UserId.Value, screenName, action);
         }
@@ -40,14 +52,29 @@ namespace Assets.Services.Implementations
         public async Task<List<string>> GetUserRolesAsync()
         {
             if (!UserId.HasValue)
+            {
+                _logger.LogWarning("? No UserId available for getting user roles");
                 return new List<string>();
+            }
+
+            _logger.LogInformation("?? Getting roles for user ID: {UserId}", UserId.Value);
 
             var user = await _context.SecurityUsers
                 .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Id == UserId.Value);
 
-            return user?.UserRoles.Select(ur => ur.Role.RoleName).ToList() ?? new List<string>();
+            if (user == null)
+            {
+                _logger.LogWarning("? User not found: {UserId}", UserId.Value);
+                return new List<string>();
+            }
+
+            var roleNames = user.UserRoles.Select(ur => ur.Role.RoleName).ToList();
+
+            _logger.LogInformation("?? User {Email} has roles: [{Roles}]", user.Email, string.Join(", ", roleNames));
+
+            return roleNames;
         }
 
         private async Task<bool> HasPermissionInternalAsync(int userId, string screenName, string action)

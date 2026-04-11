@@ -100,7 +100,13 @@ export const permissionsAPI = {
     return response.data;
   },
   updateRolePermissions: async (roleId: number, permissions: any[]) => {
-    const response = await apiClient.put(`/security/permissions/roles/${roleId}/permissions`, { permissions });
+    console.log('?? Updating permissions for role:', roleId, 'with data:', permissions);
+    
+    const response = await apiClient.put(`/security/permissions/roles/${roleId}/permissions`, { 
+      permissions: permissions 
+    });
+    
+    console.log('? Update permissions response:', response.data);
     return response.data;
   },
   checkPermission: async (screenName: string, action: string) => {
