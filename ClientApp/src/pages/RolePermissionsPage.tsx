@@ -149,12 +149,12 @@ const RolePermissionsPage: React.FC = () => {
 
   const getScreenIcon = (screenName: string) => {
     const icons: {[key: string]: string} = {
-      'Dashboard': '??', 'Assets': '??', 'Categories': '??', 'Statuses': '???',
-      'Warehouses': '??', 'Departments': '???', 'Employees': '??', 'Transfers': '??',
-      'Disposals': '???', 'Maintenance': '??', 'Reports': '??', 'Settings': '??',
-      'Users': '??', 'Permissions': '???'
+      'Dashboard': '📊', 'Assets': '💻', 'Categories': '📂', 'Statuses': '☑',
+      'Warehouses': '🏪', 'Departments': '🏛', 'Employees': '👥', 'Transfers': '🔄',
+      'Disposals': '🗑', 'Maintenance': '🔧', 'Reports': '📄', 'Settings': '⚙',
+      'Users': '👤', 'Permissions': '🔒'
     };
-    return icons[screenName] || '??';
+    return icons[screenName] || '📝';
   };
 
   useEffect(() => {
@@ -169,7 +169,7 @@ const RolePermissionsPage: React.FC = () => {
         setRoles(response.data || []);
       }
     } catch (error) {
-      setMessage({type: 'error', text: 'Failed to load roles'});
+      setMessage({type: 'error', text: 'فشل تحميل الأدوار'});
     } finally {
       setLoading(false);
     }
@@ -181,7 +181,7 @@ const RolePermissionsPage: React.FC = () => {
       
       const selectedRole = roles.find(r => r.roleId === roleId);
       if (!selectedRole) {
-        setMessage({type: 'error', text: 'Role not found'});
+        setMessage({type: 'error', text: 'لم يتم العثور على الدور'});
         return;
       }
 
@@ -200,7 +200,7 @@ const RolePermissionsPage: React.FC = () => {
         createDefaultPermissions(roleId, selectedRole.roleName);
       }
     } catch (error) {
-      setMessage({type: 'error', text: 'Failed to load role permissions'});
+      setMessage({type: 'error', text: 'فشل تحميل صلاحيات الدور'});
     } finally {
       setLoading(false);
     }
@@ -244,8 +244,8 @@ const RolePermissionsPage: React.FC = () => {
       setSaving(true);
       setMessage(null); // Clear previous messages
       
-      console.log('?? Saving permissions for role:', rolePermissions.roleName);
-      console.log('?? Permissions data:', rolePermissions.permissions);
+      console.log('Saving permissions for role:', rolePermissions.roleName);
+      console.log('Permissions data:', rolePermissions.permissions);
       
       const response = await permissionsAPI.updateRolePermissions(
         rolePermissions.roleId, 
@@ -255,7 +255,7 @@ const RolePermissionsPage: React.FC = () => {
       console.log('? Save response:', response);
       
       if (response.success) {
-        setMessage({type: 'success', text: `Permissions for ${rolePermissions.roleName} updated successfully! ??`});
+        setMessage({type: 'success', text: `تم تحديث صلاحيات ${rolePermissions.roleName} بنجاح! ✅`});
         
         // Auto-hide success message after 5 seconds
         setTimeout(() => {
@@ -263,22 +263,22 @@ const RolePermissionsPage: React.FC = () => {
         }, 5000);
         
       } else {
-        setMessage({type: 'error', text: response.message || 'Failed to update role permissions'});
+        setMessage({type: 'error', text: response.message || 'فشل تحديث صلاحيات الدور'});
       }
     } catch (error: any) {
       console.error('? Error saving permissions:', error);
       
-      let errorMessage = 'Failed to save permissions. ';
+      let errorMessage = 'فشل حفظ الصلاحيات. ';
       if (error.response?.data?.message) {
         errorMessage += error.response.data.message;
       } else if (error.response?.status === 403) {
-        errorMessage += 'You don\'t have permission to modify role permissions.';
+        errorMessage += 'ليس لديك صلاحية لتعديل صلاحيات الأدوار.';
       } else if (error.response?.status === 404) {
-        errorMessage += 'Role not found.';
+        errorMessage += 'لم يتم العثور على الدور.';
       } else if (error.message) {
         errorMessage += error.message;
       } else {
-        errorMessage += 'Please try again or contact support.';
+        errorMessage += 'يرجى المحاولة مرة أخرى أو الاتصال بالدعم.';
       }
       
       setMessage({type: 'error', text: errorMessage});
@@ -358,10 +358,10 @@ const RolePermissionsPage: React.FC = () => {
               margin: '0 auto 24px',
               fontSize: '32px'
             }}>
-              ???
+              ⚠
             </div>
-            <h3 style={{fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>Access Denied</h3>
-            <p style={{color: '#6b7280'}}>You don't have permission to access Role Permissions Management.</p>
+            <h3 style={{fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>تم رفض الوصول</h3>
+            <p style={{color: '#6b7280'}}>ليس لديك صلاحية للوصول إلى إدارة صلاحيات الأدوار.</p>
           </div>
         </div>
       </MainLayout>
@@ -395,7 +395,7 @@ const RolePermissionsPage: React.FC = () => {
               borderRadius: '50%',
               animation: 'spin 1s linear infinite'
             }}></div>
-            <span style={{color: '#374151', fontWeight: '500'}}>Loading Roles...</span>
+            <span style={{color: '#374151', fontWeight: '500'}}>جاري تحميل الأدوار...</span>
           </div>
         </div>
       </MainLayout>
@@ -409,20 +409,20 @@ const RolePermissionsPage: React.FC = () => {
         <div style={styles.gradientHeader}>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px'}}>
             <div>
-              <h1 style={styles.headerTitle}>??? Role Permissions Management</h1>
-              <p style={styles.headerSubtitle}>Configure access permissions for each role in the system using our beautiful table interface</p>
+              <h1 style={styles.headerTitle}>إدارة صلاحيات الأدوار</h1>
+              <p style={styles.headerSubtitle}>تكوين صلاحيات الوصول لكل دور في النظام باستخدام واجهة الجدول الجميلة</p>
               <div style={styles.statsContainer}>
                 <div style={styles.statItem}>
                   <div style={{...styles.statDot, backgroundColor: '#10b981'}}></div>
-                  <span>{roles.filter(r => r.isActive).length} Active Roles</span>
+                  <span>{roles.filter(r => r.isActive).length} دور نشط</span>
                 </div>
                 <div style={styles.statItem}>
                   <div style={{...styles.statDot, backgroundColor: '#f59e0b'}}></div>
-                  <span>{availableScreens.length} System Screens</span>
+                  <span>{availableScreens.length} شاشات النظام</span>
                 </div>
                 <div style={styles.statItem}>
                   <div style={{...styles.statDot, backgroundColor: '#8b5cf6'}}></div>
-                  <span>4 Permission Types</span>
+                  <span>4 أنواع صلاحيات</span>
                 </div>
               </div>
             </div>
@@ -443,7 +443,7 @@ const RolePermissionsPage: React.FC = () => {
             alignItems: 'center',
             gap: '12px'
           }}>
-            <span style={{fontSize: '18px'}}>{message.type === 'success' ? '?' : '??'}</span>
+            <span style={{fontSize: '18px'}}>{message.type === 'success' ? '✓' : '⚠'}</span>
             <span>{message.text}</span>
             <button
               onClick={() => setMessage(null)}
@@ -456,7 +456,7 @@ const RolePermissionsPage: React.FC = () => {
                 opacity: '0.7'
               }}
             >
-              ??
+              ✕
             </button>
           </div>
         )}
@@ -464,7 +464,7 @@ const RolePermissionsPage: React.FC = () => {
         {/* Role Selection */}
         <div style={styles.roleSelector}>
           <div style={styles.selectContainer}>
-            <span style={styles.selectLabel}>?? Select Role:</span>
+            <span style={styles.selectLabel}>اختر الدور:</span>
             <select
               style={{
                 ...styles.select,
@@ -489,10 +489,10 @@ const RolePermissionsPage: React.FC = () => {
                 e.target.style.boxShadow = 'none';
               }}
             >
-              <option value="">Choose a role to manage...</option>
+              <option value="">اختر دوراً للإدارة...</option>
               {roles.map(role => (
                 <option key={role.roleId} value={role.roleId}>
-                  {role.roleName} {role.isActive ? '??' : '??'}
+                  {role.roleName} {role.isActive ? '✓' : '✗'}
                 </option>
               ))}
             </select>
@@ -502,7 +502,7 @@ const RolePermissionsPage: React.FC = () => {
                 color: '#6b7280',
                 fontWeight: '500'
               }}>
-                Managing permissions for: <strong style={{color: '#7c3aed'}}>{rolePermissions?.roleName}</strong>
+                إدارة الصلاحيات لـ: <strong style={{color: '#7c3aed'}}>{rolePermissions?.roleName}</strong>
               </div>
             )}
           </div>
@@ -526,7 +526,7 @@ const RolePermissionsPage: React.FC = () => {
               animation: 'spin 1s linear infinite',
               margin: '0 auto 16px'
             }}></div>
-            <p style={{color: '#6b7280', fontWeight: '500'}}>Loading permissions...</p>
+            <p style={{color: '#6b7280', fontWeight: '500'}}>جاري تحميل الصلاحيات...</p>
           </div>
         ) : rolePermissions ? (
           <div style={styles.permissionsContainer}>
@@ -534,10 +534,10 @@ const RolePermissionsPage: React.FC = () => {
             <div style={styles.permissionsHeader}>
               <div>
                 <h3 style={{fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: '0 0 4px 0'}}>
-                  ??? Permissions for: <span style={{color: '#7c3aed'}}>{rolePermissions.roleName}</span>
+                  الصلاحيات لـ: <span style={{color: '#7c3aed'}}>{rolePermissions.roleName}</span>
                 </h3>
                 <p style={{fontSize: '14px', color: '#6b7280', margin: '0'}}>
-                  Use the beautiful table below to easily manage permissions - click toggle switches to enable/disable
+                  استخدم الجدول الجميل أدناه لإدارة الصلاحيات بسهولة - انقر على مفاتيح التبديل للتفعيل/التعطيل
                 </p>
               </div>
               
@@ -559,8 +559,8 @@ const RolePermissionsPage: React.FC = () => {
                     }
                   }}
                 >
-                  <span style={{fontSize: '16px'}}>{saving ? '?' : '??'}</span>
-                  <span>{saving ? 'Saving...' : 'Save Permissions'}</span>
+                  <span style={{fontSize: '16px'}}>{saving ? '⏳' : '💾'}</span>
+                  <span>{saving ? 'جاري الحفظ...' : 'حفظ الصلاحيات'}</span>
                 </button>
               )}
             </div>
@@ -592,8 +592,8 @@ const RolePermissionsPage: React.FC = () => {
                     gap: '8px',
                     borderRight: '1px solid #e5e7eb'
                   }}>
-                    <span style={{fontSize: '18px'}}>??</span>
-                    <span>Screen / Module</span>
+                    <span style={{fontSize: '18px'}}>📱</span>
+                    <span>الشاشة / الوحدة</span>
                   </div>
                   <div style={{
                     padding: '20px 24px',
@@ -608,7 +608,7 @@ const RolePermissionsPage: React.FC = () => {
                     gap: '6px'
                   }}>
                     <span>???</span>
-                    <span>VIEW</span>
+                    <span>عرض</span>
                   </div>
                   <div style={{
                     padding: '20px 24px',
@@ -623,7 +623,7 @@ const RolePermissionsPage: React.FC = () => {
                     gap: '6px'
                   }}>
                     <span>?</span>
-                    <span>INSERT</span>
+                    <span>إضافة</span>
                   </div>
                   <div style={{
                     padding: '20px 24px',
@@ -638,7 +638,7 @@ const RolePermissionsPage: React.FC = () => {
                     gap: '6px'
                   }}>
                     <span>??</span>
-                    <span>UPDATE</span>
+                    <span>تعديل</span>
                   </div>
                   <div style={{
                     padding: '20px 24px',
@@ -652,7 +652,7 @@ const RolePermissionsPage: React.FC = () => {
                     gap: '6px'
                   }}>
                     <span>???</span>
-                    <span>DELETE</span>
+                    <span>حذف</span>
                   </div>
                 </div>
 
@@ -700,7 +700,7 @@ const RolePermissionsPage: React.FC = () => {
                           color: '#6b7280',
                           margin: '0'
                         }}>
-                          System Module
+                          وحدة النظام
                         </p>
                       </div>
                     </div>
@@ -811,7 +811,7 @@ const RolePermissionsPage: React.FC = () => {
                   }}
                 >
                   <span style={{fontSize: '16px'}}>?</span>
-                  <span>Enable All Permissions</span>
+                  <span>تمكين جميع الصلاحيات</span>
                 </button>
 
                 <button
@@ -851,7 +851,7 @@ const RolePermissionsPage: React.FC = () => {
                   }}
                 >
                   <span style={{fontSize: '16px'}}>?</span>
-                  <span>Disable All Permissions</span>
+                  <span>تعطيل جميع الصلاحيات</span>
                 </button>
 
                 <button
@@ -891,7 +891,7 @@ const RolePermissionsPage: React.FC = () => {
                   }}
                 >
                   <span style={{fontSize: '16px'}}>???</span>
-                  <span>View Only Mode</span>
+                  <span>وضع العرض فقط</span>
                 </button>
               </div>
             </div>
@@ -899,7 +899,7 @@ const RolePermissionsPage: React.FC = () => {
             {/* Info Box */}
             <div style={styles.infoBox}>
               <h4 style={{fontSize: '16px', fontWeight: '600', color: '#1e40af', margin: '0 0 12px 0'}}>
-                ?? Beautiful Table Permission Management:
+                ?? إدارة صلاحيات الجدول الجميل:
               </h4>
               <div style={{fontSize: '13px', color: '#1e3a8a', lineHeight: '1.6'}}>
                 <p style={{margin: '0 0 8px 0'}}>
@@ -938,8 +938,8 @@ const RolePermissionsPage: React.FC = () => {
             }}>
               ??
             </div>
-            <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>No permissions data found</h3>
-            <p style={{color: '#6b7280'}}>Unable to load permissions for the selected role. Please try again.</p>
+            <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>لم يتم العثور على بيانات الصلاحيات</h3>
+            <p style={{color: '#6b7280'}}>غير قادر على تحميل الصلاحيات للدور المحدد. يرجى المحاولة مرة أخرى.</p>
           </div>
         ) : (
           <div style={{
@@ -962,8 +962,8 @@ const RolePermissionsPage: React.FC = () => {
             }}>
               ???
             </div>
-            <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>Select a Role to Manage</h3>
-            <p style={{color: '#6b7280'}}>Choose a role from the dropdown above to view and edit its permissions in our beautiful table interface.</p>
+            <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>اختر دوراً للإدارة</h3>
+            <p style={{color: '#6b7280'}}>اختر دوراً من القائمة المنسدلة أعلاه لعرض وتعديل صلاحياته في واجهة الجدول الجميل.</p>
           </div>
         )}
       </div>

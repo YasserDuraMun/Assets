@@ -233,7 +233,7 @@ const UserManagement: React.FC = () => {
         setRoles(rolesResponse.data || []);
       }
     } catch (err: any) {
-      setError('Failed to load data');
+      setError('فشل تحميل البيانات');
       console.error('Error loading data:', err);
     } finally {
       setLoading(false);
@@ -257,20 +257,20 @@ const UserManagement: React.FC = () => {
         
         const response = await usersAPI.update(editingUser.id, updateData);
         if (response.success) {
-          setSuccess('User updated successfully');
+          setSuccess('تم تحديث المستخدم بنجاح');
           await loadData();
           resetForm();
         }
       } else {
         const response = await usersAPI.create(formData);
         if (response.success) {
-          setSuccess('User created successfully');
+          setSuccess('تم إنشاء المستخدم بنجاح');
           await loadData();
           resetForm();
         }
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred during the operation');
+      setError(err.response?.data?.message || 'حدث خطأ أثناء العملية');
     }
   };
 
@@ -287,16 +287,16 @@ const UserManagement: React.FC = () => {
   };
 
   const handleDelete = async (userId: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    if (!confirm('هل أنت متأكد من رغبتك في حذف هذا المستخدم؟')) return;
 
     try {
       const response = await usersAPI.delete(userId);
       if (response.success) {
-        setSuccess('User deleted successfully');
+        setSuccess('تم حذف المستخدم بنجاح');
         await loadData();
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete user');
+      setError(err.response?.data?.message || 'فشل حذف المستخدم');
     }
   };
 
@@ -308,7 +308,7 @@ const UserManagement: React.FC = () => {
         await loadData();
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to change user status');
+      setError(err.response?.data?.message || 'فشل تغيير حالة المستخدم');
     }
   };
 
@@ -379,10 +379,10 @@ const UserManagement: React.FC = () => {
               margin: '0 auto 24px',
               fontSize: '32px'
             }}>
-              ??
+              ⚠
             </div>
-            <h3 style={{fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>Access Denied</h3>
-            <p style={{color: '#6b7280'}}>You don't have permission to access User Management.</p>
+            <h3 style={{fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>تم رفض الوصول</h3>
+            <p style={{color: '#6b7280'}}>ليس لديك صلاحية للوصول إلى إدارة المستخدمين.</p>
           </div>
         </div>
       </MainLayout>
@@ -416,7 +416,7 @@ const UserManagement: React.FC = () => {
               borderRadius: '50%',
               animation: 'spin 1s linear infinite'
             }}></div>
-            <span style={{color: '#374151', fontWeight: '500'}}>Loading Users...</span>
+            <span style={{color: '#374151', fontWeight: '500'}}>جاري تحميل المستخدمين...</span>
           </div>
         </div>
       </MainLayout>
@@ -430,20 +430,20 @@ const UserManagement: React.FC = () => {
         <div style={styles.gradientHeader}>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px'}}>
             <div>
-              <h1 style={styles.headerTitle}>?? User Management</h1>
-              <p style={styles.headerSubtitle}>Manage system users and their permissions</p>
+              <h1 style={styles.headerTitle}>إدارة المستخدمين</h1>
+              <p style={styles.headerSubtitle}>إدارة مستخدمي النظام وصلاحياتهم</p>
               <div style={styles.statsContainer}>
                 <div style={styles.statItem}>
                   <div style={{...styles.statDot, backgroundColor: '#10b981'}}></div>
-                  <span>{users.filter(u => u.isActive).length} Active Users</span>
+                  <span>{users.filter(u => u.isActive).length} مستخدم نشط</span>
                 </div>
                 <div style={styles.statItem}>
                   <div style={{...styles.statDot, backgroundColor: '#ef4444'}}></div>
-                  <span>{users.filter(u => !u.isActive).length} Inactive Users</span>
+                  <span>{users.filter(u => !u.isActive).length} مستخدم غير نشط</span>
                 </div>
                 <div style={styles.statItem}>
                   <div style={{...styles.statDot, backgroundColor: '#f59e0b'}}></div>
-                  <span>{roles.length} Roles Available</span>
+                  <span>{roles.length} دور متاح</span>
                 </div>
               </div>
             </div>
@@ -461,7 +461,7 @@ const UserManagement: React.FC = () => {
                 }}
               >
                 <span style={{fontSize: '16px'}}>?</span>
-                <span>Add New User</span>
+                <span>إضافة مستخدم جديد</span>
               </button>
             )}
           </div>
@@ -481,7 +481,7 @@ const UserManagement: React.FC = () => {
             alignItems: 'center',
             gap: '12px'
           }}>
-            <span style={{fontSize: '18px'}}>??</span>
+            <span style={{fontSize: '18px'}}>⚠</span>
             <span>{error}</span>
           </div>
         )}
@@ -499,7 +499,7 @@ const UserManagement: React.FC = () => {
             alignItems: 'center',
             gap: '12px'
           }}>
-            <span style={{fontSize: '18px'}}>?</span>
+            <span style={{fontSize: '18px'}}>✓</span>
             <span>{success}</span>
           </div>
         )}
@@ -516,11 +516,11 @@ const UserManagement: React.FC = () => {
                 color: '#9ca3af',
                 fontSize: '18px'
               }}>
-                ??
+                🔍
               </div>
               <input
                 type="text"
-                placeholder="Search users by name or email..."
+                placeholder="ابحث عن المستخدمين بالاسم أو البريد الإلكتروني..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={styles.searchInput}
@@ -541,7 +541,7 @@ const UserManagement: React.FC = () => {
               color: '#6b7280',
               fontWeight: '500'
             }}>
-              Showing {filteredUsers.length} of {users.length} users
+              عرض {filteredUsers.length} من {users.length} مستخدم
             </div>
           </div>
         </div>
@@ -579,8 +579,8 @@ const UserManagement: React.FC = () => {
                     ...styles.statusBadge,
                     ...(user.isActive ? styles.statusActive : styles.statusInactive)
                   }}>
-                    <span>{user.isActive ? '??' : '??'}</span>
-                    <span>{user.isActive ? 'Active' : 'Inactive'}</span>
+                    <span>{user.isActive ? '✓' : '✗'}</span>
+                    <span>{user.isActive ? 'نشط' : 'غير نشط'}</span>
                   </div>
                 </div>
               </div>
@@ -588,7 +588,7 @@ const UserManagement: React.FC = () => {
               {/* Card Body */}
               <div style={styles.cardBody}>
                 <div style={{marginBottom: '20px'}}>
-                  <h4 style={{fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px'}}>??? Roles:</h4>
+                  <h4 style={{fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px'}}>🎭 الأدوار:</h4>
                   <div style={{display: 'flex', flexWrap: 'wrap', gap: '6px'}}>
                     {user.roles.length > 0 ? (
                       user.roles.map((role) => (
@@ -603,7 +603,7 @@ const UserManagement: React.FC = () => {
                         </span>
                       ))
                     ) : (
-                      <span style={{color: '#9ca3af', fontSize: '14px', fontStyle: 'italic'}}>No roles assigned</span>
+                      <span style={{color: '#9ca3af', fontSize: '14px', fontStyle: 'italic'}}>لا توجد أدوار محددة</span>
                     )}
                   </div>
                 </div>
@@ -629,8 +629,8 @@ const UserManagement: React.FC = () => {
                         e.currentTarget.style.transform = 'translateY(0)';
                       }}
                     >
-                      <span>??</span>
-                      <span>Edit</span>
+                      <span>✏</span>
+                      <span>تعديل</span>
                     </button>
                   )}
                   {hasPermission('Users', 'update') && (
@@ -651,8 +651,8 @@ const UserManagement: React.FC = () => {
                         e.currentTarget.style.transform = 'translateY(0)';
                       }}
                     >
-                      <span>{user.isActive ? '??' : '??'}</span>
-                      <span>{user.isActive ? 'Disable' : 'Enable'}</span>
+                      <span>{user.isActive ? '⊗' : '✓'}</span>
+                      <span>{user.isActive ? 'تعطيل' : 'تفعيل'}</span>
                     </button>
                   )}
                   {hasPermission('Users', 'delete') && user.email !== 'admin@assets.ps' && (
@@ -668,8 +668,8 @@ const UserManagement: React.FC = () => {
                         e.currentTarget.style.transform = 'translateY(0)';
                       }}
                     >
-                      <span>???</span>
-                      <span>Delete</span>
+                      <span>✖</span>
+                      <span>حذف</span>
                     </button>
                   )}
                 </div>
@@ -698,11 +698,11 @@ const UserManagement: React.FC = () => {
               margin: '0 auto 24px',
               fontSize: '48px'
             }}>
-              ??
+              👥
             </div>
-            <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>No users found</h3>
+            <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>لا يوجد مستخدمين</h3>
             <p style={{color: '#6b7280', marginBottom: '24px'}}>
-              {searchTerm ? 'Try adjusting your search terms' : 'Get started by adding your first user'}
+              {searchTerm ? 'حاول تعديل مصطلحات البحث' : 'ابدأ بإضافة أول مستخدم'}
             </p>
             {hasPermission('Users', 'insert') && !searchTerm && (
               <button
@@ -730,7 +730,7 @@ const UserManagement: React.FC = () => {
                 }}
               >
                 <span>?</span>
-                <span>Add First User</span>
+                <span>إضافة أول مستخدم</span>
               </button>
             )}
           </div>
@@ -745,10 +745,10 @@ const UserManagement: React.FC = () => {
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                   <div>
                     <h3 style={{fontSize: '24px', fontWeight: '700', margin: '0 0 8px 0'}}>
-                      {editingUser ? '?? Edit User' : '? Add New User'}
+                      {editingUser ? 'تعديل المستخدم' : 'إضافة مستخدم جديد'}
                     </h3>
                     <p style={{opacity: '0.9', margin: '0'}}>
-                      {editingUser ? 'Update user information and roles' : 'Create a new user account'}
+                      {editingUser ? 'تحديث معلومات المستخدم والأدوار' : 'إنشاء حساب مستخدم جديد'}
                     </p>
                   </div>
                   <button
@@ -765,7 +765,7 @@ const UserManagement: React.FC = () => {
                     onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
                     onMouseOut={(e) => e.currentTarget.style.opacity = '0.8'}
                   >
-                    ??
+                    ✕
                   </button>
                 </div>
               </div>
@@ -782,7 +782,7 @@ const UserManagement: React.FC = () => {
                         fontSize: '14px',
                         fontWeight: '600'
                       }}>
-                        ?? Full Name
+                        الاسم الكامل
                       </label>
                       <input
                         type="text"
@@ -797,7 +797,7 @@ const UserManagement: React.FC = () => {
                           fontSize: '16px',
                           transition: 'all 0.2s ease'
                         }}
-                        placeholder="Enter full name"
+                        placeholder="أدخل الاسم الكامل"
                         onFocus={(e) => {
                           e.target.style.borderColor = '#667eea';
                           e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
@@ -817,7 +817,7 @@ const UserManagement: React.FC = () => {
                         fontSize: '14px',
                         fontWeight: '600'
                       }}>
-                        ?? Email Address
+                        البريد الإلكتروني
                       </label>
                       <input
                         type="email"
@@ -832,7 +832,7 @@ const UserManagement: React.FC = () => {
                           fontSize: '16px',
                           transition: 'all 0.2s ease'
                         }}
-                        placeholder="Enter email address"
+                        placeholder="أدخل البريد الإلكتروني"
                         dir="ltr"
                         onFocus={(e) => {
                           e.target.style.borderColor = '#667eea';
@@ -854,7 +854,7 @@ const UserManagement: React.FC = () => {
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>
-                      ?? Password {editingUser && <span style={{color: '#6b7280', fontWeight: '400'}}>(leave empty to keep current password)</span>}
+                      كلمة المرور {editingUser && <span style={{color: '#6b7280', fontWeight: '400'}}>(اتركه فارغاً للحفاظ على كلمة المرور الحالية)</span>}
                     </label>
                     <input
                       type="password"
@@ -869,7 +869,7 @@ const UserManagement: React.FC = () => {
                         fontSize: '16px',
                         transition: 'all 0.2s ease'
                       }}
-                      placeholder={editingUser ? "Enter new password (optional)" : "Enter password"}
+                      placeholder={editingUser ? "أدخل كلمة مرور جديدة (اختياري)" : "أدخل كلمة المرور"}
                       dir="ltr"
                       onFocus={(e) => {
                         e.target.style.borderColor = '#667eea';
@@ -892,8 +892,8 @@ const UserManagement: React.FC = () => {
                     border: '1px solid #e5e7eb'
                   }}>
                     <div>
-                      <label style={{fontSize: '14px', fontWeight: '600', color: '#374151'}}>Account Status</label>
-                      <p style={{fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0'}}>Enable or disable this user account</p>
+                      <label style={{fontSize: '14px', fontWeight: '600', color: '#374151'}}>حالة الحساب</label>
+                      <p style={{fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0'}}>تفعيل أو تعطيل حساب المستخدم هذا</p>
                     </div>
                     <label style={{
                       position: 'relative',
@@ -927,7 +927,7 @@ const UserManagement: React.FC = () => {
                         }}></div>
                       </div>
                       <span style={{marginLeft: '12px', fontSize: '14px', fontWeight: '500', color: '#1f2937'}}>
-                        {formData.isActive ? '?? Active' : '?? Inactive'}
+                        {formData.isActive ? '✓ نشط' : '✗ غير نشط'}
                       </span>
                     </label>
                   </div>
@@ -940,7 +940,7 @@ const UserManagement: React.FC = () => {
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>
-                      ??? User Roles & Permissions
+                      أدوار وصلاحيات المستخدم
                     </label>
                     <div style={{
                       backgroundColor: '#f8fafc',
@@ -1014,7 +1014,7 @@ const UserManagement: React.FC = () => {
                       onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
                       onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
                     >
-                      Cancel
+                      إلغاء
                     </button>
                     <button
                       type="submit"
@@ -1038,7 +1038,7 @@ const UserManagement: React.FC = () => {
                         e.currentTarget.style.boxShadow = '0 4px 16px rgba(102, 126, 234, 0.3)';
                       }}
                     >
-                      {editingUser ? '?? Update User' : '? Create User'}
+                      {editingUser ? 'تحديث المستخدم' : 'إنشاء مستخدم'}
                     </button>
                   </div>
                 </form>

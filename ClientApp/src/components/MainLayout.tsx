@@ -64,36 +64,42 @@ const handleLogout = () => {
       action: 'view' as const
     },
     {
-      key: '/categories',
-      icon: <ApartmentOutlined />,
-      label: 'التصنيفات',
-      onClick: () => navigate('/categories'),
-      permission: 'Categories',
-      action: 'view' as const
-    },
-    {
-      key: '/departments',
-      icon: <ShopOutlined />,
-      label: 'الأقسام',
-      onClick: () => navigate('/departments'),
-      permission: 'Departments',
-      action: 'view' as const
-    },
-    {
-      key: '/employees',
-      icon: <TeamOutlined />,
-      label: 'الموظفين',
-      onClick: () => navigate('/employees'),
-      permission: 'Employees',
-      action: 'view' as const
-    },
-    {
-      key: '/warehouses',
-      icon: <ShopOutlined />,
-      label: 'المخازن',
-      onClick: () => navigate('/warehouses'),
-      permission: 'Warehouses',
-      action: 'view' as const
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: 'الإعدادات',
+      onClick: () => navigate('/settings'),
+      permission: 'Settings',
+      action: 'view' as const,
+      children: [
+        {
+          key: '/categories',
+          label: 'التصنيفات',
+          onClick: () => navigate('/categories'),
+          permission: 'Categories',
+          action: 'view' as const
+        },
+        {
+          key: '/departments',
+          label: 'الأقسام',
+          onClick: () => navigate('/departments'),
+          permission: 'Departments',
+          action: 'view' as const
+        },
+        {
+          key: '/employees',
+          label: 'الموظفين',
+          onClick: () => navigate('/employees'),
+          permission: 'Employees',
+          action: 'view' as const
+        },
+        {
+          key: '/warehouses',
+          label: 'المخازن',
+          onClick: () => navigate('/warehouses'),
+          permission: 'Warehouses',
+          action: 'view' as const
+        }
+      ]
     },
     {
       key: '/transfers',
@@ -130,7 +136,7 @@ const handleLogout = () => {
     {
       key: '/users',
       icon: <TeamOutlined />,
-      label: 'User Management',
+      label: 'إدارة المستخدمين',
       onClick: () => navigate('/users'),
       permission: 'Users',
       action: 'view' as const
@@ -138,7 +144,7 @@ const handleLogout = () => {
     {
       key: '/permissions',
       icon: <ApartmentOutlined />,
-      label: 'Role Permissions',
+      label: 'صلاحيات الأدوار',
       onClick: () => navigate('/permissions'),
       permission: 'Permissions',
       action: 'view' as const
@@ -146,16 +152,39 @@ const handleLogout = () => {
   ];
 
   // فلترة عناصر القائمة بناءً على الصلاحيات
-  const menuItems = allMenuItems.filter(item => {
-    const canAccess = hasPermission(item.permission, item.action);
-    console.log(`🔍 Menu access check: ${item.permission}.${item.action} = ${canAccess}`);
-    return canAccess;
-  }).map(item => ({
-    key: item.key,
-    icon: item.icon,
-    label: item.label,
-    onClick: item.onClick
-  }));
+  const buildMenuItems = (items: typeof allMenuItems): any[] => {
+    return items.filter(item => {
+      const canAccess = hasPermission(item.permission, item.action);
+      console.log(`🔍 Menu access check: ${item.permission}.${item.action} = ${canAccess}`);
+      return canAccess;
+    }).map(item => {
+      const menuItem: any = {
+        key: item.key,
+        icon: item.icon,
+        label: item.label,
+        onClick: item.onClick
+      };
+
+      // إذا كان العنصر يحتوي على عناصر فرعية (مثل الإعدادات)
+      if (item.children) {
+        const filteredChildren = item.children.filter(child => 
+          hasPermission(child.permission, child.action)
+        ).map(child => ({
+          key: child.key,
+          label: child.label,
+          onClick: child.onClick
+        }));
+
+        if (filteredChildren.length > 0) {
+          menuItem.children = filteredChildren;
+        }
+      }
+
+      return menuItem;
+    });
+  };
+
+  const menuItems = buildMenuItems(allMenuItems);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -174,6 +203,7 @@ const handleLogout = () => {
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
+          defaultOpenKeys={['settings']} // فتح قائمة الإعدادات افتراضياً
           style={{ marginTop: 16 }}
           items={menuItems}
         />
@@ -197,14 +227,14 @@ const handleLogout = () => {
 
           <Space>
             <Typography.Text strong>
-              Welcome, {user?.fullName || 'User'}
+              مرحباً، {user?.fullName || 'مستخدم'}
             </Typography.Text>
             <Button
               icon={<LogoutOutlined />}
               onClick={handleLogout}
               danger
             >
-              Logout
+              تسجيل الخروج
             </Button>
           </Space>
         </Header>

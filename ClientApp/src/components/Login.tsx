@@ -25,10 +25,10 @@ const Login: React.FC = () => {
         console.log('? Login successful, navigating to dashboard');
         navigate('/dashboard', { replace: true });
       } else {
-        setError(response.message || 'Login failed. Please check your credentials.');
+        setError(response.message || 'فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد.');
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred during login. Please try again.');
+      setError(err.message || 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.');
       console.error('? Login error:', err);
     } finally {
       setLoading(false);
@@ -84,14 +84,14 @@ const Login: React.FC = () => {
             fontWeight: '700',
             margin: '0 0 8px 0'
           }}>
-            Welcome Back
+            مرحباً بعودتك
           </h2>
           <p style={{
             color: '#718096',
             fontSize: '14px',
             margin: '0'
           }}>
-            Sign in to your account
+            قم بتسجيل الدخول إلى حسابك
           </p>
         </div>
 
@@ -104,7 +104,7 @@ const Login: React.FC = () => {
               fontSize: '14px',
               fontWeight: '500'
             }}>
-              Email Address
+              البريد الإلكتروني
             </label>
             <input
               type="email"
@@ -121,7 +121,7 @@ const Login: React.FC = () => {
                 transition: 'all 0.2s ease',
                 backgroundColor: '#f7fafc'
               }}
-              placeholder="Enter your email"
+              placeholder="أدخل بريدك الإلكتروني"
               onFocus={(e) => {
                 e.target.style.borderColor = '#667eea';
                 e.target.style.backgroundColor = 'white';
@@ -143,7 +143,7 @@ const Login: React.FC = () => {
               fontSize: '14px',
               fontWeight: '500'
             }}>
-              Password
+              كلمة المرور
             </label>
             <input
               type="password"
@@ -160,7 +160,7 @@ const Login: React.FC = () => {
                 transition: 'all 0.2s ease',
                 backgroundColor: '#f7fafc'
               }}
-              placeholder="Enter your password"
+              placeholder="أدخل كلمة المرور"
               onFocus={(e) => {
                 e.target.style.borderColor = '#667eea';
                 e.target.style.backgroundColor = 'white';
@@ -221,7 +221,7 @@ const Login: React.FC = () => {
               }
             }}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
           </button>
         </form>
 
@@ -242,10 +242,10 @@ const Login: React.FC = () => {
             fontWeight: '600',
             fontSize: '13px'
           }}>
-            ?? Demo Credentials
+            🔑 بيانات اعتماد تجريبية
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontWeight: '500' }}>Email:</span>
+            <span style={{ fontWeight: '500' }}>البريد:</span>
             <span style={{ 
               backgroundColor: 'white', 
               padding: '4px 8px', 
@@ -258,7 +258,7 @@ const Login: React.FC = () => {
             </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: '500' }}>Password:</span>
+            <span style={{ fontWeight: '500' }}>كلمة المرور:</span>
             <span style={{ 
               backgroundColor: 'white', 
               padding: '4px 8px', 

@@ -10,9 +10,14 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  direction: ltr;
-  text-align: left;
+  direction: rtl;
+  text-align: right;
   background-color: #f8fafc;
+}
+
+/* دعم الخطوط العربية */
+* {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 #root {

@@ -39,6 +39,7 @@ function App() {
   return (
     <AuthProvider>
       <ConfigProvider 
+        direction="rtl"
         theme={{
           token: {
             colorPrimary: '#1890ff',
@@ -104,25 +105,25 @@ function AppRoutes() {
           
           <Route path="/categories" element={
             <PermissionGuard screenName="Categories" action="view">
-              <SettingsPage />
+              <SettingsPage defaultTab="categories" />
             </PermissionGuard>
           } />
           
           <Route path="/departments" element={
             <PermissionGuard screenName="Departments" action="view">
-              <SettingsPage />
+              <SettingsPage defaultTab="departments" />
             </PermissionGuard>
           } />
           
           <Route path="/employees" element={
             <PermissionGuard screenName="Employees" action="view">
-              <SettingsPage />
+              <SettingsPage defaultTab="employees" />
             </PermissionGuard>
           } />
           
           <Route path="/warehouses" element={
             <PermissionGuard screenName="Warehouses" action="view">
-              <SettingsPage />
+              <SettingsPage defaultTab="warehouses" />
             </PermissionGuard>
           } />
           

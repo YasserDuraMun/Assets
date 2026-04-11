@@ -16,7 +16,7 @@ const UserManagementTabs: React.FC = () => {
             tab={
               <span>
                 <UserOutlined />
-                User Management
+                إدارة المستخدمين
               </span>
             } 
             key="users"
@@ -28,7 +28,7 @@ const UserManagementTabs: React.FC = () => {
             tab={
               <span>
                 <SecurityScanOutlined />
-                Role Permissions
+                صلاحيات الأدوار
               </span>
             } 
             key="permissions"

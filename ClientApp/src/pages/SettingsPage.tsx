@@ -7,7 +7,11 @@ import DepartmentsPage from './settings/DepartmentsPage';
 import WarehousesPage from './settings/WarehousesPage';
 import EmployeesPage from './settings/EmployeesPage';
 
-export default function SettingsPage() {
+interface SettingsPageProps {
+  defaultTab?: string;
+}
+
+export default function SettingsPage({ defaultTab = 'statuses' }: SettingsPageProps) {
   const items = [
     {
       key: 'statuses',
@@ -64,8 +68,8 @@ export default function SettingsPage() {
             <SettingOutlined /> إعدادات النظام
           </span>
         }
-      >
-        <Tabs items={items} />
+        >
+        <Tabs items={items} defaultActiveKey={defaultTab} />
       </Card>
     </MainLayout>
   );
