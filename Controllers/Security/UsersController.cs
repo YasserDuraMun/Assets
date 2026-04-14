@@ -6,6 +6,7 @@ using Assets.DTOs.Security;
 using Assets.Models.Security;
 using Assets.Services.Interfaces;
 using BCrypt.Net;
+using Assets.Attributes;
 
 namespace Assets.Controllers.Security;
 
@@ -29,6 +30,7 @@ public class UsersController : ControllerBase
     /// ?????? ??? ???? ??????????
     /// </summary>
     [HttpGet]
+    [RequirePermission("Users", "view")]
     public async Task<IActionResult> GetUsers()
     {
         try

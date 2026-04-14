@@ -3,6 +3,7 @@ using Assets.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Assets.DTOs.Common;
+using Assets.Attributes;
 
 namespace Assets.Controllers
 {
@@ -27,7 +28,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("available-reports")]
-        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+        [RequirePermission("Reports", "view")]
         public IActionResult GetAvailableReports()
         {
             var reports = new
@@ -56,7 +57,7 @@ namespace Assets.Controllers
 
         // New GET endpoints for Frontend compatibility
         [HttpGet("assets-summary")]
-        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetAssetsSummary([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
         {
             try
@@ -71,7 +72,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("assets-by-status")]
-        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetAssetsByStatus()
         {
             try
@@ -86,7 +87,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("assets-by-category")]
-        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetAssetsByCategory()
         {
             try

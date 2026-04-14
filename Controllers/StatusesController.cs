@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Assets.DTOs.Status;
 using Assets.DTOs.Common;
 using Assets.Services.Interfaces;
+using Assets.Attributes;
 
 namespace Assets.Controllers;
 
@@ -25,7 +26,7 @@ public class StatusesController : ControllerBase
     /// ????? ??????? ????? ??? ???????? ???
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Assets", "view")]
     public async Task<IActionResult> GetStatuses()
     {
         try
@@ -44,7 +45,7 @@ public class StatusesController : ControllerBase
     /// Get status by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Assets", "view")]
     public async Task<IActionResult> GetStatus(int id)
     {
         try
@@ -70,7 +71,7 @@ public class StatusesController : ControllerBase
     /// ????? ???? ????? ???: "??? ?????"? "?????"? ???
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Assets", "insert")]
     public async Task<IActionResult> CreateStatus([FromBody] CreateStatusDto dto)
     {
         try
@@ -94,7 +95,7 @@ public class StatusesController : ControllerBase
     /// ????? ???? ??????
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Assets", "update")]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateStatusDto dto)
     {
         if (id != dto.Id)
@@ -130,7 +131,7 @@ public class StatusesController : ControllerBase
     /// ??? ???? (?? ???? ????? ??? ???? ??????? ?? ????)
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Super Admin,Admin")]
+    [RequirePermission("Assets", "delete")]
     public async Task<IActionResult> DeleteStatus(int id)
     {
         try

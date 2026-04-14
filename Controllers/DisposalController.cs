@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Assets.DTOs.Disposal;
 using Assets.DTOs.Common;
 using Assets.Services.Interfaces;
+using Assets.Attributes;
 
 namespace Assets.Controllers;
 
@@ -41,7 +42,7 @@ public class DisposalController : ControllerBase
     /// Get disposal reasons enum values
     /// </summary>
     [HttpGet("reasons")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Disposal", "view")]
     public IActionResult GetDisposalReasons()
     {
         try
@@ -83,7 +84,7 @@ public class DisposalController : ControllerBase
     /// Get all disposal records
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Disposal", "view")]
     public async Task<IActionResult> GetDisposals([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, 
         [FromQuery] string? searchTerm = null, [FromQuery] int? disposalReason = null,
         [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
@@ -104,7 +105,7 @@ public class DisposalController : ControllerBase
     /// Get disposal record by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Disposal", "view")]
     public async Task<IActionResult> GetDisposal(int id)
     {
         try
@@ -129,7 +130,7 @@ public class DisposalController : ControllerBase
     /// Create disposal
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Disposal", "insert")]
     public async Task<IActionResult> CreateDisposal([FromBody] CreateDisposalDto dto)
     {
         try

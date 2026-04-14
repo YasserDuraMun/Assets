@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Assets.DTOs.Transfer;
 using Assets.DTOs.Common;
 using Assets.Services.Interfaces;
+using Assets.Attributes;
 
 namespace Assets.Controllers;
 
@@ -24,7 +25,7 @@ public class TransfersController : ControllerBase
     /// Get all transfers
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Transfers", "view")]
     public async Task<IActionResult> GetTransfers(
         [FromQuery] int? assetId = null,
         [FromQuery] int? employeeId = null)
@@ -45,7 +46,7 @@ public class TransfersController : ControllerBase
     /// Get transfer by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Transfers", "view")]
     public async Task<IActionResult> GetTransfer(int id)
     {
         try

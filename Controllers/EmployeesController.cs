@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Assets.DTOs.Employee;
 using Assets.DTOs.Common;
 using Assets.Services.Interfaces;
+using Assets.Attributes;
 
 namespace Assets.Controllers;
 
@@ -24,7 +25,7 @@ public class EmployeesController : ControllerBase
     /// Get all employees with pagination
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Employees", "view")]
     public async Task<IActionResult> GetEmployees(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 20,
@@ -47,7 +48,7 @@ public class EmployeesController : ControllerBase
     /// Get employee by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Employees", "view")]
     public async Task<IActionResult> GetEmployee(int id)
     {
         try
@@ -72,7 +73,7 @@ public class EmployeesController : ControllerBase
     /// Get all active employees (for dropdowns)
     /// </summary>
     [HttpGet("active")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [RequirePermission("Employees", "view")]
     public async Task<IActionResult> GetActiveEmployees()
     {
         try
@@ -91,7 +92,7 @@ public class EmployeesController : ControllerBase
     /// Create new employee
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [RequirePermission("Employees", "insert")]
     public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployeeDto dto)
     {
         try
@@ -114,7 +115,7 @@ public class EmployeesController : ControllerBase
     /// Update employee
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [RequirePermission("Employees", "update")]
     public async Task<IActionResult> UpdateEmployee(int id, [FromBody] UpdateEmployeeDto dto)
     {
         if (id != dto.Id)
@@ -149,7 +150,7 @@ public class EmployeesController : ControllerBase
     /// Delete employee (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Employees", "delete")]
     public async Task<IActionResult> DeleteEmployee(int id)
     {
         try
@@ -174,7 +175,7 @@ public class EmployeesController : ControllerBase
     /// Generate QR Code for employee
     /// </summary>
     [HttpPost("{id}/generate-qrcode")]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [RequirePermission("Employees", "insert")]
     public async Task<IActionResult> GenerateQRCode(int id)
     {
         try

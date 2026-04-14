@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Assets.DTOs.Category;
 using Assets.DTOs.Common;
 using Assets.Services.Interfaces;
+using Assets.Attributes;
 
 namespace Assets.Controllers;
 
@@ -24,7 +25,7 @@ public class CategoriesController : ControllerBase
     /// Get all asset categories
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Categories", "view")]
     public async Task<IActionResult> GetCategories()
     {
         try
@@ -43,7 +44,7 @@ public class CategoriesController : ControllerBase
     /// Get category by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [RequirePermission("Categories", "view")]
     public async Task<IActionResult> GetCategory(int id)
     {
         try
@@ -68,7 +69,7 @@ public class CategoriesController : ControllerBase
     /// Create new category
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Categories", "insert")]
     public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryDto dto)
     {
         try
@@ -91,7 +92,7 @@ public class CategoriesController : ControllerBase
     /// Update category
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Categories", "update")]
     public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategoryDto dto)
     {
         if (id != dto.Id)
@@ -126,7 +127,7 @@ public class CategoriesController : ControllerBase
     /// Delete category (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Categories", "delete")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
         try
@@ -151,7 +152,7 @@ public class CategoriesController : ControllerBase
     /// Get subcategories of a category
     /// </summary>
     [HttpGet("{id}/subcategories")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Categories", "view")]
     public async Task<IActionResult> GetSubCategories(int id)
     {
         try
@@ -170,7 +171,7 @@ public class CategoriesController : ControllerBase
     /// Create new subcategory
     /// </summary>
     [HttpPost("subcategories")]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Categories", "insert")]
     public async Task<IActionResult> CreateSubCategory([FromBody] CreateSubCategoryDto dto)
     {
         try
@@ -191,7 +192,7 @@ public class CategoriesController : ControllerBase
     /// Update subcategory
     /// </summary>
     [HttpPut("subcategories/{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Categories", "update")]
     public async Task<IActionResult> UpdateSubCategory(int id, [FromBody] UpdateSubCategoryDto dto)
     {
         if (id != dto.Id)
@@ -226,7 +227,7 @@ public class CategoriesController : ControllerBase
     /// Delete subcategory (soft delete)
     /// </summary>
     [HttpDelete("subcategories/{id}")]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Categories", "delete")]
     public async Task<IActionResult> DeleteSubCategory(int id)
     {
         try

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Assets.DTOs.Warehouse;
 using Assets.DTOs.Common;
 using Assets.Services.Interfaces;
+using Assets.Attributes;
 
 namespace Assets.Controllers;
 
@@ -24,7 +25,7 @@ public class WarehousesController : ControllerBase
     /// Get all warehouses
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Warehouses", "view")]
     public async Task<IActionResult> GetWarehouses()
     {
         try
@@ -43,7 +44,7 @@ public class WarehousesController : ControllerBase
     /// Get warehouse by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [RequirePermission("Warehouses", "view")]
     public async Task<IActionResult> GetWarehouse(int id)
     {
         try
@@ -68,7 +69,7 @@ public class WarehousesController : ControllerBase
     /// Create new warehouse
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [RequirePermission("Warehouses", "insert")]
     public async Task<IActionResult> CreateWarehouse([FromBody] CreateWarehouseDto dto)
     {
         try
@@ -100,7 +101,7 @@ public class WarehousesController : ControllerBase
     /// Update warehouse
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Warehouses", "update")]
     public async Task<IActionResult> UpdateWarehouse(int id, [FromBody] UpdateWarehouseDto dto)
     {
         if (id != dto.Id)
@@ -135,7 +136,7 @@ public class WarehousesController : ControllerBase
     /// Delete warehouse (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Super Admin,Admin")]
+    [RequirePermission("Warehouses", "delete")]
     public async Task<IActionResult> DeleteWarehouse(int id)
     {
         try

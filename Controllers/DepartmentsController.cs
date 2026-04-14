@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Assets.DTOs.Department;
 using Assets.DTOs.Common;
 using Assets.Services.Interfaces;
+using Assets.Attributes;
 
 namespace Assets.Controllers;
 
@@ -24,7 +25,7 @@ public class DepartmentsController : ControllerBase
     /// Get all departments
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Departments", "view")]
     public async Task<IActionResult> GetDepartments()
     {
         try
@@ -43,7 +44,7 @@ public class DepartmentsController : ControllerBase
     /// Get department by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Departments", "view")]
     public async Task<IActionResult> GetDepartment(int id)
     {
         try
@@ -68,7 +69,7 @@ public class DepartmentsController : ControllerBase
     /// Create new department
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [RequirePermission("Departments", "insert")]
     public async Task<IActionResult> CreateDepartment([FromBody] CreateDepartmentDto dto)
     {
         try
@@ -91,7 +92,7 @@ public class DepartmentsController : ControllerBase
     /// Update department
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [RequirePermission("Departments", "update")]
     public async Task<IActionResult> UpdateDepartment(int id, [FromBody] UpdateDepartmentDto dto)
     {
         if (id != dto.Id)
@@ -126,7 +127,7 @@ public class DepartmentsController : ControllerBase
     /// Delete department (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Departments", "delete")]
     public async Task<IActionResult> DeleteDepartment(int id)
     {
         try

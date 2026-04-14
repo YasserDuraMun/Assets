@@ -2,6 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { permissionsAPI } from '../api/securityApi';
 import MainLayout from '../components/MainLayout';
+import { 
+  EyeOutlined, 
+  PlusOutlined, 
+  EditOutlined, 
+  DeleteOutlined,
+  SaveOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  WarningOutlined,
+  CloseOutlined,
+  UserOutlined,
+  KeyOutlined,
+  AppstoreOutlined,
+  DashboardOutlined,
+  InboxOutlined,
+  TagsOutlined,
+  ThunderboltOutlined,
+  HomeOutlined,
+  BankOutlined,
+  TeamOutlined,
+  SwapOutlined,
+  DeleteFilled,
+  ToolOutlined,
+  BarChartOutlined,
+  SettingOutlined,
+  LockOutlined
+} from '@ant-design/icons';
 
 // Inline styles for beautiful table design
 const styles = {
@@ -31,7 +58,7 @@ const styles = {
   statsContainer: {
     display: 'flex',
     gap: '32px',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap' as const
   },
   statItem: {
     display: 'flex',
@@ -55,7 +82,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '16px',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap' as const
   },
   selectLabel: {
     fontSize: '16px',
@@ -85,7 +112,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap' as const,
     gap: '16px'
   },
   saveButton: {
@@ -108,6 +135,11 @@ const styles = {
     borderRadius: '8px',
     padding: '20px',
     margin: '24px 32px 0 32px'
+  },
+  emoji: {
+    fontFamily: '"Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", "Apple Color Emoji", sans-serif',
+    fontStyle: 'normal',
+    fontWeight: 'normal'
   }
 };
 
@@ -148,13 +180,23 @@ const RolePermissionsPage: React.FC = () => {
   ];
 
   const getScreenIcon = (screenName: string) => {
-    const icons: {[key: string]: string} = {
-      'Dashboard': '??', 'Assets': '??', 'Categories': '??', 'Statuses': '???',
-      'Warehouses': '??', 'Departments': '???', 'Employees': '??', 'Transfers': '??',
-      'Disposals': '???', 'Maintenance': '??', 'Reports': '??', 'Settings': '??',
-      'Users': '??', 'Permissions': '???'
+    const iconMap: {[key: string]: React.ReactNode} = {
+      'Dashboard': <DashboardOutlined style={{fontSize: '18px'}} />,
+      'Assets': <InboxOutlined style={{fontSize: '18px'}} />,
+      'Categories': <TagsOutlined style={{fontSize: '18px'}} />,
+      'Statuses': <ThunderboltOutlined style={{fontSize: '18px'}} />,
+      'Warehouses': <HomeOutlined style={{fontSize: '18px'}} />,
+      'Departments': <BankOutlined style={{fontSize: '18px'}} />,
+      'Employees': <TeamOutlined style={{fontSize: '18px'}} />,
+      'Transfers': <SwapOutlined style={{fontSize: '18px'}} />,
+      'Disposals': <DeleteFilled style={{fontSize: '18px'}} />,
+      'Maintenance': <ToolOutlined style={{fontSize: '18px'}} />,
+      'Reports': <BarChartOutlined style={{fontSize: '18px'}} />,
+      'Settings': <SettingOutlined style={{fontSize: '18px'}} />,
+      'Users': <UserOutlined style={{fontSize: '18px'}} />,
+      'Permissions': <LockOutlined style={{fontSize: '18px'}} />
     };
-    return icons[screenName] || '??';
+    return iconMap[screenName] || <AppstoreOutlined style={{fontSize: '18px'}} />;
   };
 
   useEffect(() => {
@@ -331,10 +373,10 @@ const RolePermissionsPage: React.FC = () => {
               margin: '0 auto 24px',
               fontSize: '32px'
             }}>
-              ???
+              <LockOutlined />
             </div>
-            <h3 style={{fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>Access Denied</h3>
-            <p style={{color: '#6b7280'}}>You don't have permission to access Role Permissions Management.</p>
+            <h3 style={{fontSize: '20px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>الوصول مرفوض</h3>
+            <p style={{color: '#6b7280'}}>ليس لديك صلاحية للوصول إلى إدارة صلاحيات الأدوار.</p>
           </div>
         </div>
       </MainLayout>
@@ -382,7 +424,7 @@ const RolePermissionsPage: React.FC = () => {
         <div style={styles.gradientHeader}>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px'}}>
             <div>
-              <h1 style={styles.headerTitle}>??? Role Permissions Management</h1>
+              <h1 style={styles.headerTitle}><LockOutlined /> إدارة صلاحيات الأدوار</h1>
               <p style={styles.headerSubtitle}>Configure access permissions for each role in the system using our beautiful table interface</p>
               <div style={styles.statsContainer}>
                 <div style={styles.statItem}>
@@ -416,7 +458,7 @@ const RolePermissionsPage: React.FC = () => {
             alignItems: 'center',
             gap: '12px'
           }}>
-            <span style={{fontSize: '18px'}}>{message.type === 'success' ? '?' : '??'}</span>
+            <span style={{fontSize: '18px'}}>{message.type === 'success' ? <CheckCircleOutlined /> : <WarningOutlined />}</span>
             <span>{message.text}</span>
             <button
               onClick={() => setMessage(null)}
@@ -429,7 +471,7 @@ const RolePermissionsPage: React.FC = () => {
                 opacity: '0.7'
               }}
             >
-              ??
+              <CloseOutlined />
             </button>
           </div>
         )}
@@ -437,7 +479,7 @@ const RolePermissionsPage: React.FC = () => {
         {/* Role Selection */}
         <div style={styles.roleSelector}>
           <div style={styles.selectContainer}>
-            <span style={styles.selectLabel}>?? Select Role:</span>
+            <span style={styles.selectLabel}><UserOutlined /> اختر الدور:</span>
             <select
               style={{
                 ...styles.select,
@@ -465,7 +507,7 @@ const RolePermissionsPage: React.FC = () => {
               <option value="">Choose a role to manage...</option>
               {roles.map(role => (
                 <option key={role.roleId} value={role.roleId}>
-                  {role.roleName} {role.isActive ? '??' : '??'}
+                  {role.roleName} {role.isActive ? '✓' : '×'}
                 </option>
               ))}
             </select>
@@ -507,7 +549,7 @@ const RolePermissionsPage: React.FC = () => {
             <div style={styles.permissionsHeader}>
               <div>
                 <h3 style={{fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: '0 0 4px 0'}}>
-                  ??? Permissions for: <span style={{color: '#7c3aed'}}>{rolePermissions.roleName}</span>
+                  <KeyOutlined /> صلاحيات دور: <span style={{color: '#7c3aed'}}>{rolePermissions.roleName}</span>
                 </h3>
                 <p style={{fontSize: '14px', color: '#6b7280', margin: '0'}}>
                   Use the beautiful table below to easily manage permissions - click toggle switches to enable/disable
@@ -532,7 +574,7 @@ const RolePermissionsPage: React.FC = () => {
                     }
                   }}
                 >
-                  <span style={{fontSize: '16px'}}>{saving ? '?' : '??'}</span>
+                  <span style={{fontSize: '16px'}}>{saving ? '...' : <SaveOutlined />}</span>
                   <span>{saving ? 'Saving...' : 'Save Permissions'}</span>
                 </button>
               )}
@@ -565,8 +607,8 @@ const RolePermissionsPage: React.FC = () => {
                     gap: '8px',
                     borderRight: '1px solid #e5e7eb'
                   }}>
-                    <span style={{fontSize: '18px'}}>??</span>
-                    <span>Screen / Module</span>
+                    <AppstoreOutlined style={{fontSize: '18px'}} />
+                    <span>الشاشة / الوحدة</span>
                   </div>
                   <div style={{
                     padding: '20px 24px',
@@ -580,8 +622,8 @@ const RolePermissionsPage: React.FC = () => {
                     justifyContent: 'center',
                     gap: '6px'
                   }}>
-                    <span>???</span>
-                    <span>VIEW</span>
+                    <EyeOutlined style={{fontSize: '16px'}} />
+                    <span>عرض</span>
                   </div>
                   <div style={{
                     padding: '20px 24px',
@@ -595,8 +637,8 @@ const RolePermissionsPage: React.FC = () => {
                     justifyContent: 'center',
                     gap: '6px'
                   }}>
-                    <span>?</span>
-                    <span>INSERT</span>
+                    <PlusOutlined style={{fontSize: '16px'}} />
+                    <span>إضافة</span>
                   </div>
                   <div style={{
                     padding: '20px 24px',
@@ -610,8 +652,8 @@ const RolePermissionsPage: React.FC = () => {
                     justifyContent: 'center',
                     gap: '6px'
                   }}>
-                    <span>??</span>
-                    <span>UPDATE</span>
+                    <EditOutlined style={{fontSize: '16px'}} />
+                    <span>تعديل</span>
                   </div>
                   <div style={{
                     padding: '20px 24px',
@@ -624,8 +666,8 @@ const RolePermissionsPage: React.FC = () => {
                     justifyContent: 'center',
                     gap: '6px'
                   }}>
-                    <span>???</span>
-                    <span>DELETE</span>
+                    <DeleteOutlined style={{fontSize: '16px'}} />
+                    <span>حذف</span>
                   </div>
                 </div>
 
@@ -783,8 +825,8 @@ const RolePermissionsPage: React.FC = () => {
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  <span style={{fontSize: '16px'}}>?</span>
-                  <span>Enable All Permissions</span>
+                  <span style={{fontSize: '16px'}}><CheckCircleOutlined /></span>
+                  <span>تفعيل جميع الصلاحيات</span>
                 </button>
 
                 <button
@@ -823,8 +865,8 @@ const RolePermissionsPage: React.FC = () => {
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  <span style={{fontSize: '16px'}}>?</span>
-                  <span>Disable All Permissions</span>
+                  <span style={{fontSize: '16px'}}><CloseCircleOutlined /></span>
+                  <span>تعطيل جميع الصلاحيات</span>
                 </button>
 
                 <button
@@ -863,8 +905,8 @@ const RolePermissionsPage: React.FC = () => {
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  <span style={{fontSize: '16px'}}>???</span>
-                  <span>View Only Mode</span>
+                  <span style={{fontSize: '16px'}}><EyeOutlined /></span>
+                  <span>وضع العرض فقط</span>
                 </button>
               </div>
             </div>
@@ -872,20 +914,20 @@ const RolePermissionsPage: React.FC = () => {
             {/* Info Box */}
             <div style={styles.infoBox}>
               <h4 style={{fontSize: '16px', fontWeight: '600', color: '#1e40af', margin: '0 0 12px 0'}}>
-                ?? Beautiful Table Permission Management:
+                <AppstoreOutlined /> إدارة الصلاحيات عبر الجدول:
               </h4>
               <div style={{fontSize: '13px', color: '#1e3a8a', lineHeight: '1.6'}}>
                 <p style={{margin: '0 0 8px 0'}}>
-                  <strong>?? Important:</strong> All changes will be applied to users with the <strong>{rolePermissions.roleName}</strong> role.
+                  <strong><WarningOutlined /> تنبيه:</strong> جميع التغييرات ستُطبق على المستخدمين الذين لديهم دور <strong>{rolePermissions.roleName}</strong>.
                 </p>
                 <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px', marginTop: '12px'}}>
-                  <div><strong>??? View:</strong> Access to see the screen/data</div>
-                  <div><strong>? Insert:</strong> Permission to create new records</div>
-                  <div><strong>?? Update:</strong> Permission to modify existing records</div>
-                  <div><strong>??? Delete:</strong> Permission to remove records</div>
+                  <div><strong><EyeOutlined /> عرض:</strong> الوصول لرؤية الشاشة/البيانات</div>
+                  <div><strong><PlusOutlined /> إضافة:</strong> صلاحية إنشاء سجلات جديدة</div>
+                  <div><strong><EditOutlined /> تعديل:</strong> صلاحية تعديل السجلات الموجودة</div>
+                  <div><strong><DeleteOutlined /> حذف:</strong> صلاحية حذف السجلات</div>
                 </div>
                 <p style={{margin: '12px 0 0 0', padding: '12px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)'}}>
-                  <strong>?? How to use:</strong> Simply click the toggle switches in the table to enable/disable permissions. Use quick action buttons for bulk operations. Don't forget to <strong>Save Permissions</strong> when done!
+                  <strong><AppstoreOutlined /> كيفية الاستخدام:</strong> ببساطة انقر علمفاتيح التبديل في الجدول لتفعيل/تعطيل الصلاحيات. استخدم أزرار الإجراء السريع للعمليات المجمعة. لا تنسَ <strong>حفظ الصلاحيات</strong> عند الانتهاء!
                 </p>
               </div>
             </div>
@@ -909,10 +951,10 @@ const RolePermissionsPage: React.FC = () => {
               margin: '0 auto 24px',
               fontSize: '48px'
             }}>
-              ??
+              <WarningOutlined />
             </div>
-            <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>No permissions data found</h3>
-            <p style={{color: '#6b7280'}}>Unable to load permissions for the selected role. Please try again.</p>
+            <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>لم يتم العثور على بيانات الصلاحيات</h3>
+            <p style={{color: '#6b7280'}}>تعذر تحميل صلاحيات الدور المحدد. يرجى المحاولة مرة أخرى.</p>
           </div>
         ) : (
           <div style={{
@@ -933,10 +975,10 @@ const RolePermissionsPage: React.FC = () => {
               margin: '0 auto 24px',
               fontSize: '48px'
             }}>
-              ???
+              <UserOutlined />
             </div>
-            <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>Select a Role to Manage</h3>
-            <p style={{color: '#6b7280'}}>Choose a role from the dropdown above to view and edit its permissions in our beautiful table interface.</p>
+            <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>اختر دوراً للإدارة</h3>
+            <p style={{color: '#6b7280'}}>اختر دوراً من القائمة المنسدلة أعلاه لعرض وتعديل صلاحياته في واجهة الجدول الجميلة.</p>
           </div>
         )}
       </div>

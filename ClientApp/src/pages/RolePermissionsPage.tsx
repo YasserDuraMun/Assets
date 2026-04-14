@@ -1,7 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { permissionsAPI } from '../api/securityApi';
+import { permissionsAPI, rolesAPI } from '../api/securityApi';
 import MainLayout from '../components/MainLayout';
+
+// CSS Animations
+const CSS_ANIMATIONS = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes fadeInScale {
+    from { 
+      opacity: 0; 
+      transform: scale(0.9) translateY(-10px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: scale(1) translateY(0); 
+    }
+  }
+`;
 
 // Inline styles for beautiful table design
 const styles = {
@@ -31,7 +49,7 @@ const styles = {
   statsContainer: {
     display: 'flex',
     gap: '32px',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap' as const
   },
   statItem: {
     display: 'flex',
@@ -55,7 +73,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '16px',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap' as const
   },
   selectLabel: {
     fontSize: '16px',
@@ -85,7 +103,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap' as const,
     gap: '16px'
   },
   saveButton: {
@@ -132,19 +150,24 @@ interface RolePermissions {
 }
 
 const RolePermissionsPage: React.FC = () => {
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
-  const [rolePermissions, setRolePermissions] = useState<RolePermissions | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+const [roles, setRoles] = useState<Role[]>([]);
+const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
+const [rolePermissions, setRolePermissions] = useState<RolePermissions | null>(null);
+const [loading, setLoading] = useState(false);
+const [saving, setSaving] = useState(false);
+const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   
-  const { hasPermission } = useAuth();
+// New role creation states
+const [createModalVisible, setCreateModalVisible] = useState(false);
+const [newRoleName, setNewRoleName] = useState('');
+const [createLoading, setCreateLoading] = useState(false);
+  
+const { hasPermission } = useAuth();
 
   // Available screens in the system - Updated to match database
   const availableScreens = [
     'Dashboard', 'Assets', 'Categories', 'Departments', 'Employees', 'Warehouses', 
-    'Transfers', 'Disposal', 'Maintenance', 'Reports', 'Users', 'Permissions'
+    'Transfers', 'Disposal', 'Maintenance', 'Reports', 'Users', 'Permissions', 'Settings'
   ];
 
   const getScreenIcon = (screenName: string) => {
@@ -175,6 +198,59 @@ const RolePermissionsPage: React.FC = () => {
     }
   };
 
+  const createNewRole = async () => {
+    if (!newRoleName.trim()) {
+      setMessage({type: 'error', text: 'يرجى إدخال اسم الدور'});
+      return;
+    }
+
+    try {
+      setCreateLoading(true);
+      const response = await rolesAPI.create({ roleName: newRoleName.trim() });
+      
+      if (response.success) {
+        setMessage({type: 'success', text: `تم إنشاء الدور "${newRoleName}" بنجاح!`});
+        setNewRoleName('');
+        setCreateModalVisible(false);
+        
+        // Reload roles to show the new one
+        await loadRoles();
+        
+        // Auto-select the new role and create default permissions template
+        if (response.data) {
+          console.log('🎯 Auto-selecting new role:', response.data.roleName);
+          setSelectedRoleId(response.data.roleId);
+          
+          // Force create default permissions for new role (instead of trying to load from API)
+          console.log('🔧 Creating permissions template for new role');
+          createDefaultPermissions(response.data.roleId, response.data.roleName || newRoleName);
+          
+          // Show additional success message
+          setTimeout(() => {
+            setMessage({type: 'success', text: `تم إنشاء الدور "${newRoleName}" وإعداد قالب الصلاحيات. يمكنك الآن تخصيص الصلاحيات المطلوبة.`});
+          }, 1000);
+        }
+      } else {
+        setMessage({type: 'error', text: response.message || 'فشل إنشاء الدور'});
+      }
+    } catch (error: any) {
+      console.error('Error creating role:', error);
+      
+      let errorMessage = 'فشل إنشاء الدور. ';
+      if (error.response?.data?.message) {
+        errorMessage += error.response.data.message;
+      } else if (error.response?.status === 400) {
+        errorMessage += 'اسم الدور موجود مسبقاً أو غير صالح.';
+      } else if (error.response?.status === 403) {
+        errorMessage += 'ليس لديك صلاحية لإنشاء أدوار جديدة.';
+      }
+      
+      setMessage({type: 'error', text: errorMessage});
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const loadRolePermissions = async (roleId: number) => {
     try {
       setLoading(true);
@@ -185,21 +261,29 @@ const RolePermissionsPage: React.FC = () => {
         return;
       }
 
+      console.log('🔄 Loading permissions for role:', selectedRole.roleName, 'ID:', roleId);
+
       try {
         const response = await permissionsAPI.getRolePermissions(roleId);
-        if (response.success && response.data) {
+        console.log('📋 API Response for permissions:', response);
+        
+        if (response.success && response.data && response.data.length > 0) {
+          console.log('✅ Found existing permissions in database:', response.data.length);
           setRolePermissions({
             roleId: roleId,
             roleName: selectedRole.roleName,
             permissions: response.data
           });
         } else {
+          console.log('⚠️ No existing permissions found, creating default template');
           createDefaultPermissions(roleId, selectedRole.roleName);
         }
       } catch (error) {
+        console.log('❌ Error loading permissions, creating default template:', error);
         createDefaultPermissions(roleId, selectedRole.roleName);
       }
     } catch (error) {
+      console.error('❌ Error in loadRolePermissions:', error);
       setMessage({type: 'error', text: 'فشل تحميل صلاحيات الدور'});
     } finally {
       setLoading(false);
@@ -207,19 +291,30 @@ const RolePermissionsPage: React.FC = () => {
   };
 
   const createDefaultPermissions = (roleId: number, roleName: string) => {
+    console.log('🔧 Creating default permissions for new role:', roleName);
+    
+    // For new roles, show all screens with no permissions enabled (so user can configure them)
+    // For system roles (SuperAdmin, Admin), give default permissions
+    const isSystemRole = roleName === 'SuperAdmin' || roleName === 'Admin' || roleName === 'Super Admin';
+    
     const defaultPermissions: ScreenPermission[] = availableScreens.map(screen => ({
       screenName: screen,
-      allowView: roleName === 'SuperAdmin' || roleName === 'Admin',
-      allowInsert: roleName === 'SuperAdmin' || roleName === 'Admin',
-      allowUpdate: roleName === 'SuperAdmin' || roleName === 'Admin',
-      allowDelete: roleName === 'SuperAdmin'
+      allowView: isSystemRole, // Only system roles get default view permissions
+      allowInsert: isSystemRole, // Only system roles get default insert permissions  
+      allowUpdate: isSystemRole, // Only system roles get default update permissions
+      allowDelete: roleName === 'SuperAdmin' || roleName === 'Super Admin' // Only SuperAdmin gets delete
     }));
+
+    console.log('🔧 Default permissions created:', defaultPermissions);
+    console.log('🔧 Total screens with permissions:', defaultPermissions.length);
 
     setRolePermissions({
       roleId,
       roleName,
       permissions: defaultPermissions
     });
+    
+    console.log('✅ Role permissions state set for:', roleName);
   };
 
   const handlePermissionChange = (screenName: string, action: string, value: boolean) => {
@@ -404,6 +499,7 @@ const RolePermissionsPage: React.FC = () => {
 
   return (
     <MainLayout>
+      <style>{CSS_ANIMATIONS}</style>
       <div style={styles.container}>
         {/* Beautiful Gradient Header */}
         <div style={styles.gradientHeader}>
@@ -496,6 +592,37 @@ const RolePermissionsPage: React.FC = () => {
                 </option>
               ))}
             </select>
+            
+            {/* Create New Role Button */}
+            <button
+              style={{
+                padding: '12px 24px',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              onClick={() => setCreateModalVisible(true)}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(16, 185, 129, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 16px rgba(16, 185, 129, 0.3)';
+              }}
+            >
+              <span style={{fontSize: '16px'}}>➕</span>
+              <span>إنشاء دور جديد</span>
+            </button>
             {selectedRoleId && (
               <div style={{
                 fontSize: '14px',
@@ -964,6 +1091,232 @@ const RolePermissionsPage: React.FC = () => {
             </div>
             <h3 style={{fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px'}}>اختر دوراً للإدارة</h3>
             <p style={{color: '#6b7280'}}>اختر دوراً من القائمة المنسدلة أعلاه لعرض وتعديل صلاحياته في واجهة الجدول الجميل.</p>
+          </div>
+        )}
+        
+        {/* Create New Role Modal */}
+        {createModalVisible && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '32px',
+              minWidth: '400px',
+              maxWidth: '600px',
+              width: '100%',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+              animation: 'fadeInScale 0.3s ease-out'
+            }}>
+              {/* Modal Header */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '24px',
+                paddingBottom: '16px',
+                borderBottom: '1px solid #e5e7eb'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    backgroundColor: '#10b981',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px'
+                  }}>
+                    ➕
+                  </div>
+                  <div>
+                    <h2 style={{
+                      fontSize: '24px',
+                      fontWeight: '700',
+                      color: '#1f2937',
+                      margin: '0 0 4px 0'
+                    }}>
+                      إنشاء دور جديد
+                    </h2>
+                    <p style={{
+                      fontSize: '14px',
+                      color: '#6b7280',
+                      margin: 0
+                    }}>
+                      أنشئ دوراً مخصصاً وحدد صلاحياته
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setCreateModalVisible(false);
+                    setNewRoleName('');
+                    setMessage(null);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#6b7280',
+                    padding: '4px',
+                    borderRadius: '4px'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '8px'
+                }}>
+                  اسم الدور الجديد
+                </label>
+                <input
+                  type="text"
+                  value={newRoleName}
+                  onChange={(e) => setNewRoleName(e.target.value)}
+                  placeholder="مثل: مدير الموارد البشرية، فني الدعم التقني..."
+                  style={{
+                    width: '100%',
+                    padding: '14px 16px',
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    transition: 'all 0.2s ease',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#10b981';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#e5e7eb';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      createNewRole();
+                    } else if (e.key === 'Escape') {
+                      setCreateModalVisible(false);
+                      setNewRoleName('');
+                    }
+                  }}
+                />
+                <p style={{
+                  fontSize: '12px',
+                  color: '#6b7280',
+                  margin: '8px 0 0 0'
+                }}>
+                  اختر اسماً وصفياً للدور يعكس مسؤولياته في المؤسسة
+                </p>
+              </div>
+
+              {/* Modal Footer */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px',
+                paddingTop: '16px',
+                borderTop: '1px solid #e5e7eb'
+              }}>
+                <button
+                  onClick={() => {
+                    setCreateModalVisible(false);
+                    setNewRoleName('');
+                    setMessage(null);
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#e5e7eb';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  }}
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={createNewRole}
+                  disabled={createLoading || !newRoleName.trim()}
+                  style={{
+                    padding: '12px 24px',
+                    background: createLoading || !newRoleName.trim() 
+                      ? '#d1d5db' 
+                      : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: createLoading || !newRoleName.trim() ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    minWidth: '120px',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {createLoading ? (
+                    <>
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '2px solid #ffffff30',
+                        borderTop: '2px solid #ffffff',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }}></div>
+                      <span>جاري الإنشاء...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>➕</span>
+                      <span>إنشاء الدور</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

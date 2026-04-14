@@ -3,6 +3,7 @@ import {
   Modal, Form, Input, DatePicker, Select, InputNumber, Switch, 
   Row, Col, Space, Button, message, Divider
 } from 'antd';
+import type { FormInstance } from 'antd';
 import { ToolOutlined, CalendarOutlined } from '@ant-design/icons';
 import { maintenanceApi, CreateMaintenanceData, MaintenanceType } from '../api/maintenance.api';
 import dayjs from 'dayjs';
@@ -13,6 +14,22 @@ interface MaintenanceModalProps {
   onSuccess: () => void;
   assetId?: number;
   assetName?: string;
+}
+
+interface FormValues {
+  assetId?: number;
+  maintenanceType: number;
+  maintenanceDate: dayjs.Dayjs;
+  description: string;
+  cost?: number;
+  currency?: string;
+  performedBy?: string;
+  technicianName?: string;
+  companyName?: string;
+  scheduledDate?: dayjs.Dayjs;
+  nextMaintenanceDate?: dayjs.Dayjs;
+  warrantyUsed?: boolean;
+  notes?: string;
 }
 
 export default function MaintenanceModal({
@@ -67,13 +84,13 @@ export default function MaintenanceModal({
     }
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: FormValues) => {
     setLoading(true);
     console.log('?? Submitting maintenance data:', values);
 
     try {
       const maintenanceData: CreateMaintenanceData = {
-        assetId: assetId || values.assetId,
+        assetId: assetId || values.assetId!,
         maintenanceType: values.maintenanceType,
         maintenanceDate: values.maintenanceDate.toISOString(),
         description: values.description,
@@ -98,7 +115,64 @@ export default function MaintenanceModal({
       onSuccess();
     } catch (error: any) {
       console.error('❌❌ Failed to create maintenance:', error);
-      message.error(`فشل في إنشاء الصيانة: ${error.response?.data?.message || error.message}`);
+      
+      // Enhanced error logging for debugging
+      console.error('🔍 [DEBUG] Full error object:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers?.Authorization ? 'Bearer [PRESENT]' : 'Missing'
+        }
+      });
+
+      // Store maintenanceData for debugging
+      const debugMaintenanceData: CreateMaintenanceData = {
+        assetId: assetId || values.assetId!,
+        maintenanceType: values.maintenanceType,
+        maintenanceDate: values.maintenanceDate.toISOString(),
+        description: values.description,
+        cost: values.cost,
+        currency: values.currency || 'ILS',
+        performedBy: values.performedBy,
+        technicianName: values.technicianName,
+        companyName: values.companyName,
+        scheduledDate: values.scheduledDate?.toISOString(),
+        nextMaintenanceDate: values.nextMaintenanceDate?.toISOString(),
+        warrantyUsed: values.warrantyUsed || false,
+        notes: values.notes,
+      };
+
+      // Extract detailed error message
+      let errorMessage = 'حدث خطأ غير متوقع';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+        console.error('🔍 [DEBUG] Server error message:', error.response.data.message);
+      } else if (error.response?.status === 500) {
+        errorMessage = 'خطأ في الخادم الداخلي - يرجى مراجعة سجلات النظام';
+        console.error('🔍 [DEBUG] 500 Internal Server Error - Check backend logs');
+      } else if (error.response?.status === 401) {
+        errorMessage = 'فشل في المصادقة - يرجى تسجيل الدخول مرة أخرى';
+        console.error('🔍 [DEBUG] 401 Unauthorized - Authentication failed');
+      } else if (error.response?.status === 403) {
+        errorMessage = 'ليس لديك صلاحية لإنشاء سجلات الصيانة';
+        console.error('🔍 [DEBUG] 403 Forbidden - Permission denied');
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      // Show user-friendly error message
+      message.error(`فشل في إنشاء الصيانة: ${errorMessage}`);
+      
+      // Additional debug info for 500 errors
+      if (error.response?.status === 500) {
+        console.error('🔍 [DEBUG] Maintenance data that caused 500 error:', debugMaintenanceData);
+        console.error('🔍 [DEBUG] Check backend console for detailed error logs with [MAINTENANCE] prefix');
+      }
     } finally {
       setLoading(false);
     }

@@ -14,7 +14,9 @@ import {
   DeleteOutlined,
   ToolOutlined,
   BarChartOutlined,
-  TeamOutlined
+  TeamOutlined,
+  SafetyOutlined,
+  AppstoreOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -67,37 +69,38 @@ const handleLogout = () => {
       key: 'settings',
       icon: <SettingOutlined />,
       label: 'الإعدادات',
-      onClick: () => navigate('/settings'),
-      permission: 'Settings',
-      action: 'view' as const,
       children: [
         {
           key: '/categories',
-          label: 'التصنيفات',
+          label: 'الفئات والفئات الفرعية',
           onClick: () => navigate('/categories'),
           permission: 'Categories',
-          action: 'view' as const
+          action: 'view' as const,
+          icon: <AppstoreOutlined />
         },
         {
           key: '/departments',
-          label: 'الأقسام',
+          label: 'الإدارات والأقسام',
           onClick: () => navigate('/departments'),
           permission: 'Departments',
-          action: 'view' as const
+          action: 'view' as const,
+          icon: <ApartmentOutlined />
         },
         {
           key: '/employees',
-          label: 'الموظفين',
+          label: 'الموظفون',
           onClick: () => navigate('/employees'),
           permission: 'Employees',
-          action: 'view' as const
+          action: 'view' as const,
+          icon: <UserOutlined />
         },
         {
           key: '/warehouses',
-          label: 'المخازن',
+          label: 'المستودعات',
           onClick: () => navigate('/warehouses'),
           permission: 'Warehouses',
-          action: 'view' as const
+          action: 'view' as const,
+          icon: <ShopOutlined />
         }
       ]
     },
@@ -143,8 +146,8 @@ const handleLogout = () => {
     },
     {
       key: '/permissions',
-      icon: <ApartmentOutlined />,
-      label: 'صلاحيات الأدوار',
+      icon: <SafetyOutlined />,
+      label: 'إدارة الأدوار والصلاحيات',
       onClick: () => navigate('/permissions'),
       permission: 'Permissions',
       action: 'view' as const
@@ -154,6 +157,16 @@ const handleLogout = () => {
   // فلترة عناصر القائمة بناءً على الصلاحيات
   const buildMenuItems = (items: typeof allMenuItems): any[] => {
     return items.filter(item => {
+      // للإعدادات: اظهرها إذا كان المستخدم له صلاحية على أي من التبويبات الفرعية
+      if (item.key === 'settings' && item.children) {
+        const hasAnySubPermission = item.children.some(child => 
+          hasPermission(child.permission, child.action)
+        );
+        console.log(`🔍 Settings dropdown access check: Has any sub-permission = ${hasAnySubPermission}`);
+        return hasAnySubPermission;
+      }
+      
+      // للعناصر الأخرى: فحص الصلاحية العادية
       const canAccess = hasPermission(item.permission, item.action);
       console.log(`🔍 Menu access check: ${item.permission}.${item.action} = ${canAccess}`);
       return canAccess;
@@ -172,11 +185,14 @@ const handleLogout = () => {
         ).map(child => ({
           key: child.key,
           label: child.label,
-          onClick: child.onClick
+          onClick: child.onClick,
+          icon: child.icon
         }));
 
         if (filteredChildren.length > 0) {
           menuItem.children = filteredChildren;
+          // حذف onClick من العنصر الأب للـ dropdown
+          delete menuItem.onClick;
         }
       }
 

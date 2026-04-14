@@ -20,6 +20,56 @@ import MaintenancePage from './pages/MaintenancePage';
 import ReportsPage from './pages/ReportsPage';
 import './App.css';
 
+// Settings page wrapper that checks for any sub-permission
+const SettingsPagePermissionWrapper: React.FC = () => {
+  const { hasPermission, user } = useAuth();
+  
+  console.log('?? SettingsWrapper: Checking permissions...');
+  
+  // Check if user is Super Admin (always has access)
+  const isSuperAdmin = user?.roles?.some(role => 
+    role.roleName === 'Super Admin' || role.roleName === 'SuperAdmin'
+  ) || false;
+  
+  if (isSuperAdmin) {
+    console.log('? SettingsWrapper: Super Admin access granted');
+    return <SettingsPage />;
+  }
+  
+  // Check if user has any settings-related permission
+  const hasAnySettingsPermission = 
+    hasPermission('Categories', 'view') ||
+    hasPermission('Departments', 'view') ||
+    hasPermission('Employees', 'view') ||
+    hasPermission('Warehouses', 'view') ||
+    hasPermission('Assets', 'view'); // For asset statuses
+  
+  console.log('?? SettingsWrapper: Has any settings permission:', hasAnySettingsPermission);
+  
+  if (hasAnySettingsPermission) {
+    return <SettingsPage />;
+  }
+  
+  // No access - show access denied
+  return (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      flexDirection: 'column',
+      gap: '16px'
+    }}>
+      <h2 style={{ color: '#ff4d4f' }}>?? Access Denied</h2>
+      <p>You don't have permission to access this section.</p>
+      <p>Required: Any of Categories.view, Departments.view, Employees.view, Warehouses.view, or Assets.view</p>
+      <p style={{ fontSize: '12px', color: '#999' }}>
+        User: {user?.email} | Roles: {user?.roles?.map(r => r.roleName).join(', ')}
+      </p>
+    </div>
+  );
+};
+
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useReducer, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useReducer, ReactNode } from 'react';
+import type { FC } from 'react';
 import { AuthUser, LoginRequest, LoginResponse, Permission } from '../types/security';
 import { authAPI, permissionsAPI } from '../api/securityApi';
 

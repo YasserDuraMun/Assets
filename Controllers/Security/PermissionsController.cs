@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Assets.Data;
 using Assets.DTOs.Security;
 using Assets.Services.Interfaces;
+using Assets.Attributes;
 
 namespace Assets.Controllers.Security;
 
@@ -27,7 +28,7 @@ public class PermissionsController : ControllerBase
     /// Get all roles for permissions management
     /// </summary>
     [HttpGet("roles")]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Permissions", "view")]
     public async Task<IActionResult> GetRoles()
     {
         try
@@ -55,7 +56,7 @@ public class PermissionsController : ControllerBase
     /// Get permissions for a specific role
     /// </summary>
     [HttpGet("roles/{roleId}/permissions")]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Permissions", "view")]
     public async Task<IActionResult> GetRoleScreenPermissions(int roleId)
     {
         try

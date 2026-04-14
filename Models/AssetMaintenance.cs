@@ -1,4 +1,5 @@
 using Assets.Enums;
+using Assets.Models.Security;
 
 namespace Assets.Models;
 
@@ -10,11 +11,11 @@ public class AssetMaintenance
     public DateTime MaintenanceDate { get; set; }
     public string Description { get; set; } = string.Empty;
 
-    // ???????
+    // ??????? ???????
     public decimal? Cost { get; set; }
     public string Currency { get; set; } = "ILS";
 
-    // ????? ???????
+    // ??????? ??????
     public string? PerformedBy { get; set; }
     public string? TechnicianName { get; set; }
     public string? CompanyName { get; set; }
@@ -34,5 +35,5 @@ public class AssetMaintenance
 
     // Navigation properties
     public Asset Asset { get; set; } = null!;
-    public User Creator { get; set; } = null!;
+    public User Creator { get; set; } = null!;  // ? ?? ???????: User ????? ?? SecurityUser
 }

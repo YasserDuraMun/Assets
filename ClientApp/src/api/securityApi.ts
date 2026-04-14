@@ -1,16 +1,16 @@
 ﻿import axios from 'axios';
 
-// ????? Base URL - ?????? ??????? ?? .env ?? ?????? ??????????
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:44385/api';
+// Define Base URL - fallback to localhost if environment variable not set
+const API_BASE_URL = (typeof window !== 'undefined' && (window as any).__VITE_API_BASE_URL__) 
+  || 'https://localhost:44385/api';
 
-console.log('?? API Base URL:', API_BASE_URL);
-console.log('?? Environment Variables:', import.meta.env);
+console.log('🌐 API Base URL:', API_BASE_URL);
 
-// ????? Axios instance ?? ??? CORS ? credentials
+// Create Axios instance with CORS and credentials configuration
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
-  withCredentials: false, // ?? ?????? ????? CORS issues
+  withCredentials: false, // Prevent CORS issues
   headers: {
     'Content-Type': 'application/json',
   },
@@ -85,6 +85,42 @@ export const usersAPI = {
   },
   toggleStatus: async (id: number) => {
     const response = await apiClient.patch(`/security/users/${id}/status`);
+    return response.data;
+  },
+};
+
+// Roles API calls
+export const rolesAPI = {
+  getAll: async () => {
+    const response = await apiClient.get('/security/roles');
+    return response.data;
+  },
+  getById: async (id: number) => {
+    const response = await apiClient.get(`/security/roles/${id}`);
+    return response.data;
+  },
+  create: async (roleData: { roleName: string }) => {
+    console.log('🔄 Creating new role:', roleData);
+    const response = await apiClient.post('/security/roles', roleData);
+    console.log('✅ Role created:', response.data);
+    return response.data;
+  },
+  update: async (id: number, roleData: { roleName?: string; isActive?: boolean }) => {
+    console.log('🔄 Updating role:', id, roleData);
+    const response = await apiClient.put(`/security/roles/${id}`, roleData);
+    console.log('✅ Role updated:', response.data);
+    return response.data;
+  },
+  delete: async (id: number) => {
+    console.log('🗑️ Deleting role:', id);
+    const response = await apiClient.delete(`/security/roles/${id}`);
+    console.log('✅ Role deleted:', response.data);
+    return response.data;
+  },
+  toggleStatus: async (id: number) => {
+    console.log('🔄 Toggling role status:', id);
+    const response = await apiClient.patch(`/security/roles/${id}/toggle-status`);
+    console.log('✅ Role status toggled:', response.data);
     return response.data;
   },
 };

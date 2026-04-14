@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Assets.DTOs.Section;
 using Assets.DTOs.Common;
 using Assets.Services.Interfaces;
+using Assets.Attributes;
 
 namespace Assets.Controllers;
 
@@ -24,7 +25,7 @@ public class SectionsController : ControllerBase
     /// Get all sections (optionally filtered by department)
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Departments", "view")]
     public async Task<IActionResult> GetSections([FromQuery] int? departmentId = null)
     {
         try
@@ -43,7 +44,7 @@ public class SectionsController : ControllerBase
     /// Get section by ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Departments", "view")]
     public async Task<IActionResult> GetSection(int id)
     {
         try
@@ -68,7 +69,7 @@ public class SectionsController : ControllerBase
     /// Get sections by department
     /// </summary>
     [HttpGet("by-department/{departmentId}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [RequirePermission("Departments", "view")]
     public async Task<IActionResult> GetSectionsByDepartment(int departmentId)
     {
         try
@@ -87,7 +88,7 @@ public class SectionsController : ControllerBase
     /// Create new section
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [RequirePermission("Departments", "insert")]
     public async Task<IActionResult> CreateSection([FromBody] CreateSectionDto dto)
     {
         try
@@ -110,7 +111,7 @@ public class SectionsController : ControllerBase
     /// Update section
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,WarehouseKeeper")]
+    [RequirePermission("Departments", "update")]
     public async Task<IActionResult> UpdateSection(int id, [FromBody] UpdateSectionDto dto)
     {
         if (id != dto.Id)
@@ -145,7 +146,7 @@ public class SectionsController : ControllerBase
     /// Delete section (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [RequirePermission("Departments", "delete")]
     public async Task<IActionResult> DeleteSection(int id)
     {
         try

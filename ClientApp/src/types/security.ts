@@ -30,6 +30,23 @@ export interface Role {
   roleId: number;
   roleName: string;
   isActive: boolean;
+  createdAt?: string;
+  userCount?: number;
+}
+
+export interface CreateRoleRequest {
+  roleName: string;
+}
+
+export interface UpdateRoleRequest {
+  roleName?: string;
+  isActive?: boolean;
+}
+
+export interface RolePermission {
+  roleId: number;
+  roleName: string;
+  permissions: Permission[];
 }
 
 // Permission Types

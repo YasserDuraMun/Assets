@@ -5,6 +5,7 @@ using Assets.DTOs.Common;
 using Assets.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Assets.Data;
+using Assets.Attributes;
 
 namespace Assets.Controllers;
 
@@ -70,7 +71,7 @@ public class AssetsController : ControllerBase
     /// ?????? ??? ???? ?????? ?? pagination ??????
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Assets", "view")]
     public async Task<IActionResult> GetAssets(
         [FromQuery] int pageNumber = 1, 
         [FromQuery] int pageSize = 20,
@@ -109,7 +110,7 @@ public class AssetsController : ControllerBase
     /// ?????? ??? ??? ????
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Assets", "view")]
     public async Task<IActionResult> GetAsset(int id, [FromQuery] bool includeDeleted = false)
     {
         try
@@ -134,7 +135,7 @@ public class AssetsController : ControllerBase
     /// ????? ??? ????
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Assets", "insert")]
     public async Task<IActionResult> CreateAsset([FromBody] CreateAssetDto dto)
     {
         try
@@ -159,7 +160,7 @@ public class AssetsController : ControllerBase
     /// ????? ??? ?????
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Super Admin,Admin,Manager")]
+    [RequirePermission("Assets", "update")]
     public async Task<IActionResult> UpdateAsset(int id, [FromBody] UpdateAssetDto dto)
     {
         if (id != dto.Id)
@@ -187,7 +188,7 @@ public class AssetsController : ControllerBase
     /// ??? ???
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Super Admin,Admin")]
+    [RequirePermission("Assets", "delete")]
     public async Task<IActionResult> DeleteAsset(int id)
     {
         try

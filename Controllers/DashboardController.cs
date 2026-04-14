@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Assets.DTOs.Common;
 using Assets.Services.Interfaces;
+using Assets.Attributes;
 
 namespace Assets.Controllers;
 
@@ -23,7 +24,7 @@ public class DashboardController : ControllerBase
     /// Get main dashboard statistics
     /// </summary>
     [HttpGet("statistics")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Dashboard", "view")]
     public async Task<IActionResult> GetStatistics()
     {
         try
@@ -42,7 +43,7 @@ public class DashboardController : ControllerBase
     /// Get assets grouped by category
     /// </summary>
     [HttpGet("assets-by-category")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Dashboard", "view")]
     public async Task<IActionResult> GetAssetsByCategory()
     {
         try
@@ -61,7 +62,7 @@ public class DashboardController : ControllerBase
     /// Get assets grouped by status
     /// </summary>
     [HttpGet("assets-by-status")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Dashboard", "view")]
     public async Task<IActionResult> GetAssetsByStatus()
     {
         try
@@ -80,7 +81,7 @@ public class DashboardController : ControllerBase
     /// Get recent activities
     /// </summary>
     [HttpGet("recent-activities")]
-    [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+    [RequirePermission("Dashboard", "view")]
     public async Task<IActionResult> GetRecentActivities([FromQuery] int limit = 10)
     {
         try
