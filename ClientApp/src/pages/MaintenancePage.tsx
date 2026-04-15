@@ -10,6 +10,8 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
+import PermissionWrapper from '../components/PermissionWrapper';
+import usePermissions from '../hooks/usePermissions';
 import { maintenanceApi, AssetMaintenance, MaintenanceType, MaintenanceStatus } from '../api/maintenance.api';
 import dayjs from 'dayjs';
 
@@ -17,10 +19,12 @@ const { RangePicker } = DatePicker;
 const { confirm } = Modal;
 
 export default function MaintenancePage() {
-  console.log('?? MaintenancePage component loaded');
+console.log('📋 MaintenancePage component loaded');
 
-  const navigate = useNavigate();
-  const [maintenance, setMaintenance] = useState<AssetMaintenance[]>([]);
+const navigate = useNavigate();
+const { getScreenPermissions } = usePermissions();
+const maintenancePermissions = getScreenPermissions('Maintenance');
+const [maintenance, setMaintenance] = useState<AssetMaintenance[]>([]);
   const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceType[]>([]);
   const [maintenanceStatuses, setMaintenanceStatuses] = useState<MaintenanceStatus[]>([]);
   const [loading, setLoading] = useState(false);
@@ -249,8 +253,16 @@ export default function MaintenancePage() {
   };
 
   const getActionMenuItems = (record: AssetMaintenance) => {
-    const items = [
-      {
+    const items = [];
+
+    console.log(`🔍 MaintenancePage: Getting actions for maintenance ${record.id}`);
+    console.log(`📋 Maintenance permissions:`, maintenancePermissions);
+    console.log(`📋 Record status: ${record.status} (1=Scheduled, 2=InProgress, 3=Completed, 4=Cancelled)`);
+
+    // View asset action - show if user has view permission
+    if (maintenancePermissions.canView) {
+      console.log('✅ Adding view action');
+      items.push({
         key: 'view',
         label: (
           <Space>
@@ -259,11 +271,12 @@ export default function MaintenancePage() {
           </Space>
         ),
         onClick: () => navigate(`/assets/${record.assetId}`),
-      },
-    ];
+      });
+    }
 
-    // Add complete action for scheduled/in-progress maintenance
-    if (record.status === 1 || record.status === 2) {
+    // Add complete action for scheduled/in-progress maintenance - requires update permission
+    if (maintenancePermissions.canUpdate && (record.status === 1 || record.status === 2)) {
+      console.log('✅ Adding complete action');
       items.push({
         key: 'complete',
         label: (
@@ -274,10 +287,13 @@ export default function MaintenancePage() {
         ),
         onClick: () => handleCompleteMaintenance(record.id),
       });
+    } else {
+      console.log(`❌ Complete action NOT added - canUpdate: ${maintenancePermissions.canUpdate}, status: ${record.status}`);
     }
 
-    // Add cancel action for scheduled maintenance
-    if (record.status === 1) {
+    // Add cancel action for scheduled maintenance - requires update permission
+    if (maintenancePermissions.canUpdate && record.status === 1) {
+      console.log('✅ Adding cancel action');
       items.push({
         key: 'cancel',
         label: (
@@ -288,20 +304,28 @@ export default function MaintenancePage() {
         ),
         onClick: () => handleCancelMaintenance(record.id),
       });
+    } else {
+      console.log(`❌ Cancel action NOT added - canUpdate: ${maintenancePermissions.canUpdate}, status: ${record.status}`);
     }
 
-    // Add delete action (Admin only)
-    items.push({
-      key: 'delete',
-      label: (
-        <Space style={{ color: 'red' }}>
-          <DeleteOutlined />
-          حذف
-        </Space>
-      ),
-      onClick: () => handleDeleteMaintenance(record.id),
-    });
+    // Add delete action - requires delete permission
+    if (maintenancePermissions.canDelete) {
+      console.log('✅ Adding delete action');
+      items.push({
+        key: 'delete',
+        label: (
+          <Space style={{ color: 'red' }}>
+            <DeleteOutlined />
+            حذف
+          </Space>
+        ),
+        onClick: () => handleDeleteMaintenance(record.id),
+      });
+    } else {
+      console.log(`❌ Delete action NOT added - canDelete: ${maintenancePermissions.canDelete}`);
+    }
 
+    console.log(`📋 Final actions for maintenance ${record.id}:`, items.map(i => i.key));
     return items;
   };
 
@@ -402,19 +426,29 @@ export default function MaintenancePage() {
       key: 'actions',
       width: 80,
       fixed: 'right' as const,
-      render: (_: any, record: AssetMaintenance) => (
-        <Dropdown
-          menu={{ items: getActionMenuItems(record) }}
-          trigger={['click']}
-        >
-          <Button
-            type="text"
-            size="small"
-            icon={<MoreOutlined />}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </Dropdown>
-      ),
+      render: (_: any, record: AssetMaintenance) => {
+        const menuItems = getActionMenuItems(record);
+        
+        // Only show dropdown if there are items available
+        if (menuItems.length === 0) {
+          console.log(`❌ No actions available for maintenance ${record.id}`);
+          return null;
+        }
+
+        return (
+          <Dropdown
+            menu={{ items: menuItems }}
+            trigger={['click']}
+          >
+            <Button
+              type="text"
+              size="small"
+              icon={<MoreOutlined />}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Dropdown>
+        );
+      },
     },
   ];
 
@@ -473,7 +507,7 @@ export default function MaintenancePage() {
               <ToolOutlined style={{ marginRight: 8 }} />
               <span>سجلات الصيانة</span>
             </div>
-            <Space>
+            <PermissionWrapper screenName="Maintenance" permission="create">
               <Button 
                 type="primary" 
                 icon={<PlusOutlined />}
@@ -481,7 +515,7 @@ export default function MaintenancePage() {
               >
                 جدولة صيانة
               </Button>
-            </Space>
+            </PermissionWrapper>
           </div>
         }
       >

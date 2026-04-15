@@ -238,7 +238,7 @@ public class ReportsService : IReportsService
                     fromLocation = GetMovementLocationText(t, true),
                     toLocation = GetMovementLocationText(t, false),
                     reason = t.Notes ?? "Transfer",
-                    performedBy = t.PerformedByUser?.Username ?? "System"
+                    performedBy = t.PerformedByUser?.FullName ?? t.PerformedByUser?.Email ?? "System"
                 })
         };
     }

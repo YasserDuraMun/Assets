@@ -3,6 +3,8 @@ import { Table, Button, Space, Input, Select, Tag, message, Card, DatePicker } f
 import { PlusOutlined, EyeOutlined, SwapOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
+import PermissionWrapper from '../components/PermissionWrapper';
+import usePermissions from '../hooks/usePermissions';
 import { transferApi, type Transfer } from '../api/transfer.api';
 import { assetApi } from '../api/asset.api';
 import { employeeApi } from '../api/employee.api';
@@ -33,8 +35,10 @@ const getReasonInArabic = (reason: string | undefined): string => {
 };
 
 export default function TransfersPage() {
-  const navigate = useNavigate();
-  const [transfers, setTransfers] = useState<Transfer[]>([]);
+const navigate = useNavigate();
+const { getScreenPermissions } = usePermissions();
+const transferPermissions = getScreenPermissions('Transfers');
+const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
@@ -205,16 +209,18 @@ export default function TransfersPage() {
       width: 120,
       fixed: 'right' as const,
       render: (_: unknown, record: Transfer) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => navigate(`/transfers/${record.id}`)}
-          >
-            عرض
-          </Button>
-        </Space>
+        transferPermissions.canView ? (
+          <Space size="small">
+            <Button
+              type="link"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => navigate(`/transfers/${record.id}`)}
+            >
+              عرض
+            </Button>
+          </Space>
+        ) : null
       ),
     },
   ];
@@ -225,13 +231,15 @@ export default function TransfersPage() {
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span><SwapOutlined /> عمليات نقل الأصول</span>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/transfers/new')}
-            >
-              نقل جديد
-            </Button>
+            <PermissionWrapper screenName="Transfers" permission="create">
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => navigate('/transfers/new')}
+              >
+                نقل جديد
+              </Button>
+            </PermissionWrapper>
           </div>
         }
       >

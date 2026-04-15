@@ -229,8 +229,8 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(e => e.ToSectionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(e => e.PerformedByUser)
-                .WithMany()
+            entity.HasOne<Models.Security.User>(e => e.PerformedByUser)
+                .WithMany(u => u.PerformedMovements)
                 .HasForeignKey(e => e.PerformedBy)
                 .OnDelete(DeleteBehavior.Restrict);
         });
@@ -246,8 +246,8 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey<AssetDisposal>(e => e.AssetId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(e => e.PerformedByUser)
-                .WithMany()
+            entity.HasOne<Models.Security.User>(e => e.PerformedByUser)
+                .WithMany(u => u.PerformedDisposals)
                 .HasForeignKey(e => e.PerformedBy)
                 .OnDelete(DeleteBehavior.Restrict);
         });
@@ -272,8 +272,8 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(e => e.AssetId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(e => e.Creator)
-                .WithMany()
+            entity.HasOne<Models.Security.User>(e => e.Creator)
+                .WithMany(u => u.CreatedMaintenances)
                 .HasForeignKey(e => e.CreatedBy)
                 .OnDelete(DeleteBehavior.Restrict);
 

@@ -163,7 +163,7 @@ public class StatusesController : ControllerBase
     /// Get all active statuses (for dropdowns)
     /// </summary>
     [HttpGet("active")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [RequirePermission("Assets", "view")]
     public async Task<IActionResult> GetActiveStatuses()
     {
         try

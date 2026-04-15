@@ -35,5 +35,5 @@ public class AssetMaintenance
 
     // Navigation properties
     public Asset Asset { get; set; } = null!;
-    public User Creator { get; set; } = null!;  // ? ?? ???????: User ????? ?? SecurityUser
+    public Security.User Creator { get; set; } = null!;  // SecurityUser
 }

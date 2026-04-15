@@ -1,4 +1,5 @@
 using Assets.Enums;
+using Assets.Models.Security;
 
 namespace Assets.Models;
 
@@ -20,5 +21,5 @@ public class AssetDisposal
 
     // Navigation properties
     public Asset Asset { get; set; } = null!;
-    public User PerformedByUser { get; set; } = null!;
+    public Security.User PerformedByUser { get; set; } = null!;  // SecurityUser
 }

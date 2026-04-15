@@ -161,7 +161,7 @@ public class WarehousesController : ControllerBase
     /// Get all active warehouses (for dropdowns)
     /// </summary>
     [HttpGet("active")]
-    [Authorize(Roles = "Admin,WarehouseKeeper,Viewer")]
+    [RequirePermission("Warehouses", "view")]
     public async Task<IActionResult> GetActiveWarehouses()
     {
         try

@@ -4,6 +4,7 @@ import { EditOutlined, ArrowLeftOutlined, QrcodeOutlined, PrinterOutlined, ToolO
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import MaintenanceModal from '../components/MaintenanceModal';
+import usePermissions from '../hooks/usePermissions';
 import { assetApi } from '../api/asset.api';
 import type { Asset } from '../types';
 import dayjs from 'dayjs';
@@ -13,6 +14,9 @@ const { Title, Text } = Typography;
 export default function AssetDetailsPage() {
 const { id } = useParams<{ id: string }>();
 const navigate = useNavigate();
+const { getScreenPermissions } = usePermissions();
+const assetPermissions = getScreenPermissions('Assets');
+const maintenancePermissions = getScreenPermissions('Maintenance');
   const [searchParams] = useSearchParams();
   const [asset, setAsset] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
@@ -171,29 +175,45 @@ const fetchAsset = async (assetId: number) => {
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/assets')}>
               العودة للأصول
             </Button>
-            <Button type="primary" icon={<EditOutlined />} onClick={() => navigate(`/assets/${id}/edit`)}>
-              تعديل الأصل
-            </Button>
-            <Button 
-              icon={<ToolOutlined />} 
-              onClick={() => setMaintenanceModalVisible(true)}
-            >
-              جدولة صيانة
-            </Button>
-            <Button 
-              icon={<QrcodeOutlined />}
-              onClick={() => setQrCodeModalVisible(true)}
-              disabled={!asset.qrCode}
-            >
-              عرض رمز QR
-            </Button>
-            <Button 
-              icon={<PrinterOutlined />}
-              onClick={() => setPrintLabelModalVisible(true)}
-              disabled={!asset.qrCode}
-            >
-              طباعة الملصق
-            </Button>
+            
+            {/* Edit Asset Button - only show if user has update permission */}
+            {assetPermissions.canUpdate && (
+              <Button type="primary" icon={<EditOutlined />} onClick={() => navigate(`/assets/${id}/edit`)}>
+                تعديل الأصل
+              </Button>
+            )}
+            
+            {/* Schedule Maintenance Button - only show if user has create permission for maintenance */}
+            {maintenancePermissions.canCreate && (
+              <Button 
+                icon={<ToolOutlined />} 
+                onClick={() => setMaintenanceModalVisible(true)}
+              >
+                جدولة صيانة
+              </Button>
+            )}
+            
+            {/* QR Code Button - always show if QR code exists and user can view */}
+            {assetPermissions.canView && (
+              <Button 
+                icon={<QrcodeOutlined />}
+                onClick={() => setQrCodeModalVisible(true)}
+                disabled={!asset.qrCode}
+              >
+                عرض رمز QR
+              </Button>
+            )}
+            
+            {/* Print Label Button - always show if QR code exists and user can view */}
+            {assetPermissions.canView && (
+              <Button 
+                icon={<PrinterOutlined />}
+                onClick={() => setPrintLabelModalVisible(true)}
+                disabled={!asset.qrCode}
+              >
+                طباعة الملصق
+              </Button>
+            )}
           </Space>
         </Card>
 
@@ -415,17 +435,19 @@ const fetchAsset = async (assetId: number) => {
         </Card>
       </Space>
 
-      {/* نافذة الصيانة */}
-      <MaintenanceModal
-        visible={maintenanceModalVisible}
-        onCancel={() => setMaintenanceModalVisible(false)}
-        onSuccess={() => {
-          setMaintenanceModalVisible(false);
-          message.success('تم جدولة الصيانة بنجاح');
-        }}
-        assetId={asset?.id}
-        assetName={asset?.name}
-      />
+      {/* نافذة الصيانة - only show if user has maintenance create permission */}
+      {maintenancePermissions.canCreate && (
+        <MaintenanceModal
+          visible={maintenanceModalVisible}
+          onCancel={() => setMaintenanceModalVisible(false)}
+          onSuccess={() => {
+            setMaintenanceModalVisible(false);
+            message.success('تم جدولة الصيانة بنجاح');
+          }}
+          assetId={asset?.id}
+          assetName={asset?.name}
+        />
+      )}
 
       {/* QR Code Modal */}
       <Modal

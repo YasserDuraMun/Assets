@@ -28,4 +28,7 @@ public class User
 
     // Navigation properties
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public ICollection<AssetMaintenance> CreatedMaintenances { get; set; } = new List<AssetMaintenance>();
+    public ICollection<AssetMovement> PerformedMovements { get; set; } = new List<AssetMovement>();
+    public ICollection<AssetDisposal> PerformedDisposals { get; set; } = new List<AssetDisposal>();
 }

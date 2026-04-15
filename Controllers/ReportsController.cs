@@ -102,7 +102,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("assets-by-location")]
-        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetAssetsByLocation()
         {
             try
@@ -117,7 +117,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("disposal-report")]
-        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetDisposalReport([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
         {
             try
@@ -132,7 +132,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("maintenance-report")]
-        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetMaintenanceReport([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
         {
             try
@@ -147,7 +147,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("transfers-report")]
-        [Authorize(Roles = "Super Admin,Admin,Manager,Employee,Viewer")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetTransfersReport([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null, 
             [FromQuery] string? fromLocation = null, [FromQuery] string? toLocation = null)
         {
@@ -163,6 +163,7 @@ namespace Assets.Controllers
         }
 
         [HttpGet("monthly-summary")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetMonthlySummary([FromQuery] int year, [FromQuery] int month)
         {
             try
@@ -178,6 +179,7 @@ namespace Assets.Controllers
 
         // Keep existing POST endpoints for backward compatibility
         [HttpPost("assets")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetAssetReport([FromBody] ReportFilterDto filter)
         {
             var result = await _reportService.GenerateAssetReportAsync(filter);
@@ -189,6 +191,7 @@ namespace Assets.Controllers
         }
 
         [HttpPost("disposals")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetDisposalReport([FromBody] ReportFilterDto filter)
         {
             var result = await _reportService.GenerateDisposalReportAsync(filter);
@@ -200,6 +203,7 @@ namespace Assets.Controllers
         }
 
         [HttpPost("maintenance")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetMaintenanceReport([FromBody] ReportFilterDto filter)
         {
             var result = await _reportService.GenerateMaintenanceReportAsync(filter);
@@ -211,6 +215,7 @@ namespace Assets.Controllers
         }
 
         [HttpPost("transfers")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetTransferReport([FromBody] ReportFilterDto filter)
         {
             var result = await _reportService.GenerateTransferReportAsync(filter);
@@ -222,6 +227,7 @@ namespace Assets.Controllers
         }
 
         [HttpPost("summary")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetSummaryReport([FromBody] ReportFilterDto filter)
         {
             var result = await _reportService.GenerateSummaryReportAsync(filter);
@@ -233,6 +239,7 @@ namespace Assets.Controllers
         }
 
         [HttpPost("export/{reportType}")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> ExportReport([FromRoute] ReportType reportType, [FromBody] ReportFilterDto filter)
         {
             var result = await _reportService.ExportReportToCsvAsync(reportType, filter);
@@ -248,6 +255,7 @@ namespace Assets.Controllers
         /// Get assets by department/section for QR code printing
         /// </summary>
         [HttpGet("assets-by-location-detail")]
+        [RequirePermission("Reports", "view")]
         public async Task<IActionResult> GetAssetsByLocationDetail(
             [FromQuery] int? departmentId = null, 
             [FromQuery] int? sectionId = null)

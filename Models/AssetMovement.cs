@@ -1,4 +1,5 @@
 using Assets.Enums;
+using Assets.Models.Security;
 
 namespace Assets.Models;
 
@@ -47,5 +48,6 @@ public class AssetMovement
     public Department? ToDepartment { get; set; }
     public Section? ToSection { get; set; }
     
-    public User PerformedByUser { get; set; } = null!;
+    
+    public Security.User PerformedByUser { get; set; } = null!;  // SecurityUser
 }

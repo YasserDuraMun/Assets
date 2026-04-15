@@ -4,6 +4,8 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, SearchOutlined
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import DisposalModal from '../components/DisposalModal';
+import PermissionWrapper from '../components/PermissionWrapper';
+import usePermissions from '../hooks/usePermissions';
 import { assetApi } from '../api/asset.api';
 import { categoryApi } from '../api/category.api';
 import { statusApi } from '../api/status.api';
@@ -15,6 +17,9 @@ import type { Asset, AssetCategory, AssetStatus, Department, Section, Employee, 
 
 export default function AssetsPage() {
 const navigate = useNavigate();
+const { getScreenPermissions } = usePermissions();
+const assetPermissions = getScreenPermissions('Assets');
+const disposalPermissions = getScreenPermissions('Disposal');
 const [assets, setAssets] = useState<Asset[]>([]);
 const [categories, setCategories] = useState<AssetCategory[]>([]);
 const [statuses, setStatuses] = useState<AssetStatus[]>([]);
@@ -169,6 +174,12 @@ const [filters, setFilters] = useState({
   };
 
   const handleDispose = (asset: Asset) => {
+    // Check if user has disposal create permission
+    if (!disposalPermissions.canCreate) {
+      message.error('ليس لديك صلاحية لاستبعاد الأصول');
+      return;
+    }
+
     if (asset.statusName === 'Disposed') {
       message.warning('تم استبعاد هذا الأصل مسبقاً');
       return;
@@ -354,47 +365,76 @@ const [filters, setFilters] = useState({
       key: 'actions',
       width: 280,
       fixed: 'right' as const,
-      render: (_: unknown, record: Asset) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => navigate(`/assets/${record.id}`)}
-          >
-            عرض
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/assets/${record.id}/edit`)}
-          >
-            تعديل
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDispose(record)}
-            disabled={record.statusName === 'Disposed'}
-            title={record.statusName === 'Disposed' ? 'تم استبعاد الأصل مسبقاً' : 'استبعاد الأصل'}
-          >
-            استبعاد
-          </Button>
-          <Popconfirm
-            title="حذف هذا الأصل؟"
-            onConfirm={() => handleDelete(record.id)}
-            okText="نعم"
-            cancelText="لا"
-          >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              حذف
+      render: (_: unknown, record: Asset) => {
+        const actions = [];
+
+        // View button - always show if user has view permission
+        if (assetPermissions.canView) {
+          actions.push(
+            <Button
+              key="view"
+              type="link"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => navigate(`/assets/${record.id}`)}
+            >
+              عرض
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+          );
+        }
+
+        // Edit button - only show if user has update permission
+        if (assetPermissions.canUpdate) {
+          actions.push(
+            <Button
+              key="edit"
+              type="link"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => navigate(`/assets/${record.id}/edit`)}
+            >
+              تعديل
+            </Button>
+          );
+        }
+
+        // Dispose button - only show if user has disposal create permission and asset is not disposed
+        if (disposalPermissions.canCreate && record.statusName !== 'Disposed') {
+          actions.push(
+            <Button
+              key="dispose"
+              type="link"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDispose(record)}
+              title="استبعاد الأصل"
+            >
+              استبعاد
+            </Button>
+          );
+        }
+
+        // Delete button - only show if user has delete permission
+        if (assetPermissions.canDelete) {
+          actions.push(
+            <Popconfirm
+              key="delete"
+              title="حذف هذا الأصل؟"
+              onConfirm={() => handleDelete(record.id)}
+              okText="نعم"
+              cancelText="لا"
+            >
+              <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+                حذف
+              </Button>
+            </Popconfirm>
+          );
+        }
+
+        // Return actions or null if no actions available
+        return actions.length > 0 ? <Space size="small">{actions}</Space> : null;
+      },
     },
   ];
 
@@ -404,13 +444,15 @@ const [filters, setFilters] = useState({
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>إدارة الأصول</span>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/assets/add')}
-            >
-              إضافة أصل
-            </Button>
+            <PermissionWrapper screenName="Assets" permission="create">
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => navigate('/assets/add')}
+              >
+                إضافة أصل
+              </Button>
+            </PermissionWrapper>
           </div>
         }
       >
@@ -556,13 +598,15 @@ const [filters, setFilters] = useState({
         </Space>
       </Card>
 
-      {/* Disposal Modal */}
-      <DisposalModal
-        visible={disposalModalVisible}
-        asset={selectedAssetForDisposal}
-        onCancel={handleDisposalCancel}
-        onSuccess={handleDisposalSuccess}
-      />
+      {/* Disposal Modal - only show if user has disposal create permission */}
+      {disposalPermissions.canCreate && (
+        <DisposalModal
+          visible={disposalModalVisible}
+          asset={selectedAssetForDisposal}
+          onCancel={handleDisposalCancel}
+          onSuccess={handleDisposalSuccess}
+        />
+      )}
     </MainLayout>
   );
 }

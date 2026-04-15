@@ -145,7 +145,7 @@ public class MaintenanceService : IMaintenanceService
             WarrantyUsed = maintenance.WarrantyUsed,
             Notes = maintenance.Notes,
             CreatedBy = maintenance.CreatedBy,
-            CreatedByName = maintenance.Creator.FullName,
+            CreatedByName = maintenance.Creator?.FullName ?? "Unknown",
             CreatedAt = maintenance.CreatedAt
         };
     }
@@ -187,6 +187,11 @@ public class MaintenanceService : IMaintenanceService
         if (asset == null)
             throw new Exception("الأصل غير موجود");
 
+        // Verify user exists in SecurityUsers
+        var user = await _context.SecurityUsers.FindAsync(userId);
+        if (user == null)
+            throw new Exception("المستخدم غير موجود");
+
         var maintenance = new AssetMaintenance
         {
             AssetId = dto.AssetId,
@@ -220,7 +225,14 @@ public class MaintenanceService : IMaintenanceService
         _logger.LogInformation("Created maintenance record {Id} for asset {AssetId} by user {UserId}", 
             maintenance.Id, dto.AssetId, userId);
 
-        return (await GetByIdAsync(maintenance.Id))!;
+        var result = await GetByIdAsync(maintenance.Id);
+        if (result == null)
+        {
+            _logger.LogError("Failed to retrieve maintenance record {Id} after creation", maintenance.Id);
+            throw new Exception($"فشل في استرجاع سجل الصيانة بعد الإنشاء. ID: {maintenance.Id}");
+        }
+        
+        return result;
     }
 
     public async Task<MaintenanceDto> UpdateAsync(UpdateMaintenanceDto dto, int userId)
@@ -249,7 +261,14 @@ public class MaintenanceService : IMaintenanceService
 
         _logger.LogInformation("Updated maintenance record {Id} by user {UserId}", dto.Id, userId);
 
-        return (await GetByIdAsync(maintenance.Id))!;
+        var result = await GetByIdAsync(maintenance.Id);
+        if (result == null)
+        {
+            _logger.LogError("Failed to retrieve maintenance record {Id} after update", maintenance.Id);
+            throw new Exception($"فشل في استرجاع سجل الصيانة بعد التحديث. ID: {maintenance.Id}");
+        }
+        
+        return result;
     }
 
     public async Task<MaintenanceDto> CompleteMaintenanceAsync(CompleteMaintenanceDto dto, int userId)
@@ -282,7 +301,14 @@ public class MaintenanceService : IMaintenanceService
 
         _logger.LogInformation("Completed maintenance record {Id} by user {UserId}", dto.Id, userId);
 
-        return (await GetByIdAsync(maintenance.Id))!;
+        var result = await GetByIdAsync(maintenance.Id);
+        if (result == null)
+        {
+            _logger.LogError("Failed to retrieve maintenance record {Id} after completion", maintenance.Id);
+            throw new Exception($"فشل في استرجاع سجل الصيانة بعد الإكمال. ID: {maintenance.Id}");
+        }
+        
+        return result;
     }
 
     public async Task<bool> CancelMaintenanceAsync(int id, int userId, string? cancellationReason = null)
