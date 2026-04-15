@@ -71,36 +71,44 @@ const handleLogout = () => {
       label: 'الإعدادات',
       children: [
         {
-          key: '/categories',
+          key: '/settings?tab=categories',
           label: 'الفئات والفئات الفرعية',
-          onClick: () => navigate('/categories'),
+          onClick: () => navigate('/settings?tab=categories'),
           permission: 'Categories',
           action: 'view' as const,
           icon: <AppstoreOutlined />
         },
         {
-          key: '/departments',
+          key: '/settings?tab=departments',
           label: 'الإدارات والأقسام',
-          onClick: () => navigate('/departments'),
+          onClick: () => navigate('/settings?tab=departments'),
           permission: 'Departments',
           action: 'view' as const,
           icon: <ApartmentOutlined />
         },
         {
-          key: '/employees',
+          key: '/settings?tab=employees',
           label: 'الموظفون',
-          onClick: () => navigate('/employees'),
+          onClick: () => navigate('/settings?tab=employees'),
           permission: 'Employees',
           action: 'view' as const,
           icon: <UserOutlined />
         },
         {
-          key: '/warehouses',
+          key: '/settings?tab=warehouses',
           label: 'المستودعات',
-          onClick: () => navigate('/warehouses'),
+          onClick: () => navigate('/settings?tab=warehouses'),
           permission: 'Warehouses',
           action: 'view' as const,
           icon: <ShopOutlined />
+        },
+        {
+          key: '/settings?tab=statuses',
+          label: 'حالات الأصول',
+          onClick: () => navigate('/settings?tab=statuses'),
+          permission: 'Assets',
+          action: 'view' as const,
+          icon: <SafetyOutlined />
         }
       ]
     },

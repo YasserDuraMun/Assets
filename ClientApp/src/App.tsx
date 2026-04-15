@@ -22,9 +22,11 @@ import './App.css';
 
 // Settings page wrapper that checks for any sub-permission
 const SettingsPagePermissionWrapper: React.FC = () => {
-  const { hasPermission, user } = useAuth();
+  const { hasPermission, user, permissions } = useAuth();
   
   console.log('?? SettingsWrapper: Checking permissions...');
+  console.log('?? SettingsWrapper: User:', user?.email);
+  console.log('?? SettingsWrapper: Total permissions:', permissions?.length || 0);
   
   // Check if user is Super Admin (always has access)
   const isSuperAdmin = user?.roles?.some(role => 
@@ -36,19 +38,36 @@ const SettingsPagePermissionWrapper: React.FC = () => {
     return <SettingsPage />;
   }
   
+  // Check each permission individually
+  const categoriesPermission = hasPermission('Categories', 'view');
+  const departmentsPermission = hasPermission('Departments', 'view');
+  const employeesPermission = hasPermission('Employees', 'view');
+  const warehousesPermission = hasPermission('Warehouses', 'view');
+  const assetsPermission = hasPermission('Assets', 'view');
+  
+  console.log('?? SettingsWrapper: Individual permissions:');
+  console.log('  - Categories.view:', categoriesPermission);
+  console.log('  - Departments.view:', departmentsPermission);
+  console.log('  - Employees.view:', employeesPermission);
+  console.log('  - Warehouses.view:', warehousesPermission);
+  console.log('  - Assets.view (for statuses):', assetsPermission);
+  
   // Check if user has any settings-related permission
   const hasAnySettingsPermission = 
-    hasPermission('Categories', 'view') ||
-    hasPermission('Departments', 'view') ||
-    hasPermission('Employees', 'view') ||
-    hasPermission('Warehouses', 'view') ||
-    hasPermission('Assets', 'view'); // For asset statuses
+    categoriesPermission ||
+    departmentsPermission ||
+    employeesPermission ||
+    warehousesPermission ||
+    assetsPermission; // For asset statuses
   
   console.log('?? SettingsWrapper: Has any settings permission:', hasAnySettingsPermission);
   
   if (hasAnySettingsPermission) {
+    console.log('? SettingsWrapper: Access granted - user has at least one settings permission');
     return <SettingsPage />;
   }
+  
+  console.log('? SettingsWrapper: Access denied - no settings permissions found');
   
   // No access - show access denied
   return (
@@ -123,12 +142,6 @@ function AppRoutes() {
             </PermissionGuard>
           } />
           
-          <Route path="/settings" element={
-            <PermissionGuard screenName="Settings" action="view">
-              <SettingsPage />
-            </PermissionGuard>
-          } />
-          
           <Route path="/assets" element={
             <PermissionGuard screenName="Assets" action="view">
               <AssetsPage />
@@ -155,27 +168,36 @@ function AppRoutes() {
           
           <Route path="/categories" element={
             <PermissionGuard screenName="Categories" action="view">
-              <SettingsPage defaultTab="categories" />
+              <SettingsPage />
             </PermissionGuard>
           } />
           
           <Route path="/departments" element={
             <PermissionGuard screenName="Departments" action="view">
-              <SettingsPage defaultTab="departments" />
+              <SettingsPage />
             </PermissionGuard>
           } />
           
           <Route path="/employees" element={
             <PermissionGuard screenName="Employees" action="view">
-              <SettingsPage defaultTab="employees" />
+              <SettingsPage />
             </PermissionGuard>
           } />
           
           <Route path="/warehouses" element={
             <PermissionGuard screenName="Warehouses" action="view">
-              <SettingsPage defaultTab="warehouses" />
+              <SettingsPage />
             </PermissionGuard>
           } />
+          
+          <Route path="/statuses" element={
+            <PermissionGuard screenName="Assets" action="view">
+              <SettingsPage />
+            </PermissionGuard>
+          } />
+          
+          {/* Main settings route - uses custom permission wrapper */}
+          <Route path="/settings" element={<SettingsPagePermissionWrapper />} />
           
           <Route path="/transfers" element={
             <PermissionGuard screenName="Transfers" action="view">

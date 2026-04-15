@@ -1,5 +1,6 @@
 import { Tabs, Card } from 'antd';
-import { SettingOutlined, TagsOutlined, AppstoreOutlined, ApartmentOutlined, ShopOutlined, UserOutlined } from '@ant-design/icons';
+import { SettingOutlined, TagsOutlined, AppstoreOutlined, ApartmentOutlined, ShopOutlined, UserOutlined, SafetyOutlined } from '@ant-design/icons';
+import { useSearchParams } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import AssetStatusesPage from './settings/AssetStatusesPage';
 import CategoriesPage from './settings/CategoriesPage';
@@ -8,14 +9,14 @@ import WarehousesPage from './settings/WarehousesPage';
 import EmployeesPage from './settings/EmployeesPage';
 import { useAuth } from '../contexts/AuthContext';
 
-interface SettingsPageProps {
-  defaultTab?: string;
-}
+export default function SettingsPage() {
+const [searchParams] = useSearchParams();
+const activeTab = searchParams.get('tab') || 'categories'; // Default to categories if no tab specified
 
-export default function SettingsPage({ defaultTab = 'categories' }: SettingsPageProps) {
 const { hasPermission, permissions, user } = useAuth();
 
 console.log('🔍 SettingsPage: User:', user?.email);
+console.log('🔍 SettingsPage: Active tab from URL:', activeTab);
 console.log('🔍 SettingsPage: User roles:', user?.roles?.map(r => r.roleName));
 console.log('🔍 SettingsPage: Permissions count:', permissions?.length || 0);
 
@@ -68,16 +69,16 @@ const availableTabs = [
     ),
     children: <WarehousesPage />,
   },
-  {
-    key: 'statuses',
-    permission: 'Assets', // Asset statuses usually under Assets permission
-    label: (
-      <span>
-        <TagsOutlined /> حالات الأصول
-      </span>
-    ),
-    children: <AssetStatusesPage />,
-  }
+    {
+      key: 'statuses',
+      permission: 'Assets', // Asset statuses usually under Assets permission
+      label: (
+        <span>
+          <SafetyOutlined /> حالات الأصول
+        </span>
+      ),
+      children: <AssetStatusesPage />,
+    }
 ];
 
 // Filter tabs based on permissions - with Super Admin bypass
@@ -134,7 +135,7 @@ if (items.length === 0 && !isSuperAdmin && permissions && permissions.length > 0
           <div style={{ marginBottom: '16px', padding: '8px', backgroundColor: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: '4px' }}>
             ℹ️ عرض الإعدادات بناءً على الصلاحيات المتاحة للدور المخصص
           </div>
-          <Tabs items={availableTabsForUser} defaultActiveKey={defaultTab} />
+          <Tabs items={availableTabsForUser} activeKey={activeTab} />
         </Card>
       </MainLayout>
     );
@@ -171,9 +172,12 @@ if (items.length === 0) {
   );
 }
 
-  // Set default tab to first available if defaultTab is not accessible
+  // Set default tab to first available if activeTab from URL is not accessible
   const availableKeys = items.map(item => item.key);
-  const activeTab = availableKeys.includes(defaultTab || '') ? defaultTab : availableKeys[0];
+  const finalActiveTab = availableKeys.includes(activeTab) ? activeTab : availableKeys[0];
+  
+  console.log('🎯 Settings: Final active tab:', finalActiveTab);
+  
   return (
     <MainLayout>
       <Card
@@ -183,7 +187,7 @@ if (items.length === 0) {
           </span>
         }
         >
-        <Tabs items={items} defaultActiveKey={activeTab} />
+        <Tabs items={items} activeKey={finalActiveTab} />
       </Card>
     </MainLayout>
   );
