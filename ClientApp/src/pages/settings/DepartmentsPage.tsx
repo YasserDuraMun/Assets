@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Switch, message, Popconfirm, Tag, Row, Col, Select } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import usePermissions from '../../hooks/usePermissions';
 import { departmentApi } from '../../api/department.api';
 import { sectionApi } from '../../api/section.api';
 import type { Department, Section } from '../../types';
 
 export default function DepartmentsPage() {
+  const { getScreenPermissions } = usePermissions();
+  const departmentPermissions = getScreenPermissions('Departments');
   const [departments, setDepartments] = useState<Department[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,12 +50,20 @@ export default function DepartmentsPage() {
   };
 
   const handleAddDepartment = () => {
+    if (!departmentPermissions.canCreate) {
+      message.error('ليس لديك صلاحية لإضافة الإدارات');
+      return;
+    }
     setEditingDepartment(null);
     form.resetFields();
     setModalVisible(true);
   };
 
   const handleEditDepartment = (record: Department) => {
+    if (!departmentPermissions.canUpdate) {
+      message.error('ليس لديك صلاحية لتعديل الإدارات');
+      return;
+    }
     setEditingDepartment(record);
     // Don't include code in the form - it's auto-generated
     const { code, ...formData } = record;
@@ -61,6 +72,10 @@ export default function DepartmentsPage() {
   };
 
   const handleDeleteDepartment = async (id: number) => {
+    if (!departmentPermissions.canDelete) {
+      message.error('ليس لديك صلاحية لحذف الإدارات');
+      return;
+    }
     try {
       await departmentApi.delete(id);
       message.success('تم حذف الإدارة بنجاح');
@@ -96,12 +111,20 @@ export default function DepartmentsPage() {
   };
 
   const handleAddSection = () => {
+    if (!departmentPermissions.canCreate) {
+      message.error('ليس لديك صلاحية لإضافة الأقسام');
+      return;
+    }
     setEditingSection(null);
     sectionForm.resetFields();
     setSectionModalVisible(true);
   };
 
   const handleEditSection = (record: Section) => {
+    if (!departmentPermissions.canUpdate) {
+      message.error('ليس لديك صلاحية لتعديل الأقسام');
+      return;
+    }
     setEditingSection(record);
     // Don't include code in the form - it's auto-generated
     const { code, ...formData } = record;
@@ -110,6 +133,10 @@ export default function DepartmentsPage() {
   };
 
   const handleDeleteSection = async (id: number) => {
+    if (!departmentPermissions.canDelete) {
+      message.error('ليس لديك صلاحية لحذف الأقسام');
+      return;
+    }
     try {
       await sectionApi.delete(id);
       message.success('تم حذف القسم بنجاح');
@@ -161,23 +188,43 @@ export default function DepartmentsPage() {
     {
       title: 'الإجراءات',
       key: 'actions',
-      render: (_: unknown, record: Department) => (
-        <Space>
-          <Button type="link" icon={<EditOutlined />} onClick={() => handleEditDepartment(record)}>
-            تعديل
-          </Button>
-          <Popconfirm
-            title="هل أنت متأكد من حذف هذه الإدارة؟"
-            onConfirm={() => handleDeleteDepartment(record.id)}
-            okText="نعم"
-            cancelText="لا"
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              حذف
+      render: (_: unknown, record: Department) => {
+        const actions = [];
+
+        // Edit button - only show if user has update permission
+        if (departmentPermissions.canUpdate) {
+          actions.push(
+            <Button
+              key="edit"
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleEditDepartment(record)}
+            >
+              تعديل
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+          );
+        }
+
+        // Delete button - only show if user has delete permission
+        if (departmentPermissions.canDelete) {
+          actions.push(
+            <Popconfirm
+              key="delete"
+              title="هل أنت متأكد من حذف هذه الإدارة؟"
+              onConfirm={() => handleDeleteDepartment(record.id)}
+              okText="نعم"
+              cancelText="لا"
+            >
+              <Button type="link" danger icon={<DeleteOutlined />}>
+                حذف
+              </Button>
+            </Popconfirm>
+          );
+        }
+
+        // Return actions or null if no actions available
+        return actions.length > 0 ? <Space>{actions}</Space> : null;
+      },
     },
   ];
 
@@ -199,23 +246,43 @@ export default function DepartmentsPage() {
     {
       title: 'الإجراءات',
       key: 'actions',
-      render: (_: unknown, record: Section) => (
-        <Space>
-          <Button type="link" icon={<EditOutlined />} onClick={() => handleEditSection(record)}>
-            تعديل
-          </Button>
-          <Popconfirm
-            title="هل أنت متأكد من حذف هذا القسم؟"
-            onConfirm={() => handleDeleteSection(record.id)}
-            okText="نعم"
-            cancelText="لا"
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              حذف
+      render: (_: unknown, record: Section) => {
+        const actions = [];
+
+        // Edit button - only show if user has update permission
+        if (departmentPermissions.canUpdate) {
+          actions.push(
+            <Button
+              key="edit"
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleEditSection(record)}
+            >
+              تعديل
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+          );
+        }
+
+        // Delete button - only show if user has delete permission
+        if (departmentPermissions.canDelete) {
+          actions.push(
+            <Popconfirm
+              key="delete"
+              title="هل أنت متأكد من حذف هذا القسم؟"
+              onConfirm={() => handleDeleteSection(record.id)}
+              okText="نعم"
+              cancelText="لا"
+            >
+              <Button type="link" danger icon={<DeleteOutlined />}>
+                حذف
+              </Button>
+            </Popconfirm>
+          );
+        }
+
+        // Return actions or null if no actions available
+        return actions.length > 0 ? <Space>{actions}</Space> : null;
+      },
     },
   ];
 
@@ -224,9 +291,11 @@ export default function DepartmentsPage() {
       <Row gutter={[16, 24]}>
         <Col span={24}>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDepartment}>
-              إضافة إدارة
-            </Button>
+            {departmentPermissions.canCreate && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDepartment}>
+                إضافة إدارة
+              </Button>
+            )}
           </div>
           <Table
             columns={departmentColumns}
@@ -239,9 +308,11 @@ export default function DepartmentsPage() {
 
         <Col span={24}>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddSection}>
-              إضافة قسم
-            </Button>
+            {departmentPermissions.canCreate && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddSection}>
+                إضافة قسم
+              </Button>
+            )}
           </div>
           <Table
             columns={sectionColumns}

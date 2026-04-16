@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Space, Modal, Form, Input, message, Popconfirm, Tag, Row, Col, Select, Switch } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import usePermissions from '../../hooks/usePermissions';
 import { categoryApi } from '../../api/category.api';
 import { subCategoryApi, type SubCategory, type CreateSubCategoryDto } from '../../api/subcategory.api';
 import type { AssetCategory } from '../../types';
 
 export default function CategoriesPage() {
+  const { getScreenPermissions } = usePermissions();
+  const categoryPermissions = getScreenPermissions('Categories');
   const [categories, setCategories] = useState<AssetCategory[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -58,12 +61,20 @@ export default function CategoriesPage() {
   };
 
   const handleAddCategory = () => {
+    if (!categoryPermissions.canCreate) {
+      message.error('ليس لديك صلاحية لإضافة الفئات');
+      return;
+    }
     setEditingCategory(null);
     form.resetFields();
     setModalVisible(true);
   };
 
   const handleEditCategory = (record: AssetCategory) => {
+    if (!categoryPermissions.canUpdate) {
+      message.error('ليس لديك صلاحية لتعديل الفئات');
+      return;
+    }
     setEditingCategory(record);
     // Don't include code in the form - it's auto-generated
     const { code, ...formData } = record;
@@ -72,6 +83,10 @@ export default function CategoriesPage() {
   };
 
   const handleDeleteCategory = async (id: number) => {
+    if (!categoryPermissions.canDelete) {
+      message.error('ليس لديك صلاحية لحذف الفئات');
+      return;
+    }
     try {
       await categoryApi.delete(id);
       message.success('تم حذف الفئة بنجاح');
@@ -107,12 +122,20 @@ export default function CategoriesPage() {
   };
 
   const handleAddSubCategory = () => {
+    if (!categoryPermissions.canCreate) {
+      message.error('ليس لديك صلاحية لإضافة الفئات الفرعية');
+      return;
+    }
     setEditingSubCategory(null);
     subForm.resetFields();
     setSubModalVisible(true);
   };
 
   const handleEditSubCategory = (record: SubCategory) => {
+    if (!categoryPermissions.canUpdate) {
+      message.error('ليس لديك صلاحية لتعديل الفئات الفرعية');
+      return;
+    }
     setEditingSubCategory(record);
     // Don't include code in the form - it's auto-generated
     const { code, ...formData } = record;
@@ -121,6 +144,10 @@ export default function CategoriesPage() {
   };
 
   const handleDeleteSubCategory = async (id: number) => {
+    if (!categoryPermissions.canDelete) {
+      message.error('ليس لديك صلاحية لحذف الفئات الفرعية');
+      return;
+    }
     try {
       await subCategoryApi.delete(id);
       message.success('تم حذف الفئة الفرعية بنجاح');
@@ -174,23 +201,43 @@ export default function CategoriesPage() {
     {
       title: 'الإجراءات',
       key: 'actions',
-      render: (_: unknown, record: AssetCategory) => (
-        <Space>
-          <Button type="link" icon={<EditOutlined />} onClick={() => handleEditCategory(record)}>
-            تعديل
-          </Button>
-          <Popconfirm
-            title="هل أنت متأكد من حذف هذه الفئة؟"
-            onConfirm={() => handleDeleteCategory(record.id)}
-            okText="نعم"
-            cancelText="لا"
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              حذف
+      render: (_: unknown, record: AssetCategory) => {
+        const actions = [];
+
+        // Edit button - only show if user has update permission
+        if (categoryPermissions.canUpdate) {
+          actions.push(
+            <Button
+              key="edit"
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleEditCategory(record)}
+            >
+              تعديل
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+          );
+        }
+
+        // Delete button - only show if user has delete permission
+        if (categoryPermissions.canDelete) {
+          actions.push(
+            <Popconfirm
+              key="delete"
+              title="هل أنت متأكد من حذف هذه الفئة؟"
+              onConfirm={() => handleDeleteCategory(record.id)}
+              okText="نعم"
+              cancelText="لا"
+            >
+              <Button type="link" danger icon={<DeleteOutlined />}>
+                حذف
+              </Button>
+            </Popconfirm>
+          );
+        }
+
+        // Return actions or null if no actions available
+        return actions.length > 0 ? <Space>{actions}</Space> : null;
+      },
     },
   ];
 
@@ -212,23 +259,43 @@ export default function CategoriesPage() {
     {
       title: 'الإجراءات',
       key: 'actions',
-      render: (_: unknown, record: SubCategory) => (
-        <Space>
-          <Button type="link" icon={<EditOutlined />} onClick={() => handleEditSubCategory(record)}>
-            تعديل
-          </Button>
-          <Popconfirm
-            title="هل أنت متأكد من حذف هذه الفئة الفرعية؟"
-            onConfirm={() => handleDeleteSubCategory(record.id)}
-            okText="نعم"
-            cancelText="لا"
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              حذف
+      render: (_: unknown, record: SubCategory) => {
+        const actions = [];
+
+        // Edit button - only show if user has update permission
+        if (categoryPermissions.canUpdate) {
+          actions.push(
+            <Button
+              key="edit"
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleEditSubCategory(record)}
+            >
+              تعديل
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+          );
+        }
+
+        // Delete button - only show if user has delete permission
+        if (categoryPermissions.canDelete) {
+          actions.push(
+            <Popconfirm
+              key="delete"
+              title="هل أنت متأكد من حذف هذه الفئة الفرعية؟"
+              onConfirm={() => handleDeleteSubCategory(record.id)}
+              okText="نعم"
+              cancelText="لا"
+            >
+              <Button type="link" danger icon={<DeleteOutlined />}>
+                حذف
+              </Button>
+            </Popconfirm>
+          );
+        }
+
+        // Return actions or null if no actions available
+        return actions.length > 0 ? <Space>{actions}</Space> : null;
+      },
     },
   ];
 
@@ -238,9 +305,11 @@ export default function CategoriesPage() {
         <Col span={24}>
           <h3>الفئات الرئيسية</h3>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddCategory}>
-              إضافة فئة
-            </Button>
+            {categoryPermissions.canCreate && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddCategory}>
+                إضافة فئة
+              </Button>
+            )}
           </div>
           <Table
             columns={categoryColumns}
@@ -254,9 +323,11 @@ export default function CategoriesPage() {
         <Col span={24}>
           <h3>الفئات الفرعية</h3>
           <div style={{ marginBottom: 16, textAlign: 'right' }}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddSubCategory}>
-              إضافة فئة فرعية
-            </Button>
+            {categoryPermissions.canCreate && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddSubCategory}>
+                إضافة فئة فرعية
+              </Button>
+            )}
           </div>
           <Table
             columns={subCategoryColumns}

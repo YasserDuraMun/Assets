@@ -1,6 +1,6 @@
 import { Tabs, Card } from 'antd';
 import { SettingOutlined, TagsOutlined, AppstoreOutlined, ApartmentOutlined, ShopOutlined, UserOutlined, SafetyOutlined } from '@ant-design/icons';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import AssetStatusesPage from './settings/AssetStatusesPage';
 import CategoriesPage from './settings/CategoriesPage';
@@ -11,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function SettingsPage() {
 const [searchParams] = useSearchParams();
+const navigate = useNavigate();
 const activeTab = searchParams.get('tab') || 'categories'; // Default to categories if no tab specified
 
 const { hasPermission, permissions, user } = useAuth();
@@ -100,6 +101,20 @@ const items = availableTabs.filter(tab => {
 console.log(`🔍 Settings: Available tabs count = ${items.length}`);
 console.log(`🔍 Settings: Available tabs = `, items.map(item => item.key));
 
+// Handle tab change - update URL when user clicks on different tab
+const handleTabChange = (newActiveKey: string) => {
+  console.log('🎯 SettingsPage: Tab changed to:', newActiveKey);
+  
+  // Validate that user has permission to access this tab
+  const availableKeys = items.map(item => item.key);
+  if (!availableKeys.includes(newActiveKey)) {
+    console.warn('⚠️ SettingsPage: User tried to access unauthorized tab:', newActiveKey);
+    return;
+  }
+  
+  navigate(`/settings?tab=${newActiveKey}`);
+};
+
 // Special handling for custom roles with loaded permissions
 if (items.length === 0 && !isSuperAdmin && permissions && permissions.length > 0) {
   console.log('🔧 Settings: Custom role detected with permissions but no tabs visible');
@@ -122,6 +137,20 @@ if (items.length === 0 && !isSuperAdmin && permissions && permissions.length > 0
 
   if (availableTabsForUser.length > 0) {
     console.log('🔧 Settings: Using permission-name-based tabs');
+    
+    // Create a special handler for custom roles tabs
+    const handleCustomTabChange = (newActiveKey: string) => {
+      console.log('🎯 SettingsPage: Custom tab changed to:', newActiveKey);
+      
+      // Validate that user has permission to access this tab
+      const availableCustomKeys = availableTabsForUser.map(item => item.key);
+      if (!availableCustomKeys.includes(newActiveKey)) {
+        console.warn('⚠️ SettingsPage: User tried to access unauthorized custom tab:', newActiveKey);
+        return;
+      }
+      
+      navigate(`/settings?tab=${newActiveKey}`);
+    };
       
     return (
       <MainLayout>
@@ -135,7 +164,11 @@ if (items.length === 0 && !isSuperAdmin && permissions && permissions.length > 0
           <div style={{ marginBottom: '16px', padding: '8px', backgroundColor: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: '4px' }}>
             ℹ️ عرض الإعدادات بناءً على الصلاحيات المتاحة للدور المخصص
           </div>
-          <Tabs items={availableTabsForUser} activeKey={activeTab} />
+          <Tabs 
+            items={availableTabsForUser} 
+            activeKey={activeTab} 
+            onChange={handleCustomTabChange}
+          />
         </Card>
       </MainLayout>
     );
@@ -187,7 +220,11 @@ if (items.length === 0) {
           </span>
         }
         >
-        <Tabs items={items} activeKey={finalActiveTab} />
+        <Tabs 
+          items={items} 
+          activeKey={finalActiveTab} 
+          onChange={handleTabChange}
+        />
       </Card>
     </MainLayout>
   );

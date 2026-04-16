@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Switch, message, Popconfirm, Tag, Select } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import usePermissions from '../../hooks/usePermissions';
 import { warehouseApi } from '../../api/warehouse.api';
 import { employeeApi } from '../../api/employee.api';
 import type { Warehouse, Employee } from '../../types';
 
 export default function WarehousesPage() {
+  const { getScreenPermissions } = usePermissions();
+  const warehousePermissions = getScreenPermissions('Warehouses');
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,12 +56,20 @@ export default function WarehousesPage() {
   };
 
   const handleAdd = () => {
+    if (!warehousePermissions.canCreate) {
+      message.error('ليس لديك صلاحية لإضافة المستودعات');
+      return;
+    }
     setEditingWarehouse(null);
     form.resetFields();
     setModalVisible(true);
   };
 
   const handleEdit = (record: Warehouse) => {
+    if (!warehousePermissions.canUpdate) {
+      message.error('ليس لديك صلاحية لتعديل المستودعات');
+      return;
+    }
     setEditingWarehouse(record);
     // Don't include code in the form - it's auto-generated
     const { code, ...formData } = record;
@@ -67,6 +78,10 @@ export default function WarehousesPage() {
   };
 
   const handleDelete = async (id: number) => {
+    if (!warehousePermissions.canDelete) {
+      message.error('ليس لديك صلاحية لحذف المستودعات');
+      return;
+    }
     try {
       await warehouseApi.delete(id);
       message.success('تم حذف المستودع بنجاح');
@@ -120,32 +135,54 @@ export default function WarehousesPage() {
     {
       title: 'الإجراءات',
       key: 'actions',
-      render: (_: unknown, record: Warehouse) => (
-        <Space>
-          <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
-            تعديل
-          </Button>
-          <Popconfirm
-            title="هل أنت متأكد من حذف هذا المستودع؟"
-            onConfirm={() => handleDelete(record.id)}
-            okText="نعم"
-            cancelText="لا"
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              حذف
+      render: (_: unknown, record: Warehouse) => {
+        const actions = [];
+
+        // Edit button - only show if user has update permission
+        if (warehousePermissions.canUpdate) {
+          actions.push(
+            <Button
+              key="edit"
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            >
+              تعديل
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+          );
+        }
+
+        // Delete button - only show if user has delete permission
+        if (warehousePermissions.canDelete) {
+          actions.push(
+            <Popconfirm
+              key="delete"
+              title="هل أنت متأكد من حذف هذا المستودع؟"
+              onConfirm={() => handleDelete(record.id)}
+              okText="نعم"
+              cancelText="لا"
+            >
+              <Button type="link" danger icon={<DeleteOutlined />}>
+                حذف
+              </Button>
+            </Popconfirm>
+          );
+        }
+
+        // Return actions or null if no actions available
+        return actions.length > 0 ? <Space>{actions}</Space> : null;
+      },
     },
   ];
 
   return (
     <div>
       <div style={{ marginBottom: 16, textAlign: 'right' }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          إضافة مستودع
-        </Button>
+        {warehousePermissions.canCreate && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            إضافة مستودع
+          </Button>
+        )}
       </div>
 
       <Table

@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Switch, message, Popconfirm, Tag } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import usePermissions from '../../hooks/usePermissions';
 import { statusApi } from '../../api/status.api';
 import type { AssetStatus } from '../../types';
 
 export default function AssetStatusesPage() {
+  const { getScreenPermissions } = usePermissions();
+  const statusPermissions = getScreenPermissions('Assets'); // Asset statuses use Assets permission
   const [statuses, setStatuses] = useState<AssetStatus[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -30,12 +33,20 @@ export default function AssetStatusesPage() {
   };
 
   const handleAdd = () => {
+    if (!statusPermissions.canCreate) {
+      message.error('ليس لديك صلاحية لإضافة حالات الأصول');
+      return;
+    }
     setEditingStatus(null);
     form.resetFields();
     setModalVisible(true);
   };
 
   const handleEdit = (record: AssetStatus) => {
+    if (!statusPermissions.canUpdate) {
+      message.error('ليس لديك صلاحية لتعديل حالات الأصول');
+      return;
+    }
     setEditingStatus(record);
     // Don't include code in the form - it's auto-generated
     const { code, ...formData } = record;
@@ -44,6 +55,10 @@ export default function AssetStatusesPage() {
   };
 
   const handleDelete = async (id: number) => {
+    if (!statusPermissions.canDelete) {
+      message.error('ليس لديك صلاحية لحذف حالات الأصول');
+      return;
+    }
     try {
       await statusApi.delete(id);
       message.success('تم حذف الحالة بنجاح');
@@ -115,36 +130,54 @@ export default function AssetStatusesPage() {
     {
       title: 'الإجراءات',
       key: 'actions',
-      render: (_: unknown, record: AssetStatus) => (
-        <Space>
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            تعديل
-          </Button>
-          <Popconfirm
-            title="هل أنت متأكد من حذف هذه الحالة؟"
-            onConfirm={() => handleDelete(record.id)}
-            okText="نعم"
-            cancelText="لا"
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              حذف
+      render: (_: unknown, record: AssetStatus) => {
+        const actions = [];
+
+        // Edit button - only show if user has update permission
+        if (statusPermissions.canUpdate) {
+          actions.push(
+            <Button
+              key="edit"
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            >
+              تعديل
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+          );
+        }
+
+        // Delete button - only show if user has delete permission
+        if (statusPermissions.canDelete) {
+          actions.push(
+            <Popconfirm
+              key="delete"
+              title="هل أنت متأكد من حذف هذه الحالة؟"
+              onConfirm={() => handleDelete(record.id)}
+              okText="نعم"
+              cancelText="لا"
+            >
+              <Button type="link" danger icon={<DeleteOutlined />}>
+                حذف
+              </Button>
+            </Popconfirm>
+          );
+        }
+
+        // Return actions or null if no actions available
+        return actions.length > 0 ? <Space>{actions}</Space> : null;
+      },
     },
   ];
 
   return (
     <div>
       <div style={{ marginBottom: 16, textAlign: 'right' }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          إضافة حالة
-        </Button>
+        {statusPermissions.canCreate && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            إضافة حالة
+          </Button>
+        )}
       </div>
 
       <Table

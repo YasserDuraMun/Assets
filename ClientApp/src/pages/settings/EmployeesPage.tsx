@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Switch, message, Popconfirm, Tag, Select, DatePicker } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import usePermissions from '../../hooks/usePermissions';
 import { employeeApi } from '../../api/employee.api';
 import { departmentApi } from '../../api/department.api';
 import { sectionApi } from '../../api/section.api';
 import type { Employee, Department, Section } from '../../types';
 
 export default function EmployeesPage() {
+  const { getScreenPermissions } = usePermissions();
+  const employeePermissions = getScreenPermissions('Employees');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
@@ -78,12 +81,20 @@ export default function EmployeesPage() {
   };
 
   const handleAdd = () => {
+    if (!employeePermissions.canCreate) {
+      message.error('ليس لديك صلاحية لإضافة الموظفين');
+      return;
+    }
     setEditingEmployee(null);
     form.resetFields();
     setModalVisible(true);
   };
 
   const handleEdit = (record: Employee) => {
+    if (!employeePermissions.canUpdate) {
+      message.error('ليس لديك صلاحية لتعديل الموظفين');
+      return;
+    }
     setEditingEmployee(record);
     form.setFieldsValue(record);
     if (record.departmentId) {
@@ -94,6 +105,10 @@ export default function EmployeesPage() {
   };
 
   const handleDelete = async (id: number) => {
+    if (!employeePermissions.canDelete) {
+      message.error('ليس لديك صلاحية لحذف الموظفين');
+      return;
+    }
     try {
       await employeeApi.delete(id);
       message.success('تم حذف الموظف بنجاح');
@@ -153,32 +168,54 @@ export default function EmployeesPage() {
     {
       title: 'الإجراءات',
       key: 'actions',
-      render: (_: unknown, record: Employee) => (
-        <Space>
-          <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
-            تعديل
-          </Button>
-          <Popconfirm
-            title="هل أنت متأكد من حذف هذا الموظف؟"
-            onConfirm={() => handleDelete(record.id)}
-            okText="نعم"
-            cancelText="لا"
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              حذف
+      render: (_: unknown, record: Employee) => {
+        const actions = [];
+
+        // Edit button - only show if user has update permission
+        if (employeePermissions.canUpdate) {
+          actions.push(
+            <Button
+              key="edit"
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            >
+              تعديل
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+          );
+        }
+
+        // Delete button - only show if user has delete permission
+        if (employeePermissions.canDelete) {
+          actions.push(
+            <Popconfirm
+              key="delete"
+              title="هل أنت متأكد من حذف هذا الموظف؟"
+              onConfirm={() => handleDelete(record.id)}
+              okText="نعم"
+              cancelText="لا"
+            >
+              <Button type="link" danger icon={<DeleteOutlined />}>
+                حذف
+              </Button>
+            </Popconfirm>
+          );
+        }
+
+        // Return actions or null if no actions available
+        return actions.length > 0 ? <Space>{actions}</Space> : null;
+      },
     },
   ];
 
   return (
     <div>
       <div style={{ marginBottom: 16, textAlign: 'right' }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          إضافة موظف
-        </Button>
+        {employeePermissions.canCreate && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            إضافة موظف
+          </Button>
+        )}
       </div>
 
       <Table
