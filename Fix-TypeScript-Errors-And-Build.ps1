@@ -1,0 +1,90 @@
+# =====================================================
+# ????? ????? TypeScript ????? Frontend
+# ?? ????? ???? ??????? ??? 8
+# =====================================================
+
+Write-Host "?? ?? ????? ????? TypeScript!" -ForegroundColor Green
+Write-Host "===============================" -ForegroundColor Green
+Write-Host ""
+
+Write-Host "? ??????? ????????:" -ForegroundColor Yellow
+Write-Host "   1. MainLayout.tsx - permission type undefined" -ForegroundColor Gray
+Write-Host "   2. UserManagement.tsx - CSS flexWrap type" -ForegroundColor Gray
+Write-Host "   3. UserManagement.tsx - CSS position type" -ForegroundColor Gray
+Write-Host "   4. RolePermissionsPage-Beautiful.tsx - CSS flexWrap types" -ForegroundColor Gray
+Write-Host "   5. vite.config.ts - manualChunks configuration" -ForegroundColor Gray
+Write-Host "   6. vite.config.ts - unused proxyReq variable" -ForegroundColor Gray
+
+Write-Host ""
+Write-Host "?? ?????? ???? Frontend..." -ForegroundColor Blue
+
+try {
+    Set-Location "ClientApp"
+    
+    Write-Host "?? ????? packages..." -ForegroundColor Yellow
+    npm install
+    
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to install packages"
+    }
+    
+    Write-Host "??? ???? Frontend ???????..." -ForegroundColor Yellow
+    npm run build:production
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host ""
+        Write-Host "?? ?? ???? Frontend ?????!" -ForegroundColor Green
+        
+        # ??? web.config
+        if (Test-Path "web.config" -and Test-Path "dist") {
+            Copy-Item "web.config" "dist/web.config" -Force
+            Write-Host "? ?? ??? web.config ??? dist" -ForegroundColor Green
+        }
+        
+        # ???????? ??????
+        if (Test-Path "dist") {
+            $distSize = (Get-ChildItem -Path "dist" -Recurse | Measure-Object -Property Length -Sum).Sum
+            $distSizeMB = [Math]::Round($distSize / 1MB, 2)
+            $fileCount = (Get-ChildItem -Path "dist" -Recurse -File | Measure-Object).Count
+            
+            Write-Host ""
+            Write-Host "?? ???????? ??????:" -ForegroundColor Cyan
+            Write-Host "   ?? ??? dist: $distSizeMB MB" -ForegroundColor Gray
+            Write-Host "   ?? ??? ???????: $fileCount" -ForegroundColor Gray
+            Write-Host "   ?? ??????: ./ClientApp/dist/" -ForegroundColor Gray
+        }
+        
+        Write-Host ""
+        Write-Host "?? ???? ????? ???:" -ForegroundColor Blue
+        Write-Host "   Frontend: http://10.0.0.17:8098" -ForegroundColor Gray
+        Write-Host "   Backend: http://10.0.0.17:8099" -ForegroundColor Gray
+        
+    } else {
+        throw "Build failed with exit code $LASTEXITCODE"
+    }
+    
+} catch {
+    Write-Host ""
+    Write-Host "? ??? ?? ??????:" -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
+    
+    Write-Host ""
+    Write-Host "?? ????? ??????? ???????:" -ForegroundColor Yellow
+    Write-Host "   1. ???? ?? ????? ????? ?????" -ForegroundColor Gray
+    Write-Host "   2. ???? node_modules ???? npm install" -ForegroundColor Gray
+    Write-Host "   3. ???? ?? ??????? TypeScript ? React" -ForegroundColor Gray
+    Write-Host "   4. ???? vite.config.ts ?????? ?? ?????????" -ForegroundColor Gray
+    
+} finally {
+    Set-Location ".."
+}
+
+Write-Host ""
+Write-Host "?? ??????? ???????:" -ForegroundColor Blue
+Write-Host "   1. ???? ??????? ./ClientApp/dist/ ??? C:\inetpub\wwwroot\AssetWeb\" -ForegroundColor Gray
+Write-Host "   2. ???? ???? IIS ??? ?????? 8098" -ForegroundColor Gray
+Write-Host "   3. ???? ?? ????? Backend ??? 8099" -ForegroundColor Gray
+Write-Host "   4. ????? ?????? ?? http://10.0.0.17:8098" -ForegroundColor Gray
+
+Write-Host ""
+Write-Host "? ????? ????? ????? TypeScript!" -ForegroundColor Green

@@ -1,18 +1,19 @@
 ﻿import axios from 'axios';
 
-// Define Base URL - fallback to localhost if environment variable not set
-const API_BASE_URL = (typeof window !== 'undefined' && (window as any).__VITE_API_BASE_URL__) 
-  || 'https://localhost:44385/api';
+// Get API Base URL from environment variables
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://10.0.0.17:8099/api';
 
-console.log('🌐 API Base URL:', API_BASE_URL);
+console.log('🌐 API Base URL (securityApi):', API_BASE_URL);
+console.log('🔧 Environment:', import.meta.env.VITE_APP_ENV);
 
 // Create Axios instance with CORS and credentials configuration
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 30000, // زيادة timeout للخادم
   withCredentials: false, // Prevent CORS issues
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 });
 

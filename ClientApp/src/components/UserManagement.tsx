@@ -32,7 +32,7 @@ const styles = {
   statsContainer: {
     display: 'flex',
     gap: '32px',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap' as const
   },
   statItem: {
     display: 'flex',
@@ -165,7 +165,7 @@ const styles = {
     color: '#dc2626'
   },
   modal: {
-    position: 'fixed',
+    position: 'fixed' as const,
     top: '0',
     left: '0',
     right: '0',
@@ -175,7 +175,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: '9999',
+    zIndex: 9999,
     padding: '20px'
   },
   modalContent: {

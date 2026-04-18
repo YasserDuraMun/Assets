@@ -175,6 +175,7 @@ const handleLogout = () => {
       }
       
       // للعناصر الأخرى: فحص الصلاحية العادية
+      if (!item.permission || !item.action) return true; // إذا لم تكن هناك صلاحية مطلوبة
       const canAccess = hasPermission(item.permission, item.action);
       console.log(`🔍 Menu access check: ${item.permission}.${item.action} = ${canAccess}`);
       return canAccess;

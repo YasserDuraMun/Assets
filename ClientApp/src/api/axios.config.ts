@@ -1,15 +1,16 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 
-// API base URL - now pointing to IIS Express
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:44385/api';
-console.log('?? API Base URL:', apiBaseUrl);
-console.log('?? Environment Variables:', import.meta.env);
+// API base URL - pointing to production server
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://10.0.0.17:8099/api';
+console.log('🌐 API Base URL (axios.config):', apiBaseUrl);
+console.log('🔧 Environment Variables:', import.meta.env);
 
 const api = axios.create({
   baseURL: apiBaseUrl,
-  timeout: 10000,
+  timeout: 30000, // زيادة timeout للخادم
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 });
  

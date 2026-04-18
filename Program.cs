@@ -150,18 +150,26 @@ try
     // Controllers
     builder.Services.AddControllers();
 
-    // CORS - Updated for Frontend development
+    // CORS - Updated for Production Deployment
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowFrontend", policy =>
         {
-            policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "https://localhost:5173")
+            policy.WithOrigins(
+                      "http://localhost:5173", 
+                      "http://localhost:3000", 
+                      "https://localhost:5173",
+                      "http://10.0.0.17:8098",    // Production Frontend
+                      "https://10.0.0.17:8098"   // Production Frontend HTTPS
+                  )
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials()
                   .SetIsOriginAllowed(origin => 
                       origin.StartsWith("http://localhost") || 
-                      origin.StartsWith("https://localhost"));
+                      origin.StartsWith("https://localhost") ||
+                      origin.StartsWith("http://10.0.0.17") ||
+                      origin.StartsWith("https://10.0.0.17"));
         });
 
         options.AddPolicy("AllowAll", policy =>
@@ -169,6 +177,18 @@ try
             policy.AllowAnyOrigin()
                   .AllowAnyMethod()
                   .AllowAnyHeader();
+        });
+
+        // Production Policy for Server Deployment
+        options.AddPolicy("Production", policy =>
+        {
+            policy.WithOrigins(
+                      "http://10.0.0.17:8098",
+                      "https://10.0.0.17:8098"
+                  )
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
         });
     });
 

@@ -58,7 +58,7 @@ const styles = {
   statsContainer: {
     display: 'flex',
     gap: '32px',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap' as const
   },
   statItem: {
     display: 'flex',
@@ -82,7 +82,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '16px',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap' as const
   },
   selectLabel: {
     fontSize: '16px',

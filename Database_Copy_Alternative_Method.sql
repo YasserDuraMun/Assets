@@ -1,0 +1,747 @@
+-- =====================================================
+-- ??? ????? ???????? ????? Script Export
+-- ??? ????? ????? ???? ??? ?? ??? ????????
+-- ????? ???? ??????? ?? ???? ??????? SQL Server
+-- ??????: Assets
+-- ?????: AssetsTest
+-- =====================================================
+
+USE master;
+GO
+
+PRINT '?? ????? ?????: ??? ????? ???????? Table-by-Table Copy'
+PRINT '=================================================='
+
+-- ?????? ?? ???? ????? ???????? ??????
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'Assets')
+BEGIN
+    PRINT '? ???: ????? ???????? Assets ??? ??????!'
+    PRINT '???? ?? ???? ????? ???????? Assets ??? ????????.'
+    RETURN
+END
+
+-- ????? ????? ?????? AssetsTest ????? ?????
+IF EXISTS (SELECT name FROM sys.databases WHERE name = 'AssetsTest')
+BEGIN
+    PRINT '??? ??? AssetsTest ????????...'
+    
+    -- ??? ?????????
+    DECLARE @KillSQL NVARCHAR(MAX) = ''
+    SELECT @KillSQL = @KillSQL + 'KILL ' + CAST(session_id AS VARCHAR(10)) + '; '
+    FROM sys.dm_exec_sessions
+    WHERE database_id = DB_ID('AssetsTest') AND session_id <> @@SPID
+    
+    IF LEN(@KillSQL) > 0
+    BEGIN
+        BEGIN TRY
+            EXEC(@KillSQL)
+            WAITFOR DELAY '00:00:02'
+        END TRY
+        BEGIN CATCH
+            PRINT '?? ?????: ??? ????????? ?? ?? ???? ?????'
+        END CATCH
+    END
+    
+    BEGIN TRY
+        ALTER DATABASE AssetsTest SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+        DROP DATABASE AssetsTest;
+    END TRY
+    BEGIN CATCH
+        PRINT '? ??? ?? ??? AssetsTest: ' + ERROR_MESSAGE()
+        RETURN
+    END CATCH
+END
+
+PRINT '?? ????? ????? ?????? AssetsTest ?????...'
+
+BEGIN TRY
+    -- ????? ????? ?????? ?????
+    CREATE DATABASE AssetsTest;
+    PRINT '? ?? ????? ????? ???????? ???????'
+END TRY
+BEGIN CATCH
+    PRINT '? ??? ?? ????? AssetsTest: ' + ERROR_MESSAGE()
+    RETURN
+END CATCH
+
+GO
+
+USE AssetsTest;
+GO
+
+PRINT ''
+PRINT '?? ???? ????? ???? ?????? ????????? ???? ?????...'
+
+-- ==================================================
+-- ??? ??????? ????????? ???? ??? ?????
+-- ==================================================
+
+-- ????? ??????? ?? ??????? ?????? (?? ??? ?????? ?????? ??? ???????)
+PRINT '?? ??? ??????? ????????? ???????? ??????...'
+
+-- 1. ????? ?????? ???????? (???? ?????? ??????)
+PRINT '1?? ??? ????? ?????? ????????...'
+
+-- AssetStatuses
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetStatuses')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO AssetStatuses FROM Assets.dbo.AssetStatuses;
+        PRINT '   ? AssetStatuses: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? AssetStatuses: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- AssetCategories  
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetCategories')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO AssetCategories FROM Assets.dbo.AssetCategories;
+        PRINT '   ? AssetCategories: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? AssetCategories: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- AssetSubcategories
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetSubcategories')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO AssetSubcategories FROM Assets.dbo.AssetSubcategories;
+        PRINT '   ? AssetSubcategories: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? AssetSubcategories: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- Departments
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Departments')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO Departments FROM Assets.dbo.Departments;
+        PRINT '   ? Departments: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? Departments: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- Sections
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Sections')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO Sections FROM Assets.dbo.Sections;
+        PRINT '   ? Sections: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? Sections: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- Warehouses
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Warehouses')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO Warehouses FROM Assets.dbo.Warehouses;
+        PRINT '   ? Warehouses: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? Warehouses: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- 2. ????? ?????? ???????????
+PRINT '2?? ??? ????? ?????? ???????????...'
+
+-- SecurityUsers
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'SecurityUsers')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO SecurityUsers FROM Assets.dbo.SecurityUsers;
+        PRINT '   ? SecurityUsers: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? SecurityUsers: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- Roles
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Roles')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO Roles FROM Assets.dbo.Roles;
+        PRINT '   ? Roles: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? Roles: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- Permissions
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Permissions')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO Permissions FROM Assets.dbo.Permissions;
+        PRINT '   ? Permissions: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? Permissions: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- RolePermissions
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'RolePermissions')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO RolePermissions FROM Assets.dbo.RolePermissions;
+        PRINT '   ? RolePermissions: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? RolePermissions: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- UserRoles
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'UserRoles')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO UserRoles FROM Assets.dbo.UserRoles;
+        PRINT '   ? UserRoles: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? UserRoles: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- 3. ????????
+PRINT '3?? ??? ???? ????????...'
+
+-- Employees
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Employees')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO Employees FROM Assets.dbo.Employees;
+        PRINT '   ? Employees: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? Employees: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- 4. ?????? ????????
+PRINT '4?? ??? ???? ?????? ???????...'
+
+-- Assets
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Assets')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO Assets FROM Assets.dbo.Assets;
+        PRINT '   ? Assets: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? Assets: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- 5. ????? ????????? ????????
+PRINT '5?? ??? ????? ????????? ????????...'
+
+-- AssetTransfers
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetTransfers')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO AssetTransfers FROM Assets.dbo.AssetTransfers;
+        PRINT '   ? AssetTransfers: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? AssetTransfers: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- AssetMovements
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetMovements')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO AssetMovements FROM Assets.dbo.AssetMovements;
+        PRINT '   ? AssetMovements: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? AssetMovements: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- 6. ????? ??????? ??????????
+PRINT '6?? ??? ????? ??????? ??????????...'
+
+-- AssetMaintenance
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetMaintenance')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO AssetMaintenance FROM Assets.dbo.AssetMaintenance;
+        PRINT '   ? AssetMaintenance: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? AssetMaintenance: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- AssetDisposal
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetDisposal')
+BEGIN
+    BEGIN TRY
+        SELECT * INTO AssetDisposal FROM Assets.dbo.AssetDisposal;
+        PRINT '   ? AssetDisposal: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ? ??? ?? AssetDisposal: ' + ERROR_MESSAGE()
+    END CATCH
+END
+
+-- 7. ????? ?????? ?? ????
+PRINT '7?? ??? ???? ????? ??????...'
+
+-- ????? cursor ???? ?? ????? ???? ?? ??????
+DECLARE @TableName NVARCHAR(128)
+DECLARE @CopySQL NVARCHAR(MAX)
+DECLARE @Count INT
+
+DECLARE remaining_tables_cursor CURSOR FOR
+SELECT TABLE_NAME 
+FROM Assets.INFORMATION_SCHEMA.TABLES 
+WHERE TABLE_TYPE = 'BASE TABLE' 
+  AND TABLE_NAME NOT IN (
+    'AssetStatuses', 'AssetCategories', 'AssetSubcategories', 
+    'Departments', 'Sections', 'Warehouses',
+    'SecurityUsers', 'Roles', 'Permissions', 'RolePermissions', 'UserRoles',
+    'Employees', 'Assets', 'AssetTransfers', 'AssetMovements',
+    'AssetMaintenance', 'AssetDisposal'
+  )
+
+OPEN remaining_tables_cursor
+FETCH NEXT FROM remaining_tables_cursor INTO @TableName
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    -- ?????? ?? ?? ?????? ??? ????? ?? AssetsTest
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = @TableName)
+    BEGIN
+        BEGIN TRY
+            SET @CopySQL = 'SELECT * INTO [' + @TableName + '] FROM Assets.dbo.[' + @TableName + ']'
+            EXEC sp_executesql @CopySQL
+            
+            SET @Count = @@ROWCOUNT
+            PRINT '   ? ' + @TableName + ': ' + CAST(@Count AS VARCHAR(10)) + ' ???'
+        END TRY
+        BEGIN CATCH
+            PRINT '   ? ??? ?? ' + @TableName + ': ' + ERROR_MESSAGE()
+        END CATCH
+    END
+    
+    FETCH NEXT FROM remaining_tables_cursor INTO @TableName
+END
+
+CLOSE remaining_tables_cursor
+DEALLOCATE remaining_tables_cursor
+
+-- ==================================================
+-- ????? ????? ???????? ???????? ????????
+-- ==================================================
+
+PRINT ''
+PRINT '?? ????? ????? ???????? ???????? ????????...'
+
+-- ??? Primary Keys ???????? ??????? ??????
+DECLARE @PKScript NVARCHAR(MAX)
+
+DECLARE pk_cursor CURSOR FOR
+SELECT 
+    'ALTER TABLE [' + t.name + '] ADD CONSTRAINT [' + kc.name + '] PRIMARY KEY (' +
+    STUFF((
+        SELECT ', [' + c.name + ']'
+        FROM Assets.sys.index_columns ic
+        INNER JOIN Assets.sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+        WHERE ic.object_id = kc.parent_object_id AND ic.index_id = kc.unique_index_id
+        ORDER BY ic.key_ordinal
+        FOR XML PATH('')
+    ), 1, 2, '') + ');'
+FROM Assets.sys.key_constraints kc
+INNER JOIN Assets.sys.tables t ON kc.parent_object_id = t.object_id
+WHERE kc.type = 'PK'
+
+OPEN pk_cursor
+FETCH NEXT FROM pk_cursor INTO @PKScript
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    BEGIN TRY
+        EXEC sp_executesql @PKScript
+        PRINT '   ?? ?? ????? Primary Key'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ?? ??? ?? ????? Primary Key: ' + ERROR_MESSAGE()
+    END CATCH
+    
+    FETCH NEXT FROM pk_cursor INTO @PKScript
+END
+
+CLOSE pk_cursor
+DEALLOCATE pk_cursor
+
+-- ==================================================
+-- ??????? ???????
+-- ==================================================
+
+PRINT ''
+PRINT '?? ================================================='
+PRINT '? ?? ?????? ????? ???????!'
+PRINT '================================================='
+
+-- ?? ??????? ????????
+DECLARE @FinalTableCount INT
+SELECT @FinalTableCount = COUNT(*) FROM sys.tables WHERE type = 'U'
+
+PRINT '?? ??? ??????? ????????: ' + CAST(@FinalTableCount AS VARCHAR(10))
+
+-- ?? ?????? ???????
+CREATE TABLE #FinalCounts (TableName NVARCHAR(128), Records INT)
+
+DECLARE final_cursor CURSOR FOR
+SELECT name FROM sys.tables WHERE type = 'U'
+
+DECLARE @FinalTableName NVARCHAR(128), @FinalCountSQL NVARCHAR(500), @FinalCount INT
+
+OPEN final_cursor
+FETCH NEXT FROM final_cursor INTO @FinalTableName
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    BEGIN TRY
+        SET @FinalCountSQL = 'SELECT @Count = COUNT(*) FROM [' + @FinalTableName + ']'
+        EXEC sp_executesql @FinalCountSQL, N'@Count INT OUTPUT', @FinalCount OUTPUT
+        INSERT INTO #FinalCounts VALUES (@FinalTableName, @FinalCount)
+    END TRY
+    BEGIN CATCH
+        INSERT INTO #FinalCounts VALUES (@FinalTableName, 0)
+    END CATCH
+    
+    FETCH NEXT FROM final_cursor INTO @FinalTableName
+END
+
+CLOSE final_cursor
+DEALLOCATE final_cursor
+
+PRINT ''
+PRINT '?? ?????? ??????? ????????:'
+SELECT TableName as '??????', Records as '???????' FROM #FinalCounts ORDER BY TableName
+
+DECLARE @TotalFinalRecords BIGINT
+SELECT @TotalFinalRecords = SUM(Records) FROM #FinalCounts
+PRINT ''
+PRINT '?? ?????? ???????: ' + CAST(@TotalFinalRecords AS VARCHAR(20))
+
+DROP TABLE #FinalCounts
+
+PRINT ''
+PRINT '?? ????? ???????? AssetsTest ????? ????????!'
+PRINT '?? Connection String:'
+PRINT 'Data Source=10.0.0.17;Initial Catalog=AssetsTest;User ID=sa;Password=Dur@123456;...'
+
+USE master;
+GO
+
+-- ==================================================
+-- ??? ??????? ????????? ???? ??? ?????
+-- ==================================================
+
+-- ????? ??????? ?? ??????? ?????? (?? ??? ?????? ?????? ??? ???????)
+PRINT '?? ??? ??????? ????????? ???????? ??????...'
+
+-- 1. ????? ?????? ???????? (???? ?????? ??????)
+PRINT '1?? ??? ????? ?????? ????????...'
+
+-- AssetStatuses
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetStatuses')
+BEGIN
+    SELECT * INTO AssetStatuses FROM Assets.dbo.AssetStatuses;
+    PRINT '   ? AssetStatuses: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- AssetCategories  
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetCategories')
+BEGIN
+    SELECT * INTO AssetCategories FROM Assets.dbo.AssetCategories;
+    PRINT '   ? AssetCategories: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- AssetSubcategories
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetSubcategories')
+BEGIN
+    SELECT * INTO AssetSubcategories FROM Assets.dbo.AssetSubcategories;
+    PRINT '   ? AssetSubcategories: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- Departments
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Departments')
+BEGIN
+    SELECT * INTO Departments FROM Assets.dbo.Departments;
+    PRINT '   ? Departments: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- Sections
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Sections')
+BEGIN
+    SELECT * INTO Sections FROM Assets.dbo.Sections;
+    PRINT '   ? Sections: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- Warehouses
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Warehouses')
+BEGIN
+    SELECT * INTO Warehouses FROM Assets.dbo.Warehouses;
+    PRINT '   ? Warehouses: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- 2. ????? ?????? ???????????
+PRINT '2?? ??? ????? ?????? ???????????...'
+
+-- SecurityUsers
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'SecurityUsers')
+BEGIN
+    SELECT * INTO SecurityUsers FROM Assets.dbo.SecurityUsers;
+    PRINT '   ? SecurityUsers: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- Roles
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Roles')
+BEGIN
+    SELECT * INTO Roles FROM Assets.dbo.Roles;
+    PRINT '   ? Roles: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- Permissions
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Permissions')
+BEGIN
+    SELECT * INTO Permissions FROM Assets.dbo.Permissions;
+    PRINT '   ? Permissions: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- RolePermissions
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'RolePermissions')
+BEGIN
+    SELECT * INTO RolePermissions FROM Assets.dbo.RolePermissions;
+    PRINT '   ? RolePermissions: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- UserRoles
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'UserRoles')
+BEGIN
+    SELECT * INTO UserRoles FROM Assets.dbo.UserRoles;
+    PRINT '   ? UserRoles: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- 3. ????????
+PRINT '3?? ??? ???? ????????...'
+
+-- Employees
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Employees')
+BEGIN
+    SELECT * INTO Employees FROM Assets.dbo.Employees;
+    PRINT '   ? Employees: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- 4. ?????? ????????
+PRINT '4?? ??? ???? ?????? ???????...'
+
+-- Assets
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'Assets')
+BEGIN
+    SELECT * INTO Assets FROM Assets.dbo.Assets;
+    PRINT '   ? Assets: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- 5. ????? ????????? ????????
+PRINT '5?? ??? ????? ????????? ????????...'
+
+-- AssetTransfers
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetTransfers')
+BEGIN
+    SELECT * INTO AssetTransfers FROM Assets.dbo.AssetTransfers;
+    PRINT '   ? AssetTransfers: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- AssetMovements
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetMovements')
+BEGIN
+    SELECT * INTO AssetMovements FROM Assets.dbo.AssetMovements;
+    PRINT '   ? AssetMovements: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- 6. ????? ??????? ??????????
+PRINT '6?? ??? ????? ??????? ??????????...'
+
+-- AssetMaintenance
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetMaintenance')
+BEGIN
+    SELECT * INTO AssetMaintenance FROM Assets.dbo.AssetMaintenance;
+    PRINT '   ? AssetMaintenance: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- AssetDisposal
+IF EXISTS (SELECT * FROM Assets.sys.tables WHERE name = 'AssetDisposal')
+BEGIN
+    SELECT * INTO AssetDisposal FROM Assets.dbo.AssetDisposal;
+    PRINT '   ? AssetDisposal: ' + CAST(@@ROWCOUNT AS VARCHAR(10)) + ' ???'
+END
+
+-- 7. ????? ?????? ?? ????
+PRINT '7?? ??? ???? ????? ??????...'
+
+-- ????? cursor ???? ?? ????? ???? ?? ??????
+DECLARE @TableName NVARCHAR(128)
+DECLARE @CopySQL NVARCHAR(MAX)
+DECLARE @Count INT
+
+DECLARE remaining_tables_cursor CURSOR FOR
+SELECT TABLE_NAME 
+FROM Assets.INFORMATION_SCHEMA.TABLES 
+WHERE TABLE_TYPE = 'BASE TABLE' 
+  AND TABLE_NAME NOT IN (
+    'AssetStatuses', 'AssetCategories', 'AssetSubcategories', 
+    'Departments', 'Sections', 'Warehouses',
+    'SecurityUsers', 'Roles', 'Permissions', 'RolePermissions', 'UserRoles',
+    'Employees', 'Assets', 'AssetTransfers', 'AssetMovements',
+    'AssetMaintenance', 'AssetDisposal'
+  )
+
+OPEN remaining_tables_cursor
+FETCH NEXT FROM remaining_tables_cursor INTO @TableName
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    -- ?????? ?? ?? ?????? ??? ????? ?? AssetsTest
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = @TableName)
+    BEGIN
+        SET @CopySQL = 'SELECT * INTO [' + @TableName + '] FROM Assets.dbo.[' + @TableName + ']'
+        EXEC sp_executesql @CopySQL
+        
+        SET @Count = @@ROWCOUNT
+        PRINT '   ? ' + @TableName + ': ' + CAST(@Count AS VARCHAR(10)) + ' ???'
+    END
+    
+    FETCH NEXT FROM remaining_tables_cursor INTO @TableName
+END
+
+CLOSE remaining_tables_cursor
+DEALLOCATE remaining_tables_cursor
+
+-- ==================================================
+-- ????? ????? ???????? ???????? ????????
+-- ==================================================
+
+PRINT ''
+PRINT '?? ????? ????? ???????? ???????? ????????...'
+
+-- ??????? ?????? ????? Primary Keys
+DECLARE @PKScript NVARCHAR(MAX) = ''
+
+-- ??? Primary Keys ?? ????? ???????? ???????
+SET @PKScript = '
+-- Primary Keys Recreation Script
+-- Generated from Assets database
+'
+
+-- ??? Primary Keys ???????? ??????? ??????
+DECLARE pk_cursor CURSOR FOR
+SELECT 
+    'ALTER TABLE [' + t.name + '] ADD CONSTRAINT [' + kc.name + '] PRIMARY KEY (' +
+    STUFF((
+        SELECT ', [' + c.name + ']'
+        FROM Assets.sys.index_columns ic
+        INNER JOIN Assets.sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+        WHERE ic.object_id = kc.parent_object_id AND ic.index_id = kc.unique_index_id
+        ORDER BY ic.key_ordinal
+        FOR XML PATH('')
+    ), 1, 2, '') + ');'
+FROM Assets.sys.key_constraints kc
+INNER JOIN Assets.sys.tables t ON kc.parent_object_id = t.object_id
+WHERE kc.type = 'PK'
+
+OPEN pk_cursor
+FETCH NEXT FROM pk_cursor INTO @PKScript
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    BEGIN TRY
+        EXEC sp_executesql @PKScript
+        PRINT '   ?? ?? ????? Primary Key'
+    END TRY
+    BEGIN CATCH
+        PRINT '   ?? ??? ?? ????? Primary Key: ' + ERROR_MESSAGE()
+    END CATCH
+    
+    FETCH NEXT FROM pk_cursor INTO @PKScript
+END
+
+CLOSE pk_cursor
+DEALLOCATE pk_cursor
+
+-- ==================================================
+-- ??????? ???????
+-- ==================================================
+
+PRINT ''
+PRINT '?? ================================================='
+PRINT '? ?? ?????? ????? ???????!'
+PRINT '================================================='
+
+-- ?? ??????? ????????
+DECLARE @FinalTableCount INT
+SELECT @FinalTableCount = COUNT(*) FROM sys.tables WHERE type = 'U'
+
+PRINT '?? ??? ??????? ????????: ' + CAST(@FinalTableCount AS VARCHAR(10))
+
+-- ?? ?????? ???????
+CREATE TABLE #FinalCounts (TableName NVARCHAR(128), Records INT)
+
+DECLARE final_cursor CURSOR FOR
+SELECT name FROM sys.tables WHERE type = 'U'
+
+DECLARE @FinalTableName NVARCHAR(128), @FinalCountSQL NVARCHAR(500), @FinalCount INT
+
+OPEN final_cursor
+FETCH NEXT FROM final_cursor INTO @FinalTableName
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    SET @FinalCountSQL = 'SELECT @Count = COUNT(*) FROM [' + @FinalTableName + ']'
+    EXEC sp_executesql @FinalCountSQL, N'@Count INT OUTPUT', @FinalCount OUTPUT
+    INSERT INTO #FinalCounts VALUES (@FinalTableName, @FinalCount)
+    
+    FETCH NEXT FROM final_cursor INTO @FinalTableName
+END
+
+CLOSE final_cursor
+DEALLOCATE final_cursor
+
+PRINT ''
+PRINT '?? ?????? ??????? ????????:'
+SELECT TableName as '??????', Records as '???????' FROM #FinalCounts ORDER BY TableName
+
+DECLARE @TotalFinalRecords BIGINT
+SELECT @TotalFinalRecords = SUM(Records) FROM #FinalCounts
+PRINT ''
+PRINT '?? ?????? ???????: ' + FORMAT(@TotalFinalRecords, 'N0')
+
+DROP TABLE #FinalCounts
+
+PRINT ''
+PRINT '?? ????? ???????? AssetsTest ????? ????????!'
+PRINT '?? Connection String:'
+PRINT 'Data Source=10.0.0.17;Initial Catalog=AssetsTest;User ID=sa;Password=Dur@123456;...'
+
+USE master;
+GO

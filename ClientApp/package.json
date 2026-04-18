@@ -4,10 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 10.0.0.17 --port 8098",
+    "dev:server": "vite --host 10.0.0.17 --port 8098",
     "build": "tsc -b && vite build",
+    "build:production": "tsc -b && vite build --mode production",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --host 10.0.0.17 --port 8098",
+    "serve": "vite preview --host 10.0.0.17 --port 8098"
   },
   "dependencies": {
     "@ant-design/charts": "^2.6.7",
