@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import { assetApi } from '../api/asset.api';
 import { categoryApi } from '../api/category.api';
-import { subCategoryApi, type SubCategory } from '../api/subcategory.api';
+import { subCategoryApi, assetNameApi, type SubCategory, type AssetName } from '../api/subcategory.api';
 import { statusApi } from '../api/status.api';
 import { employeeApi } from '../api/employee.api';
 import { warehouseApi } from '../api/warehouse.api';
@@ -23,6 +23,7 @@ export default function EditAssetPage() {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [categories, setCategories] = useState<AssetCategory[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [assetNames, setAssetNames] = useState<AssetName[]>([]);
   const [statuses, setStatuses] = useState<AssetStatus[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -91,6 +92,11 @@ export default function EditAssetPage() {
         // Load subcategories if category is selected
         if (assetData.categoryId) {
           await fetchSubCategories(assetData.categoryId);
+        }
+
+        // Load asset names if subcategory is selected
+        if (assetData.subCategoryId) {
+          await fetchAssetNames(assetData.subCategoryId);
         }
 
         // Load sections if department is selected
@@ -226,10 +232,29 @@ export default function EditAssetPage() {
     }
   };
 
+  const fetchAssetNames = async (subCategoryId: number) => {
+    try {
+      const response = await assetNameApi.getBySubCategoryId(subCategoryId);
+      if (response.data.success && response.data.data) {
+        setAssetNames(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to load asset names:', error);
+      setAssetNames([]);
+    }
+  };
+
   const handleCategoryChange = (categoryId: number) => {
     setSelectedCategory(categoryId);
     form.setFieldValue('subCategoryId', undefined);
+    form.setFieldValue('name', undefined);
+    setAssetNames([]);
     fetchSubCategories(categoryId);
+  };
+
+  const handleSubCategoryChange = (subCategoryId: number) => {
+    form.setFieldValue('name', undefined);
+    fetchAssetNames(subCategoryId);
   };
 
   const handleLocationTypeChange = (value: string) => {
@@ -317,18 +342,57 @@ export default function EditAssetPage() {
           layout="vertical"
           onFinish={handleSubmit}
         >
-          <Divider>المعلومات الأساسية</Divider>
+          <Divider>الفئة واسم الأصل</Divider>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={8}>
+              <Form.Item
+                name="categoryId"
+                label="الفئة الرئيسية"
+                rules={[{ required: true, message: 'الرجاء اختيار الفئة' }]}
+              >
+                <Select placeholder="اختر الفئة" onChange={handleCategoryChange}>
+                  {categories.map(cat => (
+                    <Select.Option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="subCategoryId" label="الفئة الفرعية">
+                <Select placeholder="اختر الفئة الفرعية" disabled={!selectedCategory} onChange={handleSubCategoryChange}>
+                  {subCategories.map(sub => (
+                    <Select.Option key={sub.id} value={sub.id}>
+                      {sub.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={8}>
               <Form.Item
                 name="name"
                 label="اسم الأصل"
-                rules={[{ required: true, message: 'الرجاء إدخال اسم الأصل' }]}
+                rules={[{ required: true, message: 'الرجاء اختيار اسم الأصل' }]}
               >
-                <Input placeholder="أدخل اسم الأصل" />
+                <Select
+                  placeholder={assetNames.length === 0 ? 'اختر الفئة الفرعية أولاً' : 'اختر اسم الأصل'}
+                  disabled={assetNames.length === 0}
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {assetNames.map(n => (
+                    <Select.Option key={n.id} value={n.name}>{n.name}</Select.Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Row>
+
+          <Divider>المعلومات الأساسية</Divider>
+          <Row gutter={16}>
+            <Col span={8}>
               <Form.Item
                 name="serialNumber"
                 label="الرقم التسلسلي"
@@ -337,17 +401,9 @@ export default function EditAssetPage() {
                 <Input placeholder="أدخل الرقم التسلسلي" />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
             <Col span={8}>
               <Form.Item name="barcode" label="الباركود">
                 <Input placeholder="أدخل الباركود" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="qrCode" label="رمز QR">
-                <Input placeholder="يتم إنشاؤه تلقائياً" disabled />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -367,39 +423,17 @@ export default function EditAssetPage() {
             </Col>
           </Row>
 
-          <Form.Item name="description" label="الوصف">
-            <Input.TextArea rows={3} placeholder="أدخل الوصف" />
-          </Form.Item>
-
-          <Divider>الفئة</Divider>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item
-                name="categoryId"
-                label="الفئة الرئيسية"
-                rules={[{ required: true, message: 'الرجاء اختيار الفئة' }]}
-              >
-                <Select placeholder="اختر الفئة" onChange={handleCategoryChange}>
-                  {categories.map(cat => (
-                    <Select.Option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="subCategoryId" label="الفئة الفرعية">
-                <Select placeholder="اختر الفئة الفرعية" disabled={!selectedCategory}>
-                  {subCategories.map(sub => (
-                    <Select.Option key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </Select.Option>
-                  ))}
-                </Select>
+              <Form.Item name="qrCode" label="رمز QR">
+                <Input placeholder="يتم إنشاؤه تلقائياً" disabled />
               </Form.Item>
             </Col>
           </Row>
+
+          <Form.Item name="description" label="الوصف">
+            <Input.TextArea rows={3} placeholder="أدخل الوصف" />
+          </Form.Item>
 
           <Divider>الموقع الحالي</Divider>
           <Row gutter={16}>

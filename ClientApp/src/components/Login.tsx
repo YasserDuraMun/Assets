@@ -1,7 +1,7 @@
 import React, { useState, FormEvent } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { LoginRequest } from '../types/security';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Login: React.FC = () => {
   const [credentials, setCredentials] = useState<LoginRequest>({
@@ -13,6 +13,7 @@ const Login: React.FC = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -22,8 +23,8 @@ const Login: React.FC = () => {
     try {
       const response = await login(credentials);
       if (response.success) {
-        console.log('? Login successful, navigating to dashboard');
-        navigate('/dashboard', { replace: true });
+        const from = (location.state as any)?.from || '/dashboard';
+        navigate(from, { replace: true });
       } else {
         setError(response.message || 'فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد.');
       }

@@ -220,13 +220,126 @@ public class CategoryService : ICategoryService
     public async Task<bool> DeleteSubCategoryAsync(int id)
     {
         var subCategory = await _context.AssetSubCategories.FindAsync(id);
-        
+
         if (subCategory == null)
             return false;
 
         // Soft delete
         subCategory.IsActive = false;
 
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<List<AssetNameDto>> GetAssetNamesBySubCategoryAsync(int subCategoryId)
+    {
+        return await _context.AssetNames
+            .Where(n => n.SubCategoryId == subCategoryId && n.IsActive)
+            .Include(n => n.SubCategory)
+                .ThenInclude(sc => sc.Category)
+            .Select(n => new AssetNameDto
+            {
+                Id = n.Id,
+                Name = n.Name,
+                Code = n.Code,
+                Description = n.Description,
+                SubCategoryId = n.SubCategoryId,
+                SubCategoryName = n.SubCategory.Name,
+                CategoryName = n.SubCategory.Category.Name,
+                IsActive = n.IsActive,
+                AssetsCount = n.Assets.Count,
+                CreatedAt = n.CreatedAt
+            })
+            .OrderBy(n => n.Name)
+            .ToListAsync();
+    }
+
+    public async Task<AssetNameDto> CreateAssetNameAsync(CreateAssetNameDto dto)
+    {
+        var subCategoryExists = await _context.AssetSubCategories.AnyAsync(sc => sc.Id == dto.SubCategoryId && sc.IsActive);
+        if (!subCategoryExists)
+            throw new Exception($"SubCategory with ID {dto.SubCategoryId} not found or inactive");
+
+        var assetName = new AssetName
+        {
+            Name = dto.Name,
+            Code = GenerateAssetNameCode(dto.Name, dto.SubCategoryId),
+            Description = dto.Description,
+            SubCategoryId = dto.SubCategoryId,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.AssetNames.Add(assetName);
+        await _context.SaveChangesAsync();
+
+        var result = await _context.AssetNames
+            .Include(n => n.SubCategory)
+                .ThenInclude(sc => sc.Category)
+            .Include(n => n.Assets)
+            .FirstAsync(n => n.Id == assetName.Id);
+
+        return new AssetNameDto
+        {
+            Id = result.Id,
+            Name = result.Name,
+            Code = result.Code,
+            Description = result.Description,
+            SubCategoryId = result.SubCategoryId,
+            SubCategoryName = result.SubCategory.Name,
+            CategoryName = result.SubCategory.Category.Name,
+            IsActive = result.IsActive,
+            AssetsCount = result.Assets.Count,
+            CreatedAt = result.CreatedAt
+        };
+    }
+
+    public async Task<AssetNameDto> UpdateAssetNameAsync(UpdateAssetNameDto dto)
+    {
+        var assetName = await _context.AssetNames.FindAsync(dto.Id);
+        if (assetName == null)
+            throw new Exception("AssetName not found");
+
+        var subCategoryExists = await _context.AssetSubCategories.AnyAsync(sc => sc.Id == dto.SubCategoryId && sc.IsActive);
+        if (!subCategoryExists)
+            throw new Exception($"SubCategory with ID {dto.SubCategoryId} not found or inactive");
+
+        assetName.Name = dto.Name;
+        assetName.Code = GenerateAssetNameCode(dto.Name, dto.SubCategoryId);
+        assetName.Description = dto.Description;
+        assetName.SubCategoryId = dto.SubCategoryId;
+        assetName.IsActive = dto.IsActive;
+
+        await _context.SaveChangesAsync();
+
+        var result = await _context.AssetNames
+            .Include(n => n.SubCategory)
+                .ThenInclude(sc => sc.Category)
+            .Include(n => n.Assets)
+            .FirstAsync(n => n.Id == assetName.Id);
+
+        return new AssetNameDto
+        {
+            Id = result.Id,
+            Name = result.Name,
+            Code = result.Code,
+            Description = result.Description,
+            SubCategoryId = result.SubCategoryId,
+            SubCategoryName = result.SubCategory.Name,
+            CategoryName = result.SubCategory.Category.Name,
+            IsActive = result.IsActive,
+            AssetsCount = result.Assets.Count,
+            CreatedAt = result.CreatedAt
+        };
+    }
+
+    public async Task<bool> DeleteAssetNameAsync(int id)
+    {
+        var assetName = await _context.AssetNames.FindAsync(id);
+        if (assetName == null)
+            return false;
+
+        assetName.IsActive = false;
         await _context.SaveChangesAsync();
         return true;
     }
@@ -324,6 +437,36 @@ public class CategoryService : ICategoryService
         do
         {
             uniqueCode = $"{baseCode}{counter}";
+            counter++;
+        } while (existingCodes.Contains(uniqueCode));
+
+        return uniqueCode;
+    }
+
+    private string GenerateAssetNameCode(string name, int subCategoryId)
+    {
+        var subCategoryCode = _context.AssetSubCategories
+            .Where(sc => sc.Id == subCategoryId)
+            .Select(sc => sc.Code)
+            .FirstOrDefault() ?? "SUB";
+
+        var baseCode = GenerateBaseCode(name);
+        var fullCode = $"{subCategoryCode}-{baseCode}";
+
+        var existingCodes = _context.AssetNames
+            .Where(n => n.Code.StartsWith(fullCode))
+            .Select(n => n.Code)
+            .AsEnumerable()
+            .ToList();
+
+        if (!existingCodes.Contains(fullCode))
+            return fullCode;
+
+        int counter = 1;
+        string uniqueCode;
+        do
+        {
+            uniqueCode = $"{fullCode}{counter}";
             counter++;
         } while (existingCodes.Contains(uniqueCode));
 

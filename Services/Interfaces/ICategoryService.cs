@@ -15,4 +15,10 @@ public interface ICategoryService
     Task<SubCategoryDto> CreateSubCategoryAsync(CreateSubCategoryDto dto);
     Task<SubCategoryDto> UpdateSubCategoryAsync(UpdateSubCategoryDto dto);
     Task<bool> DeleteSubCategoryAsync(int id);
+
+    // AssetNames
+    Task<List<AssetNameDto>> GetAssetNamesBySubCategoryAsync(int subCategoryId);
+    Task<AssetNameDto> CreateAssetNameAsync(CreateAssetNameDto dto);
+    Task<AssetNameDto> UpdateAssetNameAsync(UpdateAssetNameDto dto);
+    Task<bool> DeleteAssetNameAsync(int id);
 }

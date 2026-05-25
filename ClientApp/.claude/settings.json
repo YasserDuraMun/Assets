@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/haya/source/repos/Assets - Copy/Assets/Models/**)",
+      "Bash(find \"c:\\\\Users\\\\haya\\\\source\\\\repos\\\\Assets - Copy\\\\Assets\" -type f -name \"*AssetDto*\" -o -name \"*AssetDTO*\")",
+      "Read(//c/Users/haya/source/repos/Assets - Copy/Assets/**)"
+    ]
+  }
+}

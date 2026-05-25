@@ -85,3 +85,50 @@ public class SubCategoryDto
     public int AssetsCount { get; set; }
     public DateTime CreatedAt { get; set; }
 }
+
+// ---- Asset Names ----
+
+public class CreateAssetNameDto
+{
+    [Required(ErrorMessage = "اسم الأصل مطلوب")]
+    [StringLength(200)]
+    public string Name { get; set; } = string.Empty;
+
+    public string? Description { get; set; }
+
+    [Required(ErrorMessage = "الفئة الفرعية مطلوبة")]
+    [Range(1, int.MaxValue, ErrorMessage = "يجب اختيار فئة فرعية صحيحة")]
+    public int SubCategoryId { get; set; }
+}
+
+public class UpdateAssetNameDto
+{
+    [Required]
+    public int Id { get; set; }
+
+    [Required]
+    [StringLength(200)]
+    public string Name { get; set; } = string.Empty;
+
+    public string? Description { get; set; }
+
+    [Required]
+    [Range(1, int.MaxValue)]
+    public int SubCategoryId { get; set; }
+
+    public bool IsActive { get; set; }
+}
+
+public class AssetNameDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public int SubCategoryId { get; set; }
+    public string SubCategoryName { get; set; } = string.Empty;
+    public string CategoryName { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public int AssetsCount { get; set; }
+    public DateTime CreatedAt { get; set; }
+}

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp } from 'antd';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
@@ -18,6 +18,7 @@ import TransferDetailsPage from './pages/TransferDetailsPage';
 import DisposalsPage from './pages/DisposalsPage';
 import MaintenancePage from './pages/MaintenancePage';
 import ReportsPage from './pages/ReportsPage';
+import EmployeeAssetsPage from './pages/EmployeeAssetsPage';
 import './App.css';
 
 // Settings page wrapper that checks for any sub-permission
@@ -129,11 +130,12 @@ function App() {
 // Separate component for routes to use AuthContext
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
-  
+  const location = useLocation();
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      
+
       {isAuthenticated ? (
         <>
           <Route path="/dashboard" element={
@@ -163,6 +165,12 @@ function AppRoutes() {
           <Route path="/assets/:id/edit" element={
             <PermissionGuard screenName="Assets" action="update">
               <EditAssetPage />
+            </PermissionGuard>
+          } />
+
+          <Route path="/employees/:id/assets" element={
+            <PermissionGuard screenName="Employees" action="view">
+              <EmployeeAssetsPage />
             </PermissionGuard>
           } />
           
@@ -257,7 +265,7 @@ function AppRoutes() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </>
       ) : (
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" state={{ from: location.pathname + location.search }} replace />} />
       )}
     </Routes>
   );

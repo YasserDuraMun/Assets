@@ -230,7 +230,7 @@ namespace Assets.Services.Implementations
                 using var reader = await tablesCommand.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
-                    tables.Add(reader.GetString("TABLE_NAME"));
+                    tables.Add(reader.GetString(reader.GetOrdinal("TABLE_NAME")));
                 }
             }
 

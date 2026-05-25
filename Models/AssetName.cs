@@ -1,17 +1,16 @@
 namespace Assets.Models;
 
-public class AssetSubCategory
+public class AssetName
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public int CategoryId { get; set; }
+    public int SubCategoryId { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
-    public AssetCategory Category { get; set; } = null!;
+    public AssetSubCategory SubCategory { get; set; } = null!;
     public ICollection<Asset> Assets { get; set; } = new List<Asset>();
-    public ICollection<AssetName> AssetNames { get; set; } = new List<AssetName>();
 }

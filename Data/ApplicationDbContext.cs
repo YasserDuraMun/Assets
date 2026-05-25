@@ -29,6 +29,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Asset> Assets { get; set; }
     public DbSet<AssetCategory> AssetCategories { get; set; }
     public DbSet<AssetSubCategory> AssetSubCategories { get; set; }
+    public DbSet<AssetName> AssetNames { get; set; }
     public DbSet<AssetStatus> AssetStatuses { get; set; }
 
     // Operations
@@ -154,6 +155,11 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(e => e.SubCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne(e => e.AssetNameRef)
+                .WithMany(n => n.Assets)
+                .HasForeignKey(e => e.AssetNameId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasOne(e => e.Status)
                 .WithMany(s => s.Assets)
                 .HasForeignKey(e => e.StatusId)
@@ -172,6 +178,20 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(e => e.CurrentDepartment)
                 .WithMany(d => d.Assets)
                 .HasForeignKey(e => e.CurrentDepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // AssetName configurations
+        modelBuilder.Entity<AssetName>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsUnicode(true).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Code).HasMaxLength(50);
+            entity.Property(e => e.Description).IsUnicode(true).HasMaxLength(500);
+
+            entity.HasOne(e => e.SubCategory)
+                .WithMany(s => s.AssetNames)
+                .HasForeignKey(e => e.SubCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

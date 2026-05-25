@@ -247,4 +247,96 @@ public class CategoriesController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse("??? ?? ??? ??????? ??????"));
         }
     }
+
+    // ---- Asset Names ----
+
+    /// <summary>
+    /// Get asset names for a subcategory
+    /// </summary>
+    [HttpGet("subcategories/{subCategoryId}/assetnames")]
+    [RequirePermission("Categories", "view")]
+    public async Task<IActionResult> GetAssetNames(int subCategoryId)
+    {
+        try
+        {
+            var assetNames = await _categoryService.GetAssetNamesBySubCategoryAsync(subCategoryId);
+            return Ok(ApiResponse<List<AssetNameDto>>.SuccessResponse(assetNames));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting asset names for subcategory {SubCategoryId}", subCategoryId);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("خطأ في تحميل أسماء الأصول"));
+        }
+    }
+
+    /// <summary>
+    /// Create new asset name
+    /// </summary>
+    [HttpPost("assetnames")]
+    [RequirePermission("Categories", "insert")]
+    public async Task<IActionResult> CreateAssetName([FromBody] CreateAssetNameDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ApiResponse<object>.ErrorResponse("البيانات المدخلة غير صحيحة"));
+
+        try
+        {
+            var assetName = await _categoryService.CreateAssetNameAsync(dto);
+            return Ok(ApiResponse<AssetNameDto>.SuccessResponse(assetName, "تم إضافة اسم الأصل بنجاح"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating asset name");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse($"خطأ في إضافة اسم الأصل: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// Update asset name
+    /// </summary>
+    [HttpPut("assetnames/{id}")]
+    [RequirePermission("Categories", "update")]
+    public async Task<IActionResult> UpdateAssetName(int id, [FromBody] UpdateAssetNameDto dto)
+    {
+        if (id != dto.Id)
+            return BadRequest(ApiResponse<object>.ErrorResponse("معرف السجل غير متطابق"));
+
+        if (!ModelState.IsValid)
+            return BadRequest(ApiResponse<object>.ErrorResponse("البيانات المدخلة غير صحيحة"));
+
+        try
+        {
+            var assetName = await _categoryService.UpdateAssetNameAsync(dto);
+            return Ok(ApiResponse<AssetNameDto>.SuccessResponse(assetName, "تم تحديث اسم الأصل بنجاح"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating asset name with ID: {Id}", id);
+            if (ex.Message.Contains("not found"))
+                return NotFound(ApiResponse<object>.ErrorResponse("اسم الأصل غير موجود"));
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("خطأ في تحديث اسم الأصل"));
+        }
+    }
+
+    /// <summary>
+    /// Delete asset name (soft delete)
+    /// </summary>
+    [HttpDelete("assetnames/{id}")]
+    [RequirePermission("Categories", "delete")]
+    public async Task<IActionResult> DeleteAssetName(int id)
+    {
+        try
+        {
+            var success = await _categoryService.DeleteAssetNameAsync(id);
+            if (!success)
+                return NotFound(ApiResponse<object>.ErrorResponse("اسم الأصل غير موجود"));
+
+            return Ok(ApiResponse<object>.SuccessResponse(null, "تم حذف اسم الأصل بنجاح"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting asset name");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("خطأ في حذف اسم الأصل"));
+        }
+    }
 }

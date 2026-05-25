@@ -42,6 +42,8 @@ export interface Asset {
   categoryName?: string;
   subCategoryId?: number;
   subCategoryName?: string;
+  assetNameId?: number;
+  assetNameName?: string;
   statusId: number;
   statusName?: string;
   statusColor?: string;
@@ -127,12 +129,15 @@ export interface Employee {
   employeeNumber: string;
   email?: string;
   phoneNumber?: string;
+  phone?: string;
   nationalId?: string;
   jobTitle?: string;
   departmentId: number;
   departmentName?: string;
   sectionId?: number;
   sectionName?: string;
+  qrCode?: string;
+  assetsCount?: number;
   isActive: boolean;
   createdAt: string;
 }

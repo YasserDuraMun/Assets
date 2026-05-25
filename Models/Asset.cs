@@ -14,6 +14,7 @@ public class Asset
     // ?????
     public int CategoryId { get; set; }
     public int? SubCategoryId { get; set; }
+    public int? AssetNameId { get; set; }
 
     // ???? ?????
     public int StatusId { get; set; }
@@ -61,6 +62,7 @@ public class Asset
     // Navigation properties
     public AssetCategory Category { get; set; } = null!;
     public AssetSubCategory? SubCategory { get; set; }
+    public AssetName? AssetNameRef { get; set; }
     public AssetStatus Status { get; set; } = null!;
     public Employee? CurrentEmployee { get; set; }
     public Warehouse? CurrentWarehouse { get; set; }
