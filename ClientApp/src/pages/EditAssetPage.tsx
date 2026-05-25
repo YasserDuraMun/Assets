@@ -412,8 +412,8 @@ export default function EditAssetPage() {
                 <Select onChange={handleLocationTypeChange}>
                   <Select.Option value="Employee">موظف</Select.Option>
                   <Select.Option value="Warehouse">مستودع</Select.Option>
-                  <Select.Option value="Department">قسم</Select.Option>
-                  <Select.Option value="Section">شعبة</Select.Option>
+                  <Select.Option value="Department">دائرة</Select.Option>
+                  <Select.Option value="Section">قسم</Select.Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -441,8 +441,8 @@ export default function EditAssetPage() {
                 </Form.Item>
               )}
               {locationType === 'Department' && (
-                <Form.Item name="currentDepartmentId" label="القسم" rules={[{ required: true }]}>
-                  <Select placeholder="اختر القسم">
+                <Form.Item name="currentDepartmentId" label="الدائرة" rules={[{ required: true }]}>
+                  <Select placeholder="اختر الدائرة">
                     {departments.map(dept => (
                       <Select.Option key={dept.id} value={dept.id}>
                         {dept.name}
@@ -453,8 +453,8 @@ export default function EditAssetPage() {
               )}
               {locationType === 'Section' && (
                 <>
-                  <Form.Item name="currentDepartmentId" label="القسم" rules={[{ required: true }]}>
-                    <Select placeholder="اختر القسم" onChange={handleDepartmentChange}>
+                  <Form.Item name="currentDepartmentId" label="الدائرة" rules={[{ required: true }]}>
+                    <Select placeholder="اختر الدائرة" onChange={handleDepartmentChange}>
                       {departments.map(dept => (
                         <Select.Option key={dept.id} value={dept.id}>
                           {dept.name}
@@ -470,8 +470,8 @@ export default function EditAssetPage() {
           {locationType === 'Section' && (
             <Row gutter={16}>
               <Col span={24}>
-                <Form.Item name="currentSectionId" label="الشعبة" rules={[{ required: true }]}>
-                  <Select placeholder="اختر الشعبة">
+                <Form.Item name="currentSectionId" label="القسم" rules={[{ required: true }]}>
+                  <Select placeholder="اختر القسم">
                     {sections.map(sec => (
                       <Select.Option key={sec.id} value={sec.id}>
                         {sec.name}

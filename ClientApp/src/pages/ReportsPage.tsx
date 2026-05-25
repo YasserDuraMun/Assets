@@ -349,7 +349,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="الأصول المستبعدة"
+                title="الأصول المتلفة"
                 value={assetsSummary.summary.disposedAssets}
                 valueStyle={{ color: '#f5222d' }}
               />
@@ -425,7 +425,7 @@ export default function ReportsPage() {
 
   const renderDisposalReportTab = () => {
     if (!disposalReport) {
-      return <Empty description="لا توجد بيانات تقرير الاستبعاد" />;
+      return <Empty description="لا توجد بيانات تقرير الاتلاف" />;
     }
 
     return (
@@ -435,7 +435,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12}>
             <Card>
               <Statistic
-                title="إجمالي الأصول المستبعدة"
+                title="إجمالي الأصول المتلفة"
                 value={disposalReport.summary.totalDisposals}
                 prefix={<DeleteOutlined />}
                 valueStyle={{ color: '#f5222d' }}
@@ -451,7 +451,7 @@ export default function ReportsPage() {
         </Row>
 
         {/* Disposal by Reason */}
-        <Card title="الاستبعادات حسب السبب" size="small">
+        <Card title="الاتلافات حسب السبب" size="small">
           <Table
             dataSource={disposalReport.disposalsByReason}
             columns={[
@@ -475,7 +475,7 @@ export default function ReportsPage() {
         </Card>
 
         {/* Recent Disposals */}
-        <Card title="الاستبعادات الأخيرة" size="small">
+        <Card title="الاتلافات الأخيرة" size="small">
           <Table
             dataSource={disposalReport.recentDisposals}
             columns={[
@@ -496,7 +496,7 @@ export default function ReportsPage() {
                 render: (text: string) => <Tag color="red">{text}</Tag>
               },
               { 
-                title: 'تاريخ الاستبعاد', 
+                title: 'تاريخ الاتلاف', 
                 dataIndex: 'disposalDate', 
                 key: 'disposalDate',
                 render: (date: string) => dayjs(date).format('DD/MM/YYYY')
@@ -614,7 +614,7 @@ export default function ReportsPage() {
 
   const renderTransfersReportTab = () => {
     if (!transfersReport) {
-      return <Empty description="لا توجد بيانات تقرير التحويلات" />;
+      return <Empty description="لا توجد بيانات تقرير الأصول المنقولة" />;
     }
 
     return (
@@ -624,7 +624,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12}>
             <Card>
               <Statistic
-                title="إجمالي التحويلات"
+                title="إجمالي الأصول المنقولة"
                 value={transfersReport.summary.totalTransfers}
                 prefix={<SwapOutlined />}
                 valueStyle={{ color: '#52c41a' }}
@@ -640,7 +640,7 @@ export default function ReportsPage() {
         </Row>
 
         {/* Transfers by Category */}
-        <Card title="التحويلات حسب الفئة" size="small">
+        <Card title="الأصول المنقولة حسب الفئة" size="small">
           <Table
             dataSource={transfersReport.transfersByCategory}
             columns={[
@@ -650,7 +650,7 @@ export default function ReportsPage() {
                 key: 'category' 
               },
               { 
-                title: 'عدد التحويلات', 
+                title: 'عدد الأصول المنقولة', 
                 dataIndex: 'count', 
                 key: 'count',
                 render: (count: number) => (
@@ -664,7 +664,7 @@ export default function ReportsPage() {
         </Card>
 
         {/* Recent Transfers */}
-        <Card title="التحويلات الأخيرة" size="small">
+        <Card title="الأصول المنقولة الأخيرة" size="small">
           <Table
             dataSource={transfersReport.recentTransfers}
             columns={[
@@ -723,7 +723,7 @@ export default function ReportsPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="الأصول المستبعدة"
+                title="الأصول المتلفة"
                 value={monthlyReport.summary.disposals}
                 valueStyle={{ color: '#f5222d' }}
               />
@@ -1011,7 +1011,7 @@ export default function ReportsPage() {
               tab={
                 <span>
                   <DeleteOutlined />
-                  الأصول المستبعدة
+                    الأصول المتلفة
                 </span>
               }
               key="disposal"
@@ -1035,7 +1035,7 @@ export default function ReportsPage() {
               tab={
                 <span>
                   <SwapOutlined />
-                  التحويلات
+                  الأصول المنقولة
                 </span>
               }
               key="transfers"

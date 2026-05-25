@@ -1,0 +1,160 @@
+# ===================================
+# Test Environment Migration
+# AssetTST Database Migration
+# ===================================
+
+Write-Host "?? ????? Migration ??? ????? ?????? AssetTST" -ForegroundColor Blue
+Write-Host "=============================================" -ForegroundColor Blue
+Write-Host ""
+
+$AssetTSTConnectionString = "Data Source=10.0.0.17;Initial Catalog=AssetTST;User ID=sa;Password=Dur@123456;Connect Timeout=30;Encrypt=True;Trust Server Certificate=True;Application Intent=ReadWrite;Multi Subnet Failover=False"
+
+Write-Host "?? ??????? Migration:" -ForegroundColor Cyan
+Write-Host "   ????? ????????: AssetTST" -ForegroundColor Gray
+Write-Host "   ??????: 10.0.0.17" -ForegroundColor Gray
+Write-Host "   ??????: Test" -ForegroundColor Gray
+Write-Host ""
+
+# ?????? ?? ???? ????? ????????
+Write-Host "1?? ?????? ?? ???? ????? ???????? AssetTST..." -ForegroundColor Yellow
+
+try {
+    $connection = New-Object System.Data.SqlClient.SqlConnection($AssetTSTConnectionString)
+    $connection.Open()
+    
+    $command = $connection.CreateCommand()
+    $command.CommandText = "SELECT DB_NAME()"
+    $dbName = $command.ExecuteScalar()
+    
+    $connection.Close()
+    
+    if ($dbName -eq "AssetTST") {
+        Write-Host "   ? ????? ???????? AssetTST ?????? ??????" -ForegroundColor Green
+    } else {
+        Write-Host "   ? ???: ?? ??? ??????? ?? AssetTST" -ForegroundColor Red
+        exit 1
+    }
+    
+} catch {
+    Write-Host "   ? ??? ?? ??????? ?? AssetTST: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+
+# ??? appsettings.json ???????
+Write-Host ""
+Write-Host "2?? ????? ??????? Migration..." -ForegroundColor Yellow
+
+if (Test-Path "appsettings.json") {
+    $originalSettings = Get-Content "appsettings.json" -Raw
+    Copy-Item "appsettings.json" "appsettings.json.migration-backup"
+    Write-Host "   ?? ?? ??? ???? ???????? ?? appsettings.json" -ForegroundColor Gray
+    
+    # ????? connection string ??????
+    $settings = $originalSettings | ConvertFrom-Json
+    $settings.ConnectionStrings.DefaultConnection = $AssetTSTConnectionString
+    $settings | ConvertTo-Json -Depth 10 | Set-Content "appsettings.json"
+    Write-Host "   ?? ?? ????? connection string ?? AssetTST" -ForegroundColor Gray
+} else {
+    Write-Host "   ? ??? appsettings.json ??? ?????" -ForegroundColor Red
+    exit 1
+}
+
+# ????? Migration Commands
+Write-Host ""
+Write-Host "3?? ????? Migration Commands..." -ForegroundColor Yellow
+
+$migrationCommands = @(
+    @{ Name = "??? Migrations ???????"; Command = "dotnet ef migrations list" },
+    @{ Name = "????? Migration ????"; Command = "dotnet ef migrations add AssetTST_Environment_Migration --output-dir Migrations" },
+    @{ Name = "????? Migration"; Command = "dotnet ef database update" },
+    @{ Name = "?????? ?? ???? ????? ????????"; Command = "dotnet ef migrations list" }
+)
+
+foreach ($cmd in $migrationCommands) {
+    Write-Host "   ?? $($cmd.Name)..." -ForegroundColor Gray
+    
+    try {
+        $process = Start-Process -FilePath "dotnet" -ArgumentList ($cmd.Command -split ' ' | Select-Object -Skip 1) -Wait -PassThru -NoNewWindow
+        
+        if ($process.ExitCode -eq 0) {
+            Write-Host "   ? $($cmd.Name) ???" -ForegroundColor Green
+        } else {
+            Write-Host "   ?? $($cmd.Name) ??? - ??? ??????: $($process.ExitCode)" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "   ? ??? ?? $($cmd.Name): $($_.Exception.Message)" -ForegroundColor Red
+    }
+    
+    Start-Sleep -Seconds 2
+}
+
+# ??????? ????????? ???????
+Write-Host ""
+Write-Host "4?? ??????? ????????? ???????..." -ForegroundColor Yellow
+
+try {
+    Copy-Item "appsettings.json.migration-backup" "appsettings.json" -Force
+    Remove-Item "appsettings.json.migration-backup" -Force
+    Write-Host "   ? ?? ??????? appsettings.json ??????" -ForegroundColor Green
+} catch {
+    Write-Host "   ?? ?? ???? ??????? ????????? ???????" -ForegroundColor Yellow
+}
+
+# ?????? ???????
+Write-Host ""
+Write-Host "5?? ?????? ??????? ?? AssetTST..." -ForegroundColor Yellow
+
+try {
+    $connection = New-Object System.Data.SqlClient.SqlConnection($AssetTSTConnectionString)
+    $connection.Open()
+    
+    # ??? ???????
+    $tablesCommand = $connection.CreateCommand()
+    $tablesCommand.CommandText = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
+    $tableCount = $tablesCommand.ExecuteScalar()
+    
+    # ??? Migration History
+    $migrationCommand = $connection.CreateCommand()
+    $migrationCommand.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory"
+    $migrationCount = $migrationCommand.ExecuteScalar()
+    
+    # ??? ????????
+    $usersCommand = $connection.CreateCommand()
+    $usersCommand.CommandText = "SELECT COUNT(*) FROM SecurityUsers"
+    $usersCount = $usersCommand.ExecuteScalar()
+    
+    $assetsCommand = $connection.CreateCommand()
+    $assetsCommand.CommandText = "SELECT COUNT(*) FROM Assets"
+    $assetsCount = $assetsCommand.ExecuteScalar()
+    
+    $connection.Close()
+    
+    Write-Host "   ? ?????? ??????? ???:" -ForegroundColor Green
+    Write-Host "      ?? ??? ???????: $tableCount" -ForegroundColor Gray
+    Write-Host "      ??? ??? Migrations: $migrationCount" -ForegroundColor Gray
+    Write-Host "      ?? ??? ??????????: $usersCount" -ForegroundColor Gray
+    Write-Host "      ?? ??? ??????: $assetsCount" -ForegroundColor Gray
+    
+} catch {
+    Write-Host "   ? ??? ?? ?????? ???????: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+Write-Host ""
+Write-Host "?? =========================================" -ForegroundColor Green
+Write-Host "? Migration ??? AssetTST ?????!" -ForegroundColor Green
+Write-Host "=========================================" -ForegroundColor Green
+Write-Host ""
+
+Write-Host "?? ?????? ??????? ??? AssetTST:" -ForegroundColor Cyan
+Write-Host "   1. ?????? appsettings.Test.json:" -ForegroundColor Gray
+Write-Host "      dotnet run --environment Test" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "   2. ?? ???? DefaultConnection ?? appsettings.json:" -ForegroundColor Gray
+Write-Host "      $AssetTSTConnectionString" -ForegroundColor Yellow
+
+Write-Host ""
+Write-Host "?? ?????? ????:" -ForegroundColor Blue
+Write-Host "   sqlcmd -S 10.0.0.17 -U sa -P Dur@123456 -d AssetTST -Q ""SELECT 'AssetTST Ready!' AS Status""" -ForegroundColor Gray
+
+Write-Host ""
+Write-Host "? ????? ?????? AssetTST ????? ?????????!" -ForegroundColor Green

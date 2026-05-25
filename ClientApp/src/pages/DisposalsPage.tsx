@@ -72,12 +72,12 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
         
         // إظهار رسالة فقط عند أول تحميل
         if (pagination.current === 1) {
-          message.info('لم يتم العثور على أصول مستبعدة. جرّب استبعاد أصل أولاً؛');
+          message.info('لم يتم العثور على أصول متلفة. جرّب اتلاف أصل أولاً؛');
         }
       }
     } catch (error) {
       console.error('?? Failed to load disposals:', error);
-      message.error('فشل تحميل الأصول المستبعدة');
+      message.error('فشل تحميل الأصول المتلفة');
       setDisposals([]);
     } finally {
       setLoading(false);
@@ -158,7 +158,7 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
       width: 150,
     },
     {
-      title: 'تاريخ الاستبعاد',
+      title: 'تاريخ الاتلاف',
       dataIndex: 'disposalDate',
       key: 'disposalDate',
       width: 120,
@@ -220,7 +220,7 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <CalendarOutlined style={{ marginRight: 8 }} />
-              <span>الأصول المستبعدة</span>
+              <span>الأصول المتلفة</span>
             </div>
             <Button 
               type="primary" 
@@ -271,7 +271,7 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => 
-              `${range[0]}-${range[1]} من ${total} أصل مستبعد`,
+              `${range[0]}-${range[1]} من ${total} أصل متلف`,
           }}
           onChange={handleTableChange}
           scroll={{ x: 1000 }}
@@ -280,10 +280,10 @@ console.log('?? Current state:', { disposals: disposals.length, loading, paginat
             emptyText: loading ? 'جاري التحميل...' : (
               <div style={{ padding: 20, textAlign: 'center' }}>
                 <CalendarOutlined style={{ fontSize: 48, color: '#ccc', marginBottom: 16 }} />
-                <div>لم يتم العثور على أصول مستبعدة</div>
+                <div>لم يتم العثور على أصول متلفة</div>
                 <div style={{ color: '#999', marginTop: 8 }}>
                   {disposals.length === 0 && !loading 
-                    ? 'جرّب استبعاد أصل من صفحة الأصول أولاً؛'
+                    ? 'جرّب اتلاف أصل من صفحة الأصول أولاً؛'
                     : 'جرّب تعديل معايير البحث'
                   }
                 </div>

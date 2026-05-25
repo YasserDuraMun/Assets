@@ -296,8 +296,8 @@ export default function AddAssetPage() {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="currentDepartmentId" label="الإدارة (اختياري)">
-                <Select placeholder="اختر الإدارة (اختياري)" onChange={handleDepartmentChange} allowClear>
+              <Form.Item name="currentDepartmentId" label="الدائرة (اختياري)">
+                <Select placeholder="اختر الدائرة (اختياري)" onChange={handleDepartmentChange} allowClear>
                   {departments.map(dept => (
                     <Select.Option key={dept.id} value={dept.id}>
                       {dept.name}

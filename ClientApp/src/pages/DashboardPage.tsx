@@ -121,7 +121,7 @@ const loadDashboardData = async () => {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic
-                title="الأصول المستبعدة"
+                title="الأصول المتلفة"
                 value={stats.disposedAssets}
                 prefix={<DeleteOutlined />}
                 valueStyle={{ color: '#cf1322' }}
@@ -209,7 +209,7 @@ const loadDashboardData = async () => {
             </Card>
           </Col>
           <Col xs={24} lg={12}>
-            <Card title="عمليات الاستبعاد الأخيرة" size="small">
+            <Card title="عمليات الاتلاف الأخيرة" size="small">
               <Statistic
                 title="هذا الشهر"
                 value={stats.recentDisposals}
@@ -249,7 +249,7 @@ const loadDashboardData = async () => {
                 <div style={{ fontSize: 24, fontWeight: 'bold', color: '#ff4d4f' }}>
                   {stats.disposedAssets}
                 </div>
-                <div>مستبعدة</div>
+                <div>متلفة</div>
               </div>
             </Col>
           </Row>

@@ -18,8 +18,8 @@ export default defineConfig(({ mode }) => {
       }
     },
     server: {
-      host: env.VITE_APP_HOST || '10.0.0.17',
-      port: parseInt(env.VITE_APP_PORT || '8098'),
+      host: env.VITE_APP_HOST || (mode === 'development' ? 'localhost' : '10.0.0.17'),
+      port: parseInt(env.VITE_APP_PORT || (mode === 'development' ? '5173' : '8098')),
       proxy: {
         '/api': {
           target: env.VITE_API_BASE_URL?.replace('/api', '') || 'http://10.0.0.17:8099',

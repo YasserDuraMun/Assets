@@ -176,12 +176,12 @@ const [filters, setFilters] = useState({
   const handleDispose = (asset: Asset) => {
     // Check if user has disposal create permission
     if (!disposalPermissions.canCreate) {
-      message.error('ليس لديك صلاحية لاستبعاد الأصول');
+      message.error('ليس لديك صلاحية لاتلاف الأصول');
       return;
     }
 
     if (asset.statusName === 'Disposed') {
-      message.warning('تم استبعاد هذا الأصل مسبقاً');
+      message.warning('تم اتلاف هذا الأصل مسبقاً');
       return;
     }
     setSelectedAssetForDisposal(asset);
@@ -408,9 +408,9 @@ const [filters, setFilters] = useState({
               danger
               icon={<DeleteOutlined />}
               onClick={() => handleDispose(record)}
-              title="استبعاد الأصل"
+              title="اتلاف الأصل"
             >
-              استبعاد
+              اتلاف
             </Button>
           );
         }
@@ -576,9 +576,9 @@ const [filters, setFilters] = useState({
             </Button>
             
             <Button 
-              onClick={() => navigate('/disposals')}
+              onClick={() => navigate('/disposal')}
             >
-              عرض الأصول المستبعدة
+              عرض الأصول المتلفة
             </Button>
           </Space>
 

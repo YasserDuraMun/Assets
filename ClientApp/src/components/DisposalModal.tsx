@@ -68,7 +68,7 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
       ];
       setDisposalReasons(fallbackReasons);
       
-      message.error('فشل تحميل خيارات الاستبعاد من السيرفر. استخدام الخيارات الافتراضية.');
+      message.error('فشل تحميل خيارات الاتلاف من السيرفر. استخدام الخيارات الافتراضية.');
     } finally {
       setDataLoading(false);
     }
@@ -87,7 +87,7 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
       };
 
       await disposalApi.create(disposalData);
-      message.success('تم استبعاد الأصل بنجاح');
+      message.success('تم اتلاف الأصل بنجاح');
       form.resetFields();
       onSuccess();
     } catch (error: any) {
@@ -95,7 +95,7 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
       if (error.response?.data?.message) {
         message.error(error.response.data.message);
       } else {
-        message.error('فشل في استبعاد الأصل');
+        message.error('فشل في اتلاف الأصل');
       }
     } finally {
       setLoading(false);
@@ -111,14 +111,14 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
     <Modal
       title={
         <span>
-          <DeleteOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
-          استبعاد أصل
-        </span>
+            <DeleteOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
+            اتلاف أصل
+          </span>
       }
       open={visible}
       onCancel={handleCancel}
       onOk={() => form.submit()}
-      okText="استبعاد الأصل"
+      okText="اتلاف الأصل"
       cancelText="إلغاء"
       okButtonProps={{ 
         loading, 
@@ -136,7 +136,7 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
           padding: 16, 
           marginBottom: 24 
         }}>
-          <h4 style={{ margin: 0, color: '#cf1322' }}>الأصل المراد استبعاده:</h4>
+          <h4 style={{ margin: 0, color: '#cf1322' }}>الأصل المراد اتلافه:</h4>
           <p style={{ margin: '8px 0 0 0', fontSize: 16 }}>
             <strong>{asset.name}</strong> (الرقم التسلسلي: {asset.serialNumber})
           </p>
@@ -154,21 +154,21 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
         >
           <Form.Item
             name="disposalDate"
-            label="تاريخ الاستبعاد"
-            rules={[{ required: true, message: 'الرجاء اختيار تاريخ الاستبعاد' }]}
+              label="تاريخ الاتلاف"
+              rules={[{ required: true, message: 'الرجاء اختيار تاريخ الاتلاف' }]}
           >
             <DatePicker 
               style={{ width: '100%' }} 
-              placeholder="اختر تاريخ الاستبعاد"
+              placeholder="اختر تاريخ الاتلاف"
             />
           </Form.Item>
 
           <Form.Item
             name="disposalReason"
-            label="سبب الاستبعاد"
-            rules={[{ required: true, message: 'الرجاء اختيار سبب الاستبعاد' }]}
+            label="سبب الاتلاف"
+            rules={[{ required: true, message: 'الرجاء اختيار سبب الاتلاف' }]}
           >
-            <Select placeholder="اختر سبب الاستبعاد">
+            <Select placeholder="اختر سبب الاتلاف">
               {disposalReasons.map(reason => (
                 <Select.Option key={reason.value} value={reason.value}>
                   {reason.label}
@@ -180,11 +180,11 @@ export default function DisposalModal({ visible, asset, onCancel, onSuccess }: D
           <Form.Item
             name="notes"
             label="ملاحظات وتفاصيل"
-            rules={[{ required: true, message: 'الرجاء تقديم تفاصيل الاستبعاد' }]}
+            rules={[{ required: true, message: 'الرجاء تقديم تفاصيل الاتلاف' }]}
           >
             <Input.TextArea
               rows={4}
-              placeholder="اشرح سبب الاستبعاد، حالة الأصل، وأي تفاصيل أخرى ذات صلة..."
+              placeholder="اشرح سبب الاتلاف، حالة الأصل، وأي تفاصيل أخرى ذات صلة..."
             />
           </Form.Item>
         </Form>

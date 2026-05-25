@@ -115,7 +115,7 @@ const handleLogout = () => {
     {
       key: '/transfers',
       icon: <SwapOutlined />,
-      label: 'التحويلات',
+      label: 'الأصول المنقولة',
       onClick: () => navigate('/transfers'),
       permission: 'Transfers',
       action: 'view' as const
@@ -123,7 +123,7 @@ const handleLogout = () => {
     {
       key: '/disposal',
       icon: <DeleteOutlined />,
-      label: 'الأصول المستبعدة',
+      label: 'الأصول المتلفة',
       onClick: () => navigate('/disposal'),
       permission: 'Disposal',
       action: 'view' as const

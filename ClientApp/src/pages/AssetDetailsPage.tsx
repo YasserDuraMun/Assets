@@ -101,18 +101,18 @@ const fetchAsset = async (assetId: number) => {
       case 'Department':
         return asset.currentDepartmentName ? (
           <Tag color="orange" icon={<span>🏛️</span>}>
-            قسم: {asset.currentDepartmentName}
+            دائرة: {asset.currentDepartmentName}
           </Tag>
         ) : (
-          <Tag color="red">قسم: غير محدد</Tag>
+          <Tag color="red">دائرة: غير محدد</Tag>
         );
       case 'Section':
         return asset.currentSectionName ? (
           <Tag color="purple" icon={<span>📍</span>}>
-            شعبة: {asset.currentSectionName}
+            قسم: {asset.currentSectionName}
           </Tag>
         ) : (
-          <Tag color="red">شعبة: غير محدد</Tag>
+          <Tag color="red">قسم: غير محدد</Tag>
         );
       default:
         return <Tag color="default">موقع غير معروف (النوع: {asset.currentLocationType})</Tag>;
@@ -225,7 +225,7 @@ const fetchAsset = async (assetId: number) => {
             </Tag>
             {asset.isDeleted && (
               <Tag color="red" style={{ marginLeft: 8 }}>
-                ⚠️ تم الاستبعاد
+                ⚠️ تم الاتلاف
               </Tag>
             )}
           </Title>
@@ -239,7 +239,7 @@ const fetchAsset = async (assetId: number) => {
               marginBottom: 16 
             }}>
               <Text type="warning" strong>
-                ⚠️ تم استبعاد هذا الأصل ولم يعد قيد الاستخدام.
+                ⚠️ تم اتلاف هذا الأصل ولم يعد قيد الاستخدام.
               </Text>
             </div>
           )}
@@ -352,7 +352,7 @@ const fetchAsset = async (assetId: number) => {
                   )}
                   
                   {asset.currentDepartmentId && (
-                    <Descriptions.Item label="القسم">
+                    <Descriptions.Item label="الدائرة">
                       <Tag color="orange" icon={<span>🏛️</span>}>
                         {asset.currentDepartmentName || `ID: ${asset.currentDepartmentId}`}
                       </Tag>
@@ -360,7 +360,7 @@ const fetchAsset = async (assetId: number) => {
                   )}
                   
                   {asset.currentSectionId && (
-                    <Descriptions.Item label="الشعبة">
+                    <Descriptions.Item label="القسم">
                       <Tag color="purple" icon={<span>📍</span>}>
                         {asset.currentSectionName || `ID: ${asset.currentSectionId}`}
                       </Tag>
@@ -430,7 +430,7 @@ const fetchAsset = async (assetId: number) => {
             ]}
           />
           <Text type="secondary">
-            سيتم توفير سجل أكثر تفصيلاً (التحويلات، الصيانة، إلخ) في التحديثات المستقبلية.
+            سيتم توفير سجل أكثر تفصيلاً (الأصول المنقولة، الصيانة، إلخ) في التحديثات المستقبلية.
           </Text>
         </Card>
       </Space>

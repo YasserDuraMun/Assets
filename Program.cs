@@ -150,17 +150,22 @@ try
     // Controllers
     builder.Services.AddControllers();
 
+    // Database Management Service
+    Console.WriteLine("??? Registering Database Management Service...");
+    builder.Services.AddScoped<IDatabaseManagementService, DatabaseManagementService>();
+    Console.WriteLine("? Database Management Service Registered");
+
     // CORS - Updated for Production Deployment
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowFrontend", policy =>
         {
             policy.WithOrigins(
-                      "http://localhost:5173", 
+                      "http://localhost:5173",        // Development Vite server
                       "http://localhost:3000", 
                       "https://localhost:5173",
-                      "http://10.0.0.17:8098",    // Production Frontend
-                      "https://10.0.0.17:8098"   // Production Frontend HTTPS
+                      "http://10.0.0.17:8098",       // Production Frontend
+                      "https://10.0.0.17:8098"       // Production Frontend HTTPS
                   )
                   .AllowAnyMethod()
                   .AllowAnyHeader()

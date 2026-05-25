@@ -150,10 +150,10 @@ export default function NewTransferPage() {
       locationParts.push(`مستودع: ${asset.currentWarehouseName}`);
     }
     if (asset.currentDepartmentName) {
-      locationParts.push(`قسم: ${asset.currentDepartmentName}`);
+      locationParts.push(`دائرة: ${asset.currentDepartmentName}`);
     }
     if (asset.currentSectionName) {
-      locationParts.push(`شعبة: ${asset.currentSectionName}`);
+      locationParts.push(`قسم: ${asset.currentSectionName}`);
     }
     
     if (locationParts.length > 0) {
@@ -167,9 +167,9 @@ export default function NewTransferPage() {
       case 'Warehouse':
         return 'موقع مستودع (الاسم غير متاح)';
       case 'Department':
-        return 'موقع قسم (الاسم غير متاح)';
+        return 'موقع دائرة (الاسم غير متاح)';
       case 'Section':
-        return 'موقع شعبة (الاسم غير متاح)';
+        return 'موقع قسم (الاسم غير متاح)';
       default:
         return 'موقع غير معروف';
     }
@@ -356,8 +356,8 @@ export default function NewTransferPage() {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="toDepartmentId" label="القسم (معبأ تلقائياً)">
-                <Select placeholder="اختر قسم" onChange={handleToDepartmentChange} allowClear>
+              <Form.Item name="toDepartmentId" label="الدائرة (معبأ تلقائياً)">
+                <Select placeholder="اختر دائرة" onChange={handleToDepartmentChange} allowClear>
                   {departments.map(dept => (
                     <Select.Option key={dept.id} value={dept.id}>
                       {dept.name}
@@ -367,8 +367,8 @@ export default function NewTransferPage() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="toSectionId" label="الشعبة (معبأ تلقائياً)">
-                <Select placeholder="اختر شعبة" allowClear>
+              <Form.Item name="toSectionId" label="القسم (معبأ تلقائياً)">
+                <Select placeholder="اختر قسم" allowClear>
                   {sections.map(sec => (
                     <Select.Option key={sec.id} value={sec.id}>
                       {sec.name}
