@@ -37,16 +37,16 @@ public class ReportsService : IReportsService
             query = query.Where(a => a.CreatedAt <= endDate.Value);
         }
 
-        var totalAssets = await query.CountAsync();
+        var totalAssets = await query.Where(a => !a.IsDeleted).CountAsync();
         var activeAssets = await query.Where(a => !a.IsDeleted).CountAsync();
-        var disposedAssets = await query.Where(a => a.IsDeleted).CountAsync();
+        var disposedAssets = await _context.AssetDisposals.CountAsync();
 
-        _logger.LogInformation("?? Final counts - Total: {Total}, Active: {Active}, Disposed: {Disposed}", 
+        _logger.LogInformation("?? Final counts - Total: {Total}, Active: {Active}, Disposed: {Disposed}",
             totalAssets, activeAssets, disposedAssets);
 
         var assetsByCategory = await query
             .Include(a => a.Category)
-            .Where(a => a.Category != null)
+            .Where(a => !a.IsDeleted && a.Category != null)
             .GroupBy(a => a.Category.Name)
             .Select(g => new { Category = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)

@@ -214,6 +214,51 @@ public class AssetsController : ControllerBase
     }
 
     /// <summary>
+    /// توليد الرقم التسلسلي التلقائي التالي
+    /// </summary>
+    [HttpGet("next-serial-number")]
+    [RequirePermission("Assets", "view")]
+    public async Task<IActionResult> GetNextSerialNumber()
+    {
+        try
+        {
+            var maxId = await _context.Assets.AnyAsync()
+                ? await _context.Assets.MaxAsync(a => a.Id)
+                : 0;
+            var nextSerial = (maxId + 1).ToString();
+            return Ok(ApiResponse<string>.SuccessResponse(nextSerial));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting next serial number");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("خطأ في توليد الرقم التسلسلي"));
+        }
+    }
+
+    /// <summary>
+    /// التحقق من أن الرقم التسلسلي غير مكرر
+    /// </summary>
+    [HttpGet("check-serial")]
+    [RequirePermission("Assets", "view")]
+    public async Task<IActionResult> CheckSerialNumber([FromQuery] string serialNumber, [FromQuery] int? excludeId = null)
+    {
+        try
+        {
+            var query = _context.Assets.Where(a => a.SerialNumber == serialNumber);
+            if (excludeId.HasValue)
+                query = query.Where(a => a.Id != excludeId.Value);
+
+            var exists = await query.AnyAsync();
+            return Ok(ApiResponse<bool>.SuccessResponse(exists));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking serial number");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("خطأ في التحقق من الرقم التسلسلي"));
+        }
+    }
+
+    /// <summary>
     /// ?????? ??? ???? ???? ????
     /// </summary>
     [HttpGet("by-employee/{employeeId}")]

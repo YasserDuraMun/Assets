@@ -1,19 +1,30 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, Space, Modal, Form, Input, message, Popconfirm, Tag, Row, Col, Select, Switch } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Modal, Form, Input, message, Popconfirm, Tag, Row, Col, Select, Switch, Empty, Typography } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, RightOutlined } from '@ant-design/icons';
 import usePermissions from '../../hooks/usePermissions';
 import { categoryApi } from '../../api/category.api';
 import { subCategoryApi, assetNameApi, type SubCategory, type CreateSubCategoryDto, type AssetName, type CreateAssetNameDto } from '../../api/subcategory.api';
 import type { AssetCategory } from '../../types';
 
+const { Text } = Typography;
+
 export default function CategoriesPage() {
   const { getScreenPermissions } = usePermissions();
   const categoryPermissions = getScreenPermissions('Categories');
 
+  // Data
   const [categories, setCategories] = useState<AssetCategory[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [assetNames, setAssetNames] = useState<AssetName[]>([]);
   const [loading, setLoading] = useState(false);
+  const [subLoading, setSubLoading] = useState(false);
+  const [nameLoading, setNameLoading] = useState(false);
+
+  // Drill-down selection
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<AssetCategory | null>(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<SubCategory | null>(null);
 
   // Category modal
   const [modalVisible, setModalVisible] = useState(false);
@@ -33,8 +44,6 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     fetchCategories();
-    fetchAllSubCategories();
-    fetchAllAssetNames();
   }, []);
 
   const fetchCategories = async () => {
@@ -51,57 +60,53 @@ export default function CategoriesPage() {
     }
   };
 
-  const fetchAllSubCategories = async () => {
+  const fetchSubCategories = async (categoryId: number) => {
+    setSubLoading(true);
     try {
-      const response = await categoryApi.getAll();
+      const response = await subCategoryApi.getByCategoryId(categoryId);
       if (response.data.success && response.data.data) {
-        const allSubCats: SubCategory[] = [];
-        for (const category of response.data.data) {
-          try {
-            const subResponse = await subCategoryApi.getByCategoryId(category.id);
-            if (subResponse.data.success && subResponse.data.data) {
-              allSubCats.push(...subResponse.data.data);
-            }
-          } catch {
-            // Skip
-          }
-        }
-        setSubCategories(allSubCats);
+        setSubCategories(response.data.data);
+      } else {
+        setSubCategories([]);
       }
     } catch {
-      console.error('Failed to load subcategories');
+      setSubCategories([]);
+    } finally {
+      setSubLoading(false);
     }
   };
 
-  const fetchAllAssetNames = async () => {
+  const fetchAssetNames = async (subCategoryId: number) => {
+    setNameLoading(true);
     try {
-      const response = await categoryApi.getAll();
+      const response = await assetNameApi.getBySubCategoryId(subCategoryId);
       if (response.data.success && response.data.data) {
-        const allNames: AssetName[] = [];
-        for (const category of response.data.data) {
-          try {
-            const subResponse = await subCategoryApi.getByCategoryId(category.id);
-            if (subResponse.data.success && subResponse.data.data) {
-              for (const sub of subResponse.data.data) {
-                try {
-                  const nameResponse = await assetNameApi.getBySubCategoryId(sub.id);
-                  if (nameResponse.data.success && nameResponse.data.data) {
-                    allNames.push(...nameResponse.data.data);
-                  }
-                } catch {
-                  // Skip
-                }
-              }
-            }
-          } catch {
-            // Skip
-          }
-        }
-        setAssetNames(allNames);
+        setAssetNames(response.data.data);
+      } else {
+        setAssetNames([]);
       }
     } catch {
-      console.error('Failed to load asset names');
+      setAssetNames([]);
+    } finally {
+      setNameLoading(false);
     }
+  };
+
+  // ---- Drill-down handlers ----
+
+  const handleSelectCategory = (record: AssetCategory) => {
+    setSelectedCategoryId(record.id);
+    setSelectedCategory(record);
+    setSelectedSubCategoryId(null);
+    setSelectedSubCategory(null);
+    setAssetNames([]);
+    fetchSubCategories(record.id);
+  };
+
+  const handleSelectSubCategory = (record: SubCategory) => {
+    setSelectedSubCategoryId(record.id);
+    setSelectedSubCategory(record);
+    fetchAssetNames(record.id);
   };
 
   // ---- Category handlers ----
@@ -126,6 +131,14 @@ export default function CategoriesPage() {
     try {
       await categoryApi.delete(id);
       message.success('تم حذف الفئة بنجاح');
+      if (selectedCategoryId === id) {
+        setSelectedCategoryId(null);
+        setSelectedCategory(null);
+        setSelectedSubCategoryId(null);
+        setSelectedSubCategory(null);
+        setSubCategories([]);
+        setAssetNames([]);
+      }
       fetchCategories();
     } catch {
       message.error('فشل حذف الفئة');
@@ -135,8 +148,7 @@ export default function CategoriesPage() {
   const handleSubmitCategory = async (values: Partial<AssetCategory>) => {
     try {
       if (editingCategory) {
-        const updateData = { ...values, id: editingCategory.id, isActive: values.isActive !== undefined ? values.isActive : editingCategory.isActive };
-        await categoryApi.update(editingCategory.id, updateData);
+        await categoryApi.update(editingCategory.id, { ...values, id: editingCategory.id });
         message.success('تم تحديث الفئة بنجاح');
       } else {
         const { code, ...createData } = values as any;
@@ -156,6 +168,10 @@ export default function CategoriesPage() {
     if (!categoryPermissions.canCreate) { message.error('ليس لديك صلاحية لإضافة الفئات الفرعية'); return; }
     setEditingSubCategory(null);
     subForm.resetFields();
+    // Pre-fill the selected category
+    if (selectedCategoryId) {
+      subForm.setFieldValue('categoryId', selectedCategoryId);
+    }
     setSubModalVisible(true);
   };
 
@@ -172,7 +188,12 @@ export default function CategoriesPage() {
     try {
       await subCategoryApi.delete(id);
       message.success('تم حذف الفئة الفرعية بنجاح');
-      fetchAllSubCategories();
+      if (selectedSubCategoryId === id) {
+        setSelectedSubCategoryId(null);
+        setSelectedSubCategory(null);
+        setAssetNames([]);
+      }
+      if (selectedCategoryId) fetchSubCategories(selectedCategoryId);
     } catch {
       message.error('فشل حذف الفئة الفرعية');
     }
@@ -190,7 +211,7 @@ export default function CategoriesPage() {
         message.success('تم إنشاء الفئة الفرعية بنجاح');
       }
       setSubModalVisible(false);
-      fetchAllSubCategories();
+      if (selectedCategoryId) fetchSubCategories(selectedCategoryId);
     } catch {
       message.error(editingSubCategory ? 'فشل تحديث الفئة الفرعية' : 'فشل إنشاء الفئة الفرعية');
     }
@@ -215,14 +236,22 @@ export default function CategoriesPage() {
     if (!categoryPermissions.canCreate) { message.error('ليس لديك صلاحية لإضافة أسماء الأصول'); return; }
     setEditingAssetName(null);
     nameForm.resetFields();
-    setSubCategoriesForNameModal([]);
+    // Pre-fill category and subcategory from current selection
+    if (selectedCategoryId) {
+      nameForm.setFieldValue('categoryId', selectedCategoryId);
+      setSubCategoriesForNameModal(subCategories);
+      if (selectedSubCategoryId) {
+        nameForm.setFieldValue('subCategoryId', selectedSubCategoryId);
+      }
+    } else {
+      setSubCategoriesForNameModal([]);
+    }
     setNameModalVisible(true);
   };
 
   const handleEditAssetName = async (record: AssetName) => {
     if (!categoryPermissions.canUpdate) { message.error('ليس لديك صلاحية لتعديل أسماء الأصول'); return; }
     setEditingAssetName(record);
-    // Find the category for this subcategory
     const subCat = subCategories.find(s => s.id === record.subCategoryId);
     if (subCat) {
       try {
@@ -233,7 +262,13 @@ export default function CategoriesPage() {
       } catch {
         // ignore
       }
-      nameForm.setFieldsValue({ categoryId: subCat.categoryId, subCategoryId: record.subCategoryId, name: record.name, description: record.description, isActive: record.isActive });
+      nameForm.setFieldsValue({
+        categoryId: subCat.categoryId,
+        subCategoryId: record.subCategoryId,
+        name: record.name,
+        description: record.description,
+        isActive: record.isActive,
+      });
     }
     setNameModalVisible(true);
   };
@@ -243,7 +278,7 @@ export default function CategoriesPage() {
     try {
       await assetNameApi.delete(id);
       message.success('تم حذف اسم الأصل بنجاح');
-      fetchAllAssetNames();
+      if (selectedSubCategoryId) fetchAssetNames(selectedSubCategoryId);
     } catch {
       message.error('فشل حذف اسم الأصل');
     }
@@ -265,7 +300,7 @@ export default function CategoriesPage() {
         message.success('تم إضافة اسم الأصل بنجاح');
       }
       setNameModalVisible(false);
-      fetchAllAssetNames();
+      if (selectedSubCategoryId) fetchAssetNames(selectedSubCategoryId);
     } catch {
       message.error(editingAssetName ? 'فشل تحديث اسم الأصل' : 'فشل إضافة اسم الأصل');
     }
@@ -274,23 +309,31 @@ export default function CategoriesPage() {
   // ---- Columns ----
 
   const categoryColumns = [
-    { title: 'الاسم', dataIndex: 'name', key: 'name' },
-    { title: 'الرمز', dataIndex: 'code', key: 'code' },
-    { title: 'الوصف', dataIndex: 'description', key: 'description' },
     {
-      title: 'نشط', dataIndex: 'isActive', key: 'isActive',
-      render: (v: boolean) => <Tag color={v ? 'green' : 'red'}>{v ? 'نشط' : 'غير نشط'}</Tag>,
+      title: 'الفئة الرئيسية',
+      key: 'name',
+      render: (_: unknown, record: AssetCategory) => (
+        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+          <Space direction="vertical" size={0}>
+            <Tag color={record.isActive ? 'blue' : 'default'}>{record.name}</Tag>
+            <Text type="secondary" style={{ fontSize: 11, paddingRight: 4 }}>{record.code}</Text>
+          </Space>
+          {selectedCategoryId === record.id && <RightOutlined style={{ color: '#1677ff' }} />}
+        </Space>
+      ),
     },
     {
-      title: 'الإجراءات', key: 'actions',
+      title: '',
+      key: 'actions',
+      width: 80,
       render: (_: unknown, record: AssetCategory) => (
-        <Space>
+        <Space size={0}>
           {categoryPermissions.canUpdate && (
-            <Button type="link" icon={<EditOutlined />} onClick={() => handleEditCategory(record)}>تعديل</Button>
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={e => { e.stopPropagation(); handleEditCategory(record); }} />
           )}
           {categoryPermissions.canDelete && (
-            <Popconfirm title="هل أنت متأكد من حذف هذه الفئة؟" onConfirm={() => handleDeleteCategory(record.id)} okText="نعم" cancelText="لا">
-              <Button type="link" danger icon={<DeleteOutlined />}>حذف</Button>
+            <Popconfirm title="هل أنت متأكد من حذف هذه الفئة؟" onConfirm={e => { e?.stopPropagation(); handleDeleteCategory(record.id); }} okText="نعم" cancelText="لا">
+              <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={e => e.stopPropagation()} />
             </Popconfirm>
           )}
         </Space>
@@ -299,24 +342,31 @@ export default function CategoriesPage() {
   ];
 
   const subCategoryColumns = [
-    { title: 'الاسم', dataIndex: 'name', key: 'name' },
-    { title: 'الرمز', dataIndex: 'code', key: 'code' },
-    { title: 'الفئة الرئيسية', dataIndex: 'categoryName', key: 'categoryName' },
-    { title: 'الوصف', dataIndex: 'description', key: 'description' },
     {
-      title: 'نشط', dataIndex: 'isActive', key: 'isActive',
-      render: (v: boolean) => <Tag color={v ? 'green' : 'red'}>{v ? 'نشط' : 'غير نشط'}</Tag>,
+      title: 'الفئة الفرعية',
+      key: 'name',
+      render: (_: unknown, record: SubCategory) => (
+        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+          <Space direction="vertical" size={0}>
+            <Tag color={record.isActive ? 'green' : 'default'}>{record.name}</Tag>
+            <Text type="secondary" style={{ fontSize: 11, paddingRight: 4 }}>{record.code}</Text>
+          </Space>
+          {selectedSubCategoryId === record.id && <RightOutlined style={{ color: '#1677ff' }} />}
+        </Space>
+      ),
     },
     {
-      title: 'الإجراءات', key: 'actions',
+      title: '',
+      key: 'actions',
+      width: 80,
       render: (_: unknown, record: SubCategory) => (
-        <Space>
+        <Space size={0}>
           {categoryPermissions.canUpdate && (
-            <Button type="link" icon={<EditOutlined />} onClick={() => handleEditSubCategory(record)}>تعديل</Button>
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={e => { e.stopPropagation(); handleEditSubCategory(record); }} />
           )}
           {categoryPermissions.canDelete && (
             <Popconfirm title="هل أنت متأكد من حذف هذه الفئة الفرعية؟" onConfirm={() => handleDeleteSubCategory(record.id)} okText="نعم" cancelText="لا">
-              <Button type="link" danger icon={<DeleteOutlined />}>حذف</Button>
+              <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={e => e.stopPropagation()} />
             </Popconfirm>
           )}
         </Space>
@@ -325,25 +375,28 @@ export default function CategoriesPage() {
   ];
 
   const assetNameColumns = [
-    { title: 'اسم الأصل', dataIndex: 'name', key: 'name' },
-    { title: 'الرمز', dataIndex: 'code', key: 'code' },
-    { title: 'الفئة الرئيسية', dataIndex: 'categoryName', key: 'categoryName' },
-    { title: 'الفئة الفرعية', dataIndex: 'subCategoryName', key: 'subCategoryName' },
-    { title: 'الوصف', dataIndex: 'description', key: 'description' },
     {
-      title: 'نشط', dataIndex: 'isActive', key: 'isActive',
-      render: (v: boolean) => <Tag color={v ? 'green' : 'red'}>{v ? 'نشط' : 'غير نشط'}</Tag>,
+      title: 'اسم المادة',
+      key: 'name',
+      render: (_: unknown, record: AssetName) => (
+        <Space direction="vertical" size={0}>
+          <Tag color={record.isActive ? 'purple' : 'default'}>{record.name}</Tag>
+          <Text type="secondary" style={{ fontSize: 11, paddingRight: 4 }}>{record.code}</Text>
+        </Space>
+      ),
     },
     {
-      title: 'الإجراءات', key: 'actions',
+      title: '',
+      key: 'actions',
+      width: 80,
       render: (_: unknown, record: AssetName) => (
-        <Space>
+        <Space size={0}>
           {categoryPermissions.canUpdate && (
-            <Button type="link" icon={<EditOutlined />} onClick={() => handleEditAssetName(record)}>تعديل</Button>
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => handleEditAssetName(record)} />
           )}
           {categoryPermissions.canDelete && (
             <Popconfirm title="هل أنت متأكد من حذف اسم الأصل هذا؟" onConfirm={() => handleDeleteAssetName(record.id)} okText="نعم" cancelText="لا">
-              <Button type="link" danger icon={<DeleteOutlined />}>حذف</Button>
+              <Button type="text" size="small" danger icon={<DeleteOutlined />} />
             </Popconfirm>
           )}
         </Space>
@@ -351,45 +404,110 @@ export default function CategoriesPage() {
     },
   ];
 
+  const colStyle: import('react').CSSProperties = {
+    borderRight: '1px solid #f0f0f0',
+    paddingRight: 12,
+    paddingLeft: 12,
+    minHeight: 400,
+  };
+
   return (
     <div>
-      <Row gutter={[16, 24]}>
-        {/* الفئات الرئيسية */}
-        <Col span={24}>
-          <h3>الفئات الرئيسية</h3>
-          <div style={{ marginBottom: 16, textAlign: 'right' }}>
+      <Row gutter={0} style={{ border: '1px solid #f0f0f0', borderRadius: 8, overflow: 'hidden' }}>
+
+        {/* العمود 1: الفئات الرئيسية */}
+        <Col span={8} style={colStyle}>
+          <div style={{ padding: '12px 0 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', marginBottom: 8 }}>
+            <Text strong>الفئات الرئيسية</Text>
             {categoryPermissions.canCreate && (
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddCategory}>إضافة فئة</Button>
+              <Button type="primary" size="small" icon={<PlusOutlined />} onClick={handleAddCategory}>إضافة</Button>
             )}
           </div>
-          <Table columns={categoryColumns} dataSource={categories} rowKey="id" loading={loading} pagination={{ pageSize: 5 }} />
+          <Table
+            columns={categoryColumns}
+            dataSource={categories}
+            rowKey="id"
+            loading={loading}
+            pagination={false}
+            size="small"
+            showHeader={false}
+            onRow={record => ({
+              onClick: () => handleSelectCategory(record),
+              style: {
+                cursor: 'pointer',
+                background: selectedCategoryId === record.id ? '#e6f4ff' : undefined,
+              },
+            })}
+            scroll={{ y: 420 }}
+          />
         </Col>
 
-        {/* الفئات الفرعية */}
-        <Col span={24}>
-          <h3>الفئات الفرعية</h3>
-          <div style={{ marginBottom: 16, textAlign: 'right' }}>
+        {/* العمود 2: الفئات الفرعية */}
+        <Col span={8} style={colStyle}>
+          <div style={{ padding: '12px 0 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', marginBottom: 8 }}>
+            <Text strong>
+              الفئات الفرعية
+              {selectedCategory && <Text type="secondary" style={{ fontSize: 12, marginRight: 6 }}>({selectedCategory.name})</Text>}
+            </Text>
             {categoryPermissions.canCreate && (
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddSubCategory}>إضافة فئة فرعية</Button>
+              <Button type="primary" size="small" icon={<PlusOutlined />} onClick={handleAddSubCategory} disabled={!selectedCategoryId}>إضافة</Button>
             )}
           </div>
-          <Table columns={subCategoryColumns} dataSource={subCategories} rowKey="id" loading={loading} pagination={{ pageSize: 5 }} />
+          {!selectedCategoryId ? (
+            <Empty description="اختر فئة رئيسية أولاً" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ marginTop: 60 }} />
+          ) : (
+            <Table
+              columns={subCategoryColumns}
+              dataSource={subCategories}
+              rowKey="id"
+              loading={subLoading}
+              pagination={false}
+              size="small"
+              showHeader={false}
+              locale={{ emptyText: 'لا توجد فئات فرعية' }}
+              onRow={record => ({
+                onClick: () => handleSelectSubCategory(record),
+                style: {
+                  cursor: 'pointer',
+                  background: selectedSubCategoryId === record.id ? '#e6f4ff' : undefined,
+                },
+              })}
+              scroll={{ y: 420 }}
+            />
+          )}
         </Col>
 
-        {/* أسماء الأصول */}
-        <Col span={24}>
-          <h3>أسماء الأصول</h3>
-          <div style={{ marginBottom: 16, textAlign: 'right' }}>
+        {/* العمود 3: أسماء المواد */}
+        <Col span={8} style={{ ...colStyle, borderRight: 'none' }}>
+          <div style={{ padding: '12px 0 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', marginBottom: 8 }}>
+            <Text strong>
+              أسماء المواد
+              {selectedSubCategory && <Text type="secondary" style={{ fontSize: 12, marginRight: 6 }}>({selectedSubCategory.name})</Text>}
+            </Text>
             {categoryPermissions.canCreate && (
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddAssetName}>إضافة اسم أصل</Button>
+              <Button type="primary" size="small" icon={<PlusOutlined />} onClick={handleAddAssetName} disabled={!selectedSubCategoryId}>إضافة</Button>
             )}
           </div>
-          <Table columns={assetNameColumns} dataSource={assetNames} rowKey="id" loading={loading} pagination={{ pageSize: 10 }} />
+          {!selectedSubCategoryId ? (
+            <Empty description="اختر فئة فرعية أولاً" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ marginTop: 60 }} />
+          ) : (
+            <Table
+              columns={assetNameColumns}
+              dataSource={assetNames}
+              rowKey="id"
+              loading={nameLoading}
+              pagination={false}
+              size="small"
+              showHeader={false}
+              locale={{ emptyText: 'لا توجد أسماء مواد' }}
+              scroll={{ y: 420 }}
+            />
+          )}
         </Col>
       </Row>
 
       {/* Modal: الفئة الرئيسية */}
-      <Modal title={editingCategory ? 'تعديل الفئة' : 'إضافة فئة'} open={modalVisible} onCancel={() => setModalVisible(false)} onOk={() => form.submit()} width={600}>
+      <Modal title={editingCategory ? 'تعديل الفئة' : 'إضافة فئة'} open={modalVisible} onCancel={() => setModalVisible(false)} onOk={() => form.submit()} width={500}>
         <Form form={form} layout="vertical" onFinish={handleSubmitCategory}>
           <Form.Item name="name" label="اسم الفئة" rules={[{ required: true, message: 'يرجى إدخال اسم الفئة' }]}>
             <Input placeholder="مثال: أجهزة حاسوب، أثاث مكتبي" />
@@ -409,7 +527,7 @@ export default function CategoriesPage() {
       </Modal>
 
       {/* Modal: الفئة الفرعية */}
-      <Modal title={editingSubCategory ? 'تعديل الفئة الفرعية' : 'إضافة فئة فرعية'} open={subModalVisible} onCancel={() => setSubModalVisible(false)} onOk={() => subForm.submit()} width={600}>
+      <Modal title={editingSubCategory ? 'تعديل الفئة الفرعية' : 'إضافة فئة فرعية'} open={subModalVisible} onCancel={() => setSubModalVisible(false)} onOk={() => subForm.submit()} width={500}>
         <Form form={subForm} layout="vertical" onFinish={handleSubmitSubCategory}>
           <Form.Item name="categoryId" label="الفئة الرئيسية" rules={[{ required: true, message: 'يرجى اختيار الفئة الرئيسية' }]}>
             <Select placeholder="اختر الفئة الرئيسية" showSearch optionFilterProp="children">
@@ -425,8 +543,8 @@ export default function CategoriesPage() {
         </Form>
       </Modal>
 
-      {/* Modal: اسم الأصل */}
-      <Modal title={editingAssetName ? 'تعديل اسم الأصل' : 'إضافة اسم أصل'} open={nameModalVisible} onCancel={() => setNameModalVisible(false)} onOk={() => nameForm.submit()} width={600}>
+      {/* Modal: اسم المادة */}
+      <Modal title={editingAssetName ? 'تعديل اسم المادة' : 'إضافة اسم مادة'} open={nameModalVisible} onCancel={() => setNameModalVisible(false)} onOk={() => nameForm.submit()} width={500}>
         <Form form={nameForm} layout="vertical" onFinish={handleSubmitAssetName}>
           <Form.Item name="categoryId" label="الفئة الرئيسية" rules={[{ required: true, message: 'يرجى اختيار الفئة الرئيسية' }]}>
             <Select placeholder="اختر الفئة الرئيسية" showSearch optionFilterProp="children" onChange={handleCategoryChangeForNameModal}>
@@ -438,11 +556,11 @@ export default function CategoriesPage() {
               {subCategoriesForNameModal.map(sub => <Select.Option key={sub.id} value={sub.id}>{sub.name}</Select.Option>)}
             </Select>
           </Form.Item>
-          <Form.Item name="name" label="اسم الأصل" rules={[{ required: true, message: 'يرجى إدخال اسم الأصل' }]}>
+          <Form.Item name="name" label="اسم المادة" rules={[{ required: true, message: 'يرجى إدخال اسم المادة' }]}>
             <Input placeholder="مثال: كرسي مكتب، طاولة اجتماعات" />
           </Form.Item>
           <Form.Item name="description" label="الوصف">
-            <Input.TextArea rows={3} placeholder="وصف اسم الأصل (اختياري)" />
+            <Input.TextArea rows={3} placeholder="وصف المادة (اختياري)" />
           </Form.Item>
           {editingAssetName && (
             <Form.Item name="isActive" label="نشط" valuePropName="checked" initialValue={true}>

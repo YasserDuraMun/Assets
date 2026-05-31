@@ -4,17 +4,19 @@ import {
   Tabs, Typography, Spin, message, Divider, Empty, Timeline, Progress, QRCode
 } from 'antd';
 import {
-  FileTextOutlined, CalendarOutlined, BarChartOutlined, 
+  FileTextOutlined, CalendarOutlined, BarChartOutlined,
   DownloadOutlined, FilterOutlined, ReloadOutlined,
   DeleteOutlined, ToolOutlined, SwapOutlined, DashboardOutlined,
-  QrcodeOutlined, PrinterOutlined, EnvironmentOutlined
+  QrcodeOutlined, PrinterOutlined, EnvironmentOutlined, UserOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import { reportsApi, AssetsSummaryReport, DisposalReport, MaintenanceReport, TransfersReport, AssetLocationDetailReport } from '../api/reports.api';
 import { departmentApi } from '../api/department.api';
 import { sectionApi } from '../api/section.api';
-import type { Department, Section } from '../types';
+import { employeeApi } from '../api/employee.api';
+import { assetApi } from '../api/asset.api';
+import type { Department, Section, Employee, Asset } from '../types';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
@@ -62,6 +64,12 @@ export default function ReportsPage() {
   const [sections, setSections] = useState<Section[]>([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | undefined>(undefined);
   const [selectedSectionId, setSelectedSectionId] = useState<number | undefined>(undefined);
+
+  // Employee assets report
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | undefined>(undefined);
+  const [employeeAssets, setEmployeeAssets] = useState<Asset[] | null>(null);
+  const [employeeReportLoading, setEmployeeReportLoading] = useState(false);
   
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -77,6 +85,7 @@ export default function ReportsPage() {
   useEffect(() => {
     loadInitialReports();
     loadDepartments();
+    loadEmployees();
   }, []);
 
   const loadDepartments = async () => {
@@ -223,6 +232,35 @@ export default function ReportsPage() {
       setLoading(false);
     }
   };
+  const loadEmployees = async () => {
+    try {
+      const response = await employeeApi.getActive();
+      if (response.data.success && response.data.data) {
+        setEmployees(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to load employees:', error);
+    }
+  };
+
+  const loadAssetsByEmployee = async (employeeId: number) => {
+    try {
+      setEmployeeReportLoading(true);
+      const response = await assetApi.getByEmployee(employeeId);
+      if (response.data.success && response.data.data) {
+        setEmployeeAssets(response.data.data);
+      } else {
+        setEmployeeAssets([]);
+      }
+    } catch (error) {
+      console.error('Failed to load employee assets:', error);
+      message.error('فشل تحميل أصول الموظف');
+      setEmployeeAssets([]);
+    } finally {
+      setEmployeeReportLoading(false);
+    }
+  };
+
   const handleDateRangeChange = (dates: any) => {
     setDateRange(dates);
     
@@ -935,6 +973,134 @@ export default function ReportsPage() {
     );
   };
 
+  const renderEmployeeAssetsReportTab = () => {
+    const selectedEmployee = employees.find(e => e.id === selectedEmployeeId);
+
+    const columns = [
+      {
+        title: 'اسم الأصل',
+        dataIndex: 'name',
+        key: 'name',
+      },
+      {
+        title: 'الرقم التسلسلي',
+        dataIndex: 'serialNumber',
+        key: 'serialNumber',
+      },
+      {
+        title: 'الفئة',
+        dataIndex: 'categoryName',
+        key: 'categoryName',
+        render: (val: string) => val || '-',
+      },
+      {
+        title: 'الحالة',
+        dataIndex: 'statusName',
+        key: 'statusName',
+        render: (val: string, record: Asset) => (
+          <Tag color={record.statusColor || 'default'}>{val || '-'}</Tag>
+        ),
+      },
+      {
+        title: 'تاريخ الشراء',
+        dataIndex: 'purchaseDate',
+        key: 'purchaseDate',
+        render: (val: string) => val ? dayjs(val).format('DD/MM/YYYY') : '-',
+      },
+      {
+        title: 'السعر',
+        dataIndex: 'purchasePrice',
+        key: 'purchasePrice',
+        render: (val: number) => val ? `${val.toLocaleString()} ILS` : '-',
+      },
+    ];
+
+    return (
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Card size="small">
+          <Row gutter={[16, 16]} align="middle">
+            <Col xs={24} sm={14}>
+              <Select
+                style={{ width: '100%' }}
+                placeholder="اختر الموظف"
+                allowClear
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
+                }
+                value={selectedEmployeeId}
+                onChange={(val) => {
+                  setSelectedEmployeeId(val);
+                  setEmployeeAssets(null);
+                }}
+                options={employees.map(emp => ({
+                  label: `${emp.fullName} - ${emp.employeeNumber}`,
+                  value: emp.id,
+                }))}
+              />
+            </Col>
+            <Col xs={24} sm={10}>
+              <Button
+                type="primary"
+                icon={<FilterOutlined />}
+                loading={employeeReportLoading}
+                disabled={!selectedEmployeeId}
+                onClick={() => selectedEmployeeId && loadAssetsByEmployee(selectedEmployeeId)}
+              >
+                عرض التقرير
+              </Button>
+            </Col>
+          </Row>
+        </Card>
+
+        {employeeAssets === null ? (
+          <Empty description="اختر موظفاً لعرض أصوله" />
+        ) : (
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            {selectedEmployee && (
+              <Card size="small">
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} sm={8}>
+                    <Statistic
+                      title="إجمالي الأصول"
+                      value={employeeAssets.length}
+                      prefix={<UserOutlined />}
+                      valueStyle={{ color: '#1677ff' }}
+                    />
+                  </Col>
+                  <Col xs={24} sm={8}>
+                    <div>
+                      <Text type="secondary">الموظف</Text>
+                      <div style={{ fontSize: 16, fontWeight: 'bold' }}>{selectedEmployee.fullName}</div>
+                    </div>
+                  </Col>
+                  <Col xs={24} sm={8}>
+                    <div>
+                      <Text type="secondary">الدائرة / القسم</Text>
+                      <div style={{ fontSize: 14 }}>
+                        {selectedEmployee.departmentName || '-'}
+                        {selectedEmployee.sectionName ? ` / ${selectedEmployee.sectionName}` : ''}
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+              </Card>
+            )}
+
+            <Table
+              dataSource={employeeAssets}
+              columns={columns}
+              rowKey="id"
+              loading={employeeReportLoading}
+              locale={{ emptyText: 'لا توجد أصول مسجلة لهذا الموظف' }}
+              pagination={{ pageSize: 10, showSizeChanger: false }}
+            />
+          </Space>
+        )}
+      </Space>
+    );
+  };
+
   return (
     <MainLayout>
       <style>
@@ -1065,6 +1231,18 @@ export default function ReportsPage() {
               key="locationDetail"
             >
               {renderLocationDetailReportTab()}
+            </Tabs.TabPane>
+
+            <Tabs.TabPane
+              tab={
+                <span>
+                  <UserOutlined />
+                  تقرير الأصول حسب الموظف
+                </span>
+              }
+              key="employeeAssets"
+            >
+              {renderEmployeeAssetsReportTab()}
             </Tabs.TabPane>
           </Tabs>
         </Spin>

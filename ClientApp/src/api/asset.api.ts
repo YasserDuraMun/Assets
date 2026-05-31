@@ -27,8 +27,14 @@ export const assetApi = {
   delete: (id: number) => 
     api.delete<ApiResponse<null>>(`/assets/${id}`),
   
-  getByEmployee: (employeeId: number) => 
-    api.get<ApiResponse<Asset[]>>(`/assets/employee/${employeeId}`),
+  getByEmployee: (employeeId: number) =>
+    api.get<ApiResponse<Asset[]>>(`/assets/by-employee/${employeeId}`),
+
+  getNextSerialNumber: () =>
+    api.get<ApiResponse<string>>('/assets/next-serial-number'),
+
+  checkSerialNumber: (serialNumber: string, excludeId?: number) =>
+    api.get<ApiResponse<boolean>>('/assets/check-serial', { params: { serialNumber, excludeId } }),
   
   getByWarehouse: (warehouseId: number) => 
     api.get<ApiResponse<Asset[]>>(`/assets/warehouse/${warehouseId}`),

@@ -28,6 +28,8 @@ export default function AddAssetPage() {
   const [sections, setSections] = useState<Section[]>([]);
   const [hasWarranty, setHasWarranty] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [serialNumberStatus, setSerialNumberStatus] = useState<'' | 'validating' | 'success' | 'error'>('');
+  const [serialNumberHelp, setSerialNumberHelp] = useState<string>('');
 
   useEffect(() => {
     fetchCategories();
@@ -35,6 +37,7 @@ export default function AddAssetPage() {
     fetchEmployees();
     fetchWarehouses();
     fetchDepartments();
+    fetchNextSerialNumber();
   }, []);
 
   const fetchCategories = async () => {
@@ -125,6 +128,38 @@ export default function AddAssetPage() {
     } catch (error) {
       console.error('Failed to load asset names:', error);
       setAssetNames([]);
+    }
+  };
+
+  const fetchNextSerialNumber = async () => {
+    try {
+      const response = await assetApi.getNextSerialNumber();
+      if (response.data.success && response.data.data) {
+        form.setFieldValue('serialNumber', response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to get next serial number:', error);
+    }
+  };
+
+  const handleSerialNumberBlur = async (e: { target: { value: string } }) => {
+    const value = e.target.value?.trim();
+    if (!value) return;
+
+    setSerialNumberStatus('validating');
+    setSerialNumberHelp('جاري التحقق...');
+    try {
+      const response = await assetApi.checkSerialNumber(value);
+      if (response.data.success && response.data.data === true) {
+        setSerialNumberStatus('error');
+        setSerialNumberHelp('الرقم التسلسلي مستخدم مسبقاً، يرجى إدخال رقم آخر');
+      } else {
+        setSerialNumberStatus('success');
+        setSerialNumberHelp('');
+      }
+    } catch {
+      setSerialNumberStatus('');
+      setSerialNumberHelp('');
     }
   };
 
@@ -259,9 +294,26 @@ export default function AddAssetPage() {
               <Form.Item
                 name="serialNumber"
                 label="الرقم التسلسلي"
-                rules={[{ required: true, message: 'الرجاء إدخال الرقم التسلسلي' }]}
+                validateStatus={serialNumberStatus}
+                help={serialNumberHelp || undefined}
+                rules={[
+                  { required: true, message: 'الرجاء إدخال الرقم التسلسلي' },
+                  {
+                    validator: () =>
+                      serialNumberStatus === 'error'
+                        ? Promise.reject(new Error(serialNumberHelp))
+                        : Promise.resolve(),
+                  },
+                ]}
               >
-                <Input placeholder="أدخل الرقم التسلسلي" />
+                <Input
+                  placeholder="يتم توليده تلقائياً"
+                  onBlur={handleSerialNumberBlur}
+                  onChange={() => {
+                    setSerialNumberStatus('');
+                    setSerialNumberHelp('');
+                  }}
+                />
               </Form.Item>
             </Col>
             <Col span={8}>
