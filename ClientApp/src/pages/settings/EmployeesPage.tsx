@@ -33,7 +33,7 @@ export default function EmployeesPage() {
   const fetchEmployees = async () => {
     setLoading(true);
     try {
-      const response = await employeeApi.getAll();
+      const response = await employeeApi.getAll({ pageSize: 1000 });
       if (response.data.success && response.data.data) {
         const employeeData = response.data.data.items
           ? response.data.data.items
@@ -85,17 +85,24 @@ export default function EmployeesPage() {
     setModalVisible(true);
   };
 
-  const handleEdit = (record: Employee) => {
+  const handleEdit = async (record: Employee) => {
     if (!employeePermissions.canUpdate) {
       message.error('ليس لديك صلاحية لتعديل الموظفين');
       return;
     }
     setEditingEmployee(record);
-    form.setFieldsValue(record);
+    setSections([]);
     if (record.departmentId) {
       setSelectedDepartmentId(record.departmentId);
-      fetchSectionsByDepartment(record.departmentId);
+      await fetchSectionsByDepartment(record.departmentId);
+    } else {
+      setSelectedDepartmentId(null);
     }
+    form.setFieldsValue({
+      ...record,
+      departmentId: record.departmentId ? Number(record.departmentId) : undefined,
+      sectionId: record.sectionId ? Number(record.sectionId) : undefined,
+    });
     setModalVisible(true);
   };
 
@@ -144,6 +151,29 @@ export default function EmployeesPage() {
   const handleShowQR = (record: Employee) => {
     setQrEmployee(record);
     setQrModalVisible(true);
+  };
+
+  const handleGenerateAllQR = async () => {
+    const missing = employees.filter(e => !e.qrCode);
+    if (missing.length === 0) {
+      message.info('جميع الموظفين لديهم رمز QR بالفعل');
+      return;
+    }
+    setLoading(true);
+    let success = 0;
+    let fail = 0;
+    for (const emp of missing) {
+      try {
+        const res = await employeeApi.generateQRCode(emp.id);
+        if (res.data.success) success++;
+        else fail++;
+      } catch {
+        fail++;
+      }
+    }
+    setLoading(false);
+    message.success(`تم توليد ${success} رمز QR${fail > 0 ? ` • فشل ${fail}` : ''}`);
+    fetchEmployees();
   };
 
   const handleGenerateQR = async () => {
@@ -274,7 +304,10 @@ export default function EmployeesPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, textAlign: 'right' }}>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <Button icon={<QrcodeOutlined />} onClick={handleGenerateAllQR} loading={loading}>
+          توليد QR للجميع
+        </Button>
         {employeePermissions.canCreate && (
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             إضافة موظف
@@ -339,6 +372,7 @@ export default function EmployeesPage() {
             name="departmentId"
             label="الإدارة"
             rules={[{ required: true, message: 'يرجى اختيار الإدارة' }]}
+            extra={editingEmployee?.departmentName ? `المخزّنة حالياً: ${editingEmployee.departmentName}` : undefined}
           >
             <Select
               placeholder="اختر الإدارة"
@@ -352,7 +386,11 @@ export default function EmployeesPage() {
             </Select>
           </Form.Item>
 
-          <Form.Item name="sectionId" label="القسم">
+          <Form.Item
+            name="sectionId"
+            label="القسم"
+            extra={editingEmployee?.sectionName ? `المخزّن حالياً: ${editingEmployee.sectionName}` : undefined}
+          >
             <Select
               placeholder="اختر القسم (اختياري)"
               disabled={!selectedDepartmentId}

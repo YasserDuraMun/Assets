@@ -63,7 +63,9 @@ public class EmployeeDto
     public string? Phone { get; set; }
     public string? Email { get; set; }
     public string? JobTitle { get; set; }
+    public int DepartmentId { get; set; }
     public string DepartmentName { get; set; } = string.Empty;
+    public int? SectionId { get; set; }
     public string? SectionName { get; set; }
     public string? QRCode { get; set; }
     public int AssetsCount { get; set; }
